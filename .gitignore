@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Coverage
+coverage/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploads / media
+backend/public/
+backend/uploads/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vite
+frontend/dist/
+
+# Docker volumes (local)
+postgres_data/
+redis_data/
+letsencrypt/
+
+# Misc
+*.pid
+*.seed

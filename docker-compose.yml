@@ -1,0 +1,210 @@
+services:
+  traefik:
+    image: traefik:v3.2
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # HTTP -> HTTPS redirect (ACME HTTP challenge is intercepted before redirect)
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - zflow-public
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        # Dashboard: traefik.${DOMAIN} (protected by basicAuth)
+        # Generate credentials: htpasswd -nB admin
+        - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.entrypoints=websecure"
+        - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.dashboard.middlewares=auth"
+        - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
+        - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-zflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-zflow}
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=50"
+      - "-c"
+      - "shared_buffers=128MB"
+      - "-c"
+      - "effective_cache_size=256MB"
+      - "-c"
+      - "work_mem=4MB"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - zflow-internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-zflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - zflow-internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ${REGISTRY:-}zflow-backend:${TAG:-latest}
+    build:
+      context: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 7563
+      BACKEND_URL: https://${DOMAIN}
+      FRONTEND_URL: https://${DOMAIN}
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
+      RUN_SEEDS: ${RUN_SEEDS:-false}
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-zflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-zflow}
+      DB_PORT: 5432
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      USER_LIMIT: ${USER_LIMIT:-10}
+      CONNECTIONS_LIMIT: ${CONNECTIONS_LIMIT:-5}
+      MIN_SLEEP_BUSINESS_HOURS: ${MIN_SLEEP_BUSINESS_HOURS:-1000}
+      MAX_SLEEP_BUSINESS_HOURS: ${MAX_SLEEP_BUSINESS_HOURS:-3000}
+      META_APP_ID: ${META_APP_ID:-}
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      META_VERIFY_TOKEN: ${META_VERIFY_TOKEN:-}
+      META_CONFIG_ID: ${META_CONFIG_ID:-}
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_public:/app/public
+      - backend_logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - zflow-internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+      update_config:
+        parallelism: 1
+        delay: 30s
+        order: start-first
+
+  frontend:
+    image: ${REGISTRY:-}zflow-frontend:${TAG:-latest}
+    build:
+      context: ./frontend
+      args:
+        VITE_META_APP_ID: ${META_APP_ID:-}
+        VITE_META_CONFIG_ID: ${META_CONFIG_ID:-}
+    networks:
+      - zflow-public
+      - zflow-internal
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.zflow.rule=Host(`${DOMAIN}`)"
+        - "traefik.http.routers.zflow.entrypoints=websecure"
+        - "traefik.http.routers.zflow.tls.certresolver=letsencrypt"
+        - "traefik.http.services.zflow.loadbalancer.server.port=8080"
+        - "traefik.http.middlewares.zflow-headers.headers.stsSeconds=31536000"
+        - "traefik.http.middlewares.zflow-headers.headers.stsIncludeSubdomains=true"
+        - "traefik.http.middlewares.zflow-headers.headers.frameDeny=true"
+        - "traefik.http.middlewares.zflow-headers.headers.contentTypeNosniff=true"
+        - "traefik.http.routers.zflow.middlewares=zflow-headers"
+
+networks:
+  zflow-public:
+    driver: overlay
+  zflow-internal:
+    driver: overlay
+    internal: true
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_uploads:
+  backend_public:
+  backend_logs:
+  letsencrypt:
