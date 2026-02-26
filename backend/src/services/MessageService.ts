@@ -1,5 +1,3 @@
-import { Op } from "sequelize"
-
 import Message from "../models/Message"
 import Ticket from "../models/Ticket"
 import Contact from "../models/Contact"

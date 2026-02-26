@@ -3,7 +3,6 @@ import { render, screen, waitFor } from "@/__tests__/utils/render"
 import TicketList from "@/pages/tickets/TicketList"
 import { server } from "@/__tests__/mocks/server"
 import { http, HttpResponse } from "msw"
-import { useTicketStore } from "@/stores/ticketStore"
 import { resetAllStores } from "@/__tests__/utils/storeReset"
 
 vi.mock("@/lib/socket", () => ({

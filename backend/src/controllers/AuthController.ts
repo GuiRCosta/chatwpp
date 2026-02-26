@@ -2,7 +2,6 @@ import { Request, Response } from "express"
 
 import * as AuthService from "../services/AuthService"
 import { loginSchema, refreshSchema } from "../validators/AuthValidator"
-import { AppError } from "../helpers/AppError"
 
 export const login = async (req: Request, res: Response): Promise<Response> => {
   const validated = await loginSchema.validate(req.body, {

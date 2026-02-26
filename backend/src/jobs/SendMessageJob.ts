@@ -17,7 +17,7 @@ export interface SendMessageData {
 }
 
 export async function process(job: Job<SendMessageData>): Promise<void> {
-  const { messageId, ticketId, tenantId } = job.data
+  const { messageId, ticketId, tenantId: _tenantId } = job.data
 
   const message = await Message.findByPk(messageId)
   if (!message) {

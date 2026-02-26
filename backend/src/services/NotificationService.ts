@@ -1,5 +1,3 @@
-import { Op } from "sequelize"
-
 import Notification from "../models/Notification"
 import { AppError } from "../helpers/AppError"
 import { emitToTenant } from "../libs/socket"

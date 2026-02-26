@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { render, screen, userEvent, waitFor } from "@/__tests__/utils/render"
+import { describe, it, expect, vi } from "vitest"
+import { render, screen } from "@/__tests__/utils/render"
 import { SearchInput } from "@/components/shared/SearchInput"
 import { act } from "@testing-library/react"
 
@@ -50,10 +50,6 @@ describe("SearchInput", () => {
       input.dispatchEvent(new Event("input", { bubbles: true }))
       input.dispatchEvent(new Event("change", { bubbles: true }))
     })
-
-    // The initial render triggers onChange with "" after debounce
-    // Reset to track only the typed value
-    const callCountAfterType = onChange.mock.calls.length
 
     // Advance past the debounce period
     await act(async () => {

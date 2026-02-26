@@ -14,7 +14,6 @@ import {
   deleteBanList
 } from "../BanListService"
 import BanList from "@/models/BanList"
-import { AppError } from "@/helpers/AppError"
 
 function buildBanList(overrides: Record<string, unknown> = {}) {
   const data = {

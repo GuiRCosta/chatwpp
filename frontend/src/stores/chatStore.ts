@@ -106,37 +106,33 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   },
 
   sendMessage: async (ticketId: number, body: string, mediaUrl?: string, mediaType?: string) => {
-    try {
-      const payload: {
-        body: string
-        mediaUrl?: string
-        mediaType?: string
-      } = { body }
+    const payload: {
+      body: string
+      mediaUrl?: string
+      mediaType?: string
+    } = { body }
 
-      if (mediaUrl) {
-        payload.mediaUrl = mediaUrl
-      }
-
-      if (mediaType) {
-        payload.mediaType = mediaType
-      }
-
-      const response = await api.post<ApiResponse<Message>>(
-        `/messages/${ticketId}`,
-        payload
-      )
-
-      if (!response.data.success) {
-        throw new Error(response.data.error || "Failed to send message")
-      }
-
-      // Message will be added via socket event or optimistically
-      set((state) => ({
-        messages: [...state.messages, response.data.data]
-      }))
-    } catch (error) {
-      throw error
+    if (mediaUrl) {
+      payload.mediaUrl = mediaUrl
     }
+
+    if (mediaType) {
+      payload.mediaType = mediaType
+    }
+
+    const response = await api.post<ApiResponse<Message>>(
+      `/messages/${ticketId}`,
+      payload
+    )
+
+    if (!response.data.success) {
+      throw new Error(response.data.error || "Failed to send message")
+    }
+
+    // Message will be added via socket event or optimistically
+    set((state) => ({
+      messages: [...state.messages, response.data.data]
+    }))
   },
 
   sendAudioMessage: async (ticketId: number, blob: Blob, mimeType: string, _duration: number) => {
@@ -177,10 +173,6 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   },
 
   markAsRead: async (ticketId: number) => {
-    try {
-      await api.put(`/messages/${ticketId}/read`)
-    } catch (error) {
-      throw error
-    }
+    await api.put(`/messages/${ticketId}/read`)
   }
 }))

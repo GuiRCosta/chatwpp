@@ -1,5 +1,4 @@
 import Setting from "../models/Setting"
-import { AppError } from "../helpers/AppError"
 
 interface SettingsMap {
   [key: string]: string

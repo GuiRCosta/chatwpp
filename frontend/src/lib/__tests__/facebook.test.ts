@@ -157,7 +157,7 @@ describe("launchWhatsAppSignup", () => {
   })
 
   it("rejects when FB.login callback has no authResponse code", async () => {
-    ;(window as Record<string, unknown>).FB = {
+    (window as Record<string, unknown>).FB = {
       init: vi.fn(),
       login: vi.fn().mockImplementation((callback: (r: { status: string }) => void) => {
         callback({ status: "unknown" })
@@ -172,7 +172,7 @@ describe("launchWhatsAppSignup", () => {
   })
 
   it("resolves with signup data on FINISH event", async () => {
-    ;(window as Record<string, unknown>).FB = {
+    (window as Record<string, unknown>).FB = {
       init: vi.fn(),
       login: vi.fn().mockImplementation(
         (callback: (r: { authResponse: { code: string }; status: string }) => void) => {

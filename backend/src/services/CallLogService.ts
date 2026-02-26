@@ -1,5 +1,3 @@
-import { Op } from "sequelize"
-
 import CallLog from "../models/CallLog"
 import Contact from "../models/Contact"
 import User from "../models/User"

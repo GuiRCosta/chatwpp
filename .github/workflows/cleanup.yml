@@ -1,0 +1,27 @@
+name: Cleanup Old Images
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: Delete old container images
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: zflow-backend
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: true
+
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: zflow-frontend
+          package-type: container
+          min-versions-to-keep: 10
+          delete-only-untagged-versions: true

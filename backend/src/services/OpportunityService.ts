@@ -1,5 +1,3 @@
-import { Op } from "sequelize"
-
 import Opportunity from "../models/Opportunity"
 import Contact from "../models/Contact"
 import Pipeline from "../models/Pipeline"

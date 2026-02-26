@@ -1,4 +1,4 @@
-import { Op, fn, col, literal } from "sequelize"
+import { Op, fn, col } from "sequelize"
 
 import Campaign from "../models/Campaign"
 import CampaignContact from "../models/CampaignContact"

@@ -300,20 +300,24 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 ## Fase 9: CI/CD & Git
 
-> **Status: PENDENTE**
+> **Status: CONCLUIDA**
 
-### 9.1 Repositorio Git
-- [ ] Inicializar repositorio
-- [ ] .gitignore (node_modules, dist, .env, uploads)
-- [ ] Commit inicial com todo o projeto
+### 9.1 Repositorio Git (Concluido)
+- [x] Inicializar repositorio (git init + remote github.com:GuiRCosta/chatwpp.git)
+- [x] .gitignore (node_modules, dist, .env, uploads, Docker volumes, IDE)
+- [x] Commit inicial com todo o projeto (390 arquivos, 56.280 linhas)
 
-### 9.2 GitHub Actions
-- [ ] Workflow: lint (ESLint)
-- [ ] Workflow: test (Vitest + cobertura)
-- [ ] Workflow: build (Docker build + push para registry)
-- [ ] Workflow: deploy (SSH na VPS ou webhook Portainer)
+### 9.2 GitHub Actions (Concluido)
+- [x] Workflow CI (ci.yml): 4 jobs paralelos - lint backend, lint frontend, test backend, test frontend
+- [x] Workflow Build & Push (build-push.yml): Docker build + push para GHCR (push main/tags)
+- [x] Workflow Deploy (deploy.yml): SSH na VPS com docker stack deploy (manual + automatico)
+- [x] Workflow Cleanup (cleanup.yml): limpeza semanal de imagens antigas
+- [x] ESLint configurado: backend/.eslintrc.cjs + frontend/.eslintrc.cjs
+- [x] Concurrency com cancel-in-progress (economia de minutos)
+- [x] Cache npm via actions/setup-node (rebuild rapido)
+- [x] Cache Docker layers via GHA (builds incrementais)
 
-### 9.3 Registry de Imagens
-- [ ] Configurar Docker Registry (GitHub Container Registry ou Docker Hub)
-- [ ] Tags de imagem por branch/version (latest, v1.0.0)
-- [ ] Limpeza de imagens antigas
+### 9.3 Registry de Imagens (Concluido)
+- [x] GitHub Container Registry (GHCR) com GITHUB_TOKEN (sem secrets extras)
+- [x] Tags automaticas via docker/metadata-action: branch (main), semver (v1.2.3, 1.2), sha
+- [x] Limpeza semanal: mantem 10 versoes, deleta imagens sem tag

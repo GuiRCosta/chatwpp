@@ -1,5 +1,3 @@
-import { Op } from "sequelize"
-
 import TodoList from "../models/TodoList"
 import { AppError } from "../helpers/AppError"
 import { emitToTenant } from "../libs/socket"

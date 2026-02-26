@@ -187,7 +187,7 @@ export const onboardFromFBL = async (tenantId: number, data: {
     farewellMessage: ""
   })
 
-  const { wabaToken, wabaWebhookSecret, ...safeWhatsapp } = whatsapp.toJSON()
+  const { wabaToken: _wabaToken, wabaWebhookSecret: _wabaWebhookSecret, ...safeWhatsapp } = whatsapp.toJSON()
   emitToTenant(tenantId, "whatsapp:created", safeWhatsapp)
 
   logger.info(

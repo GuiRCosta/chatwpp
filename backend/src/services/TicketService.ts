@@ -10,7 +10,7 @@ import Message from "../models/Message"
 import TicketLog from "../models/TicketLog"
 import TicketNote from "../models/TicketNote"
 import { AppError } from "../helpers/AppError"
-import { emitToTenant, emitToTicket } from "../libs/socket"
+import { emitToTenant } from "../libs/socket"
 
 interface ListParams {
   tenantId: number
