@@ -50,16 +50,17 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
       >("/tickets", { params })
 
       if (!response.data.success) {
-        throw new Error(response.data.error || "Failed to fetch tickets")
+        set({ tickets: [], isLoading: false })
+        return
       }
 
+      const data = response.data.data
       set({
-        tickets: response.data.data.tickets,
+        tickets: Array.isArray(data?.tickets) ? data.tickets : [],
         isLoading: false
       })
-    } catch (error) {
-      set({ isLoading: false })
-      throw error
+    } catch {
+      set({ tickets: [], isLoading: false })
     }
   },
 

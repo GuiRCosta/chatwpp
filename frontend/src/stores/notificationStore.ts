@@ -32,9 +32,8 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
           unreadCount
         })
       }
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error)
-      throw error
+    } catch {
+      // Silently handle - notifications will stay empty
     }
   },
 
@@ -44,7 +43,7 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
         `/notifications/${id}/read`
       )
 
-      if (response.data.success) {
+      if (response.data.success && response.data.data) {
         const updatedNotification = response.data.data
 
         set((state) => {
@@ -60,9 +59,8 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
           }
         })
       }
-    } catch (error) {
-      console.error("Failed to mark notification as read:", error)
-      throw error
+    } catch {
+      // Silently handle
     }
   },
 
@@ -85,9 +83,8 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
           }
         })
       }
-    } catch (error) {
-      console.error("Failed to mark all notifications as read:", error)
-      throw error
+    } catch {
+      // Silently handle
     }
   },
 

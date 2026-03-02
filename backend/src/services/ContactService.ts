@@ -53,7 +53,8 @@ export const listContacts = async ({ tenantId, searchParam = "", pageNumber = "1
     limit: Number(limit),
     offset,
     order: [["name", "ASC"]],
-    distinct: true
+    distinct: true,
+    subQuery: false
   })
 
   const hasMore = count > offset + contacts.length

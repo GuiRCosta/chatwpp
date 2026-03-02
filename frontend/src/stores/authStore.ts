@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
         }>
       >("/auth/login", { email, password })
 
-      if (!response.data.success) {
+      if (!response.data.success || !response.data.data) {
         throw new Error(response.data.error || "Login failed")
       }
 

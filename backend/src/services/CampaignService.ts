@@ -47,7 +47,8 @@ export const listCampaigns = async ({
     ],
     limit: Number(limit),
     offset,
-    order: [["createdAt", "DESC"]]
+    order: [["createdAt", "DESC"]],
+    subQuery: false
   })
 
   const hasMore = count > offset + campaigns.length

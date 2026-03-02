@@ -97,7 +97,8 @@ export const listTickets = async ({
     limit: Number(limit),
     offset,
     order: [["lastMessageAt", "DESC"]],
-    distinct: true
+    distinct: true,
+    subQuery: false
   })
 
   const hasMore = count > offset + tickets.length

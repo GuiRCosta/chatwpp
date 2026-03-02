@@ -44,20 +44,21 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       })
 
       if (!response.data.success) {
-        throw new Error(response.data.error || "Failed to fetch messages")
+        set({ messages: [], isLoading: false })
+        return
       }
 
-      // Messages come in reverse chronological order, reverse them for display
-      const messages = [...response.data.data.messages].reverse()
+      const data = response.data.data
+      const rawMessages = Array.isArray(data?.messages) ? data.messages : []
+      const messages = [...rawMessages].reverse()
 
       set({
         messages,
-        hasMore: response.data.data.hasMore,
+        hasMore: data?.hasMore ?? false,
         isLoading: false
       })
-    } catch (error) {
-      set({ isLoading: false })
-      throw error
+    } catch {
+      set({ messages: [], isLoading: false })
     }
   },
 
@@ -87,21 +88,22 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       })
 
       if (!response.data.success) {
-        throw new Error(response.data.error || "Failed to load more messages")
+        set({ isLoading: false })
+        return
       }
 
-      // Messages come in reverse chronological order, reverse them for display
-      const newMessages = [...response.data.data.messages].reverse()
+      const data = response.data.data
+      const rawMessages = Array.isArray(data?.messages) ? data.messages : []
+      const newMessages = [...rawMessages].reverse()
 
       set((state) => ({
         messages: [...newMessages, ...state.messages],
-        hasMore: response.data.data.hasMore,
+        hasMore: data?.hasMore ?? false,
         page: nextPage,
         isLoading: false
       }))
-    } catch (error) {
+    } catch {
       set({ isLoading: false })
-      throw error
     }
   },
 
@@ -125,8 +127,8 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       payload
     )
 
-    if (!response.data.success) {
-      throw new Error(response.data.error || "Failed to send message")
+    if (!response.data.success || !response.data.data) {
+      return
     }
 
     // Message will be added via socket event or optimistically
