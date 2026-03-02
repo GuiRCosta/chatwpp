@@ -29,6 +29,7 @@ import BanList from "./BanList"
 import CallLog from "./CallLog"
 import BulkDispatch from "./BulkDispatch"
 import UserWhatsApp from "./UserWhatsApp"
+import MessageTemplate from "./MessageTemplate"
 
 const models = [
   Tenant,
@@ -61,7 +62,8 @@ const models = [
   BanList,
   CallLog,
   BulkDispatch,
-  UserWhatsApp
+  UserWhatsApp,
+  MessageTemplate
 ]
 
 export {
@@ -95,7 +97,8 @@ export {
   BanList,
   CallLog,
   BulkDispatch,
-  UserWhatsApp
+  UserWhatsApp,
+  MessageTemplate
 }
 
 export default models

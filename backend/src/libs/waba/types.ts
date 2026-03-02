@@ -176,6 +176,41 @@ export interface MediaUrlResponse {
   file_size: number
 }
 
+export interface WabaTemplateComponent {
+  type: "HEADER" | "BODY" | "FOOTER" | "BUTTONS"
+  format?: "TEXT" | "IMAGE" | "VIDEO" | "DOCUMENT"
+  text?: string
+  example?: {
+    header_text?: string[]
+    body_text?: string[][]
+    header_handle?: string[]
+  }
+  buttons?: Array<{
+    type: "QUICK_REPLY" | "URL" | "PHONE_NUMBER"
+    text: string
+    url?: string
+    phone_number?: string
+    example?: string[]
+  }>
+}
+
+export interface WabaTemplate {
+  name: string
+  language: string
+  status: string
+  category: string
+  id: string
+  components: WabaTemplateComponent[]
+}
+
+export interface WabaTemplateListResponse {
+  data: WabaTemplate[]
+  paging?: {
+    cursors: { before: string; after: string }
+    next?: string
+  }
+}
+
 export const ACK_MAP: Record<string, number> = {
   sent: 1,
   delivered: 2,

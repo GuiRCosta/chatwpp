@@ -197,8 +197,11 @@ export interface Kanban {
 export interface Campaign {
   id: number
   name: string
-  message: string
-  status: "pending" | "running" | "paused" | "completed" | "cancelled"
+  message?: string
+  templateName?: string
+  templateLanguage?: string
+  templateComponents?: Record<string, unknown>[]
+  status: "pending" | "scheduled" | "queued" | "processing" | "running" | "completed" | "cancelled"
   scheduledAt?: string
   whatsappId: number
   whatsapp?: WhatsApp
@@ -214,11 +217,44 @@ export interface CampaignContact {
   campaign?: Campaign
   contactId: number
   contact?: Contact
-  status: "pending" | "sent" | "failed"
+  status: "pending" | "sent" | "delivered" | "read" | "error"
   sentAt?: string
   error?: string
   createdAt: string
   updatedAt: string
+}
+
+// Message Templates
+export interface MessageTemplate {
+  id: number
+  name: string
+  language: string
+  status: string
+  category: string
+  components: MessageTemplateComponent[]
+  whatsappId: number
+  whatsapp?: Pick<WhatsApp, "id" | "name">
+  tenantId: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MessageTemplateComponent {
+  type: "HEADER" | "BODY" | "FOOTER" | "BUTTONS"
+  format?: "TEXT" | "IMAGE" | "VIDEO" | "DOCUMENT"
+  text?: string
+  example?: {
+    header_text?: string[]
+    body_text?: string[][]
+    header_handle?: string[]
+  }
+  buttons?: Array<{
+    type: "QUICK_REPLY" | "URL" | "PHONE_NUMBER"
+    text: string
+    url?: string
+    phone_number?: string
+    example?: string[]
+  }>
 }
 
 // Chat Automation

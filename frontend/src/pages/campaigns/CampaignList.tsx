@@ -32,16 +32,15 @@ const STATUS_TABS: readonly StatusTab[] = [
   { label: "Todas", value: "all" },
   { label: "Pendentes", value: "pending" },
   { label: "Em Andamento", value: "running" },
-  { label: "Concluídas", value: "completed" },
-  { label: "Pausadas", value: "paused" },
+  { label: "Concluidas", value: "completed" },
   { label: "Canceladas", value: "cancelled" }
 ] as const
 
 const canStart = (status: CampaignStatus): boolean =>
-  status === "pending" || status === "paused"
+  status === "pending"
 
 const canCancel = (status: CampaignStatus): boolean =>
-  status === "pending" || status === "running" || status === "paused"
+  status === "pending" || status === "running"
 
 const ITEMS_PER_PAGE = 20
 

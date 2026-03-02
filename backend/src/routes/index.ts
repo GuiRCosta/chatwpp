@@ -20,6 +20,7 @@ import { pipelineRoutes } from "./pipelineRoutes"
 import { kanbanRoutes } from "./kanbanRoutes"
 import { opportunityRoutes } from "./opportunityRoutes"
 import { campaignRoutes } from "./campaignRoutes"
+import { templateRoutes } from "./templateRoutes"
 import { autoreplyRoutes } from "./autoreplyRoutes"
 import { chatflowRoutes } from "./chatflowRoutes"
 import { uploadRoutes } from "./uploadRoutes"
@@ -55,6 +56,7 @@ appRoutes.use("/pipelines", pipelineRoutes)
 appRoutes.use("/kanbans", kanbanRoutes)
 appRoutes.use("/opportunities", opportunityRoutes)
 appRoutes.use("/campaigns", campaignRoutes)
+appRoutes.use("/templates", templateRoutes)
 appRoutes.use("/auto-replies", autoreplyRoutes)
 appRoutes.use("/chatflows", chatflowRoutes)
 appRoutes.use("/upload", uploadRoutes)

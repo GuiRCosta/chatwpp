@@ -106,7 +106,10 @@ export const createCampaign = async (
   tenantId: number,
   data: {
     name: string
-    message: string
+    templateName: string
+    templateLanguage?: string
+    templateComponents?: Record<string, unknown>[]
+    message?: string
     whatsappId: number
     mediaUrl?: string
     scheduledAt?: Date
@@ -123,7 +126,10 @@ export const createCampaign = async (
   const campaign = await Campaign.create({
     tenantId,
     name: data.name,
-    message: data.message,
+    templateName: data.templateName,
+    templateLanguage: data.templateLanguage || "pt_BR",
+    templateComponents: data.templateComponents || [],
+    message: data.message || "",
     whatsappId: data.whatsappId,
     mediaUrl: data.mediaUrl || "",
     scheduledAt: data.scheduledAt || null,
@@ -142,6 +148,9 @@ export const updateCampaign = async (
   tenantId: number,
   data: {
     name?: string
+    templateName?: string
+    templateLanguage?: string
+    templateComponents?: Record<string, unknown>[]
     message?: string
     whatsappId?: number
     mediaUrl?: string

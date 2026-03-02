@@ -32,7 +32,7 @@ export default class Campaign extends Model {
   name!: string
 
   @Default("pending")
-  @Column(DataType.ENUM("pending", "scheduled", "queued", "processing", "completed", "cancelled"))
+  @Column(DataType.ENUM("pending", "scheduled", "queued", "processing", "running", "completed", "cancelled"))
   status!: string
 
   @Column(DataType.TEXT)
@@ -40,6 +40,16 @@ export default class Campaign extends Model {
 
   @Column
   mediaUrl!: string
+
+  @Column
+  templateName!: string
+
+  @Default("pt_BR")
+  @Column(DataType.STRING(10))
+  templateLanguage!: string
+
+  @Column(DataType.JSONB)
+  templateComponents!: Record<string, unknown>[]
 
   @ForeignKey(() => WhatsApp)
   @Column

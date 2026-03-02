@@ -6,7 +6,9 @@ import {
   SendTemplatePayload,
   SendMessageResponse,
   MediaUrlResponse,
-  TemplateComponent
+  TemplateComponent,
+  WabaTemplate,
+  WabaTemplateListResponse
 } from "./types"
 
 const GRAPH_API_URL = "https://graph.facebook.com/v25.0"
@@ -267,4 +269,24 @@ export async function subscribeApp(
   await client.post(`/${phoneNumberId}/subscribed_apps`, {})
 
   logger.info("Webhook subscription registered for phone %s", phoneNumberId)
+}
+
+export async function getMessageTemplates(
+  wabaId: string,
+  token: string
+): Promise<WabaTemplate[]> {
+  const client = createClient(token)
+  const templates: WabaTemplate[] = []
+  let url: string | null = `/${wabaId}/message_templates?fields=name,language,status,category,components&limit=100`
+
+  while (url) {
+    const { data } = await client.get<WabaTemplateListResponse>(url)
+    templates.push(...(data.data || []))
+
+    url = data.paging?.next
+      ? data.paging.next.replace(GRAPH_API_URL, "")
+      : null
+  }
+
+  return templates
 }

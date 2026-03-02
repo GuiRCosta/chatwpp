@@ -1,14 +1,31 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Save, Search, Users, Loader2 } from "lucide-react"
+import {
+  Save,
+  Search,
+  Users,
+  Loader2,
+  RefreshCw,
+  FileText,
+  ChevronDown
+} from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
+import { Badge } from "@/components/ui/Badge"
 import {
   Dialog, DialogContent, DialogDescription,
   DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/Dialog"
 import api from "@/lib/api"
-import type { Campaign, Contact, PaginatedResponse } from "@/types"
+import type {
+  ApiResponse,
+  Campaign,
+  Contact,
+  MessageTemplate,
+  MessageTemplateComponent,
+  PaginatedResponse,
+  WhatsApp
+} from "@/types"
 
 interface CampaignFormProps {
   open: boolean
@@ -17,39 +34,121 @@ interface CampaignFormProps {
   onSuccess: () => void
 }
 
-interface FormData { name: string; message: string; scheduledAt: string }
-interface FormErrors { name?: string; message?: string; contacts?: string }
+interface FormData {
+  name: string
+  whatsappId: string
+  templateName: string
+  templateLanguage: string
+  scheduledAt: string
+}
 
-const INITIAL_FORM: FormData = { name: "", message: "", scheduledAt: "" }
+interface FormErrors {
+  name?: string
+  whatsappId?: string
+  template?: string
+  contacts?: string
+}
+
+const INITIAL_FORM: FormData = {
+  name: "",
+  whatsappId: "",
+  templateName: "",
+  templateLanguage: "pt_BR",
+  scheduledAt: ""
+}
 
 const DEBOUNCE_DELAY = 300
 
-const STATUS_MAP: Record<Campaign["status"], { label: string; color: string }> = {
-  pending: { label: "Pendente", color: "bg-yellow-100 text-yellow-800" },
-  running: { label: "Em execucao", color: "bg-blue-100 text-blue-800" },
-  paused: { label: "Pausada", color: "bg-gray-100 text-gray-800" },
-  completed: { label: "Concluida", color: "bg-green-100 text-green-800" },
-  cancelled: { label: "Cancelada", color: "bg-red-100 text-red-800" },
+const CATEGORY_LABELS: Record<string, string> = {
+  MARKETING: "Marketing",
+  UTILITY: "Utilidade",
+  AUTHENTICATION: "Autenticacao"
 }
 
-function buildFormData(campaign: Campaign): FormData {
-  return {
-    name: campaign.name,
-    message: campaign.message,
-    scheduledAt: campaign.scheduledAt ? campaign.scheduledAt.slice(0, 16) : "",
-  }
+function extractBodyText(components: MessageTemplateComponent[]): string {
+  const body = components.find(c => c.type === "BODY")
+  return body?.text || ""
 }
 
-function buildSelectedIds(campaign: Campaign): ReadonlySet<number> {
-  return new Set((campaign.contacts ?? []).map((cc) => cc.contactId))
+function countVariables(text: string): number {
+  const matches = text.match(/\{\{\d+\}\}/g)
+  return matches ? matches.length : 0
 }
 
-function validate(data: FormData, ids: ReadonlySet<number>): FormErrors {
-  const errors: FormErrors = {}
-  if (!data.name.trim()) errors.name = "Nome da campanha e obrigatorio"
-  if (!data.message.trim()) errors.message = "Mensagem e obrigatoria"
-  if (ids.size === 0) errors.contacts = "Selecione pelo menos um contato"
-  return errors
+function TemplatePreview({
+  components,
+  parameterValues,
+  onParameterChange
+}: {
+  components: MessageTemplateComponent[]
+  parameterValues: string[]
+  onParameterChange: (index: number, value: string) => void
+}) {
+  const header = components.find(c => c.type === "HEADER")
+  const body = components.find(c => c.type === "BODY")
+  const footer = components.find(c => c.type === "FOOTER")
+  const buttons = components.find(c => c.type === "BUTTONS")
+
+  const bodyText = body?.text || ""
+  const variableCount = countVariables(bodyText)
+
+  let previewBody = bodyText
+  parameterValues.forEach((val, i) => {
+    previewBody = previewBody.replace(`{{${i + 1}}}`, val || `{{${i + 1}}}`)
+  })
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm">
+        {header?.text && (
+          <p className="mb-2 font-semibold text-gray-900">{header.text}</p>
+        )}
+        {header?.format && header.format !== "TEXT" && (
+          <div className="mb-2 flex h-32 items-center justify-center rounded-lg bg-gray-200 text-xs text-gray-500">
+            [{header.format}]
+          </div>
+        )}
+        <p className="whitespace-pre-wrap text-gray-700">{previewBody}</p>
+        {footer?.text && (
+          <p className="mt-2 text-xs text-gray-400">{footer.text}</p>
+        )}
+        {buttons?.buttons && buttons.buttons.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1 border-t border-gray-200 pt-2">
+            {buttons.buttons.map((btn, i) => (
+              <span
+                key={i}
+                className="rounded-lg border border-blue-200 bg-white px-3 py-1 text-xs text-blue-600"
+              >
+                {btn.text}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {variableCount > 0 && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-gray-700">
+            Variaveis do template
+          </Label>
+          <p className="text-xs text-gray-500">
+            Preencha os valores que substituirao as variaveis no template
+          </p>
+          {Array.from({ length: variableCount }, (_, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="min-w-[60px] text-sm text-gray-500">{`{{${i + 1}}}`}</span>
+              <Input
+                value={parameterValues[i] || ""}
+                onChange={(e) => onParameterChange(i, e.target.value)}
+                placeholder={`Valor para {{${i + 1}}}`}
+                className="flex-1"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function CampaignForm({
@@ -65,6 +164,14 @@ export function CampaignForm({
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitError, setSubmitError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const [whatsapps, setWhatsapps] = useState<WhatsApp[]>([])
+  const [templates, setTemplates] = useState<MessageTemplate[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null)
+  const [parameterValues, setParameterValues] = useState<string[]>([])
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false)
+  const [isSyncingTemplates, setIsSyncingTemplates] = useState(false)
+
   const [searchQuery, setSearchQuery] = useState("")
   const [contacts, setContacts] = useState<readonly Contact[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -79,19 +186,103 @@ export function CampaignForm({
     setSearchQuery("")
     setContacts([])
     setSelectedContactIds(new Set())
+    setSelectedTemplate(null)
+    setParameterValues([])
     setIsSubmitting(false)
     setIsSearching(false)
   }, [])
 
+  const fetchWhatsApps = useCallback(async () => {
+    try {
+      const response = await api.get<ApiResponse<WhatsApp[]>>("/whatsapp")
+      if (response.data.success) {
+        setWhatsapps(Array.isArray(response.data.data) ? response.data.data : [])
+      }
+    } catch {
+      setWhatsapps([])
+    }
+  }, [])
+
+  const fetchTemplates = useCallback(async (whatsappId: string) => {
+    if (!whatsappId) {
+      setTemplates([])
+      return
+    }
+
+    try {
+      setIsLoadingTemplates(true)
+      const response = await api.get<ApiResponse<MessageTemplate[]>>("/templates", {
+        params: { whatsappId }
+      })
+      if (response.data.success) {
+        setTemplates(Array.isArray(response.data.data) ? response.data.data : [])
+      }
+    } catch {
+      setTemplates([])
+    } finally {
+      setIsLoadingTemplates(false)
+    }
+  }, [])
+
+  const handleSyncTemplates = useCallback(async () => {
+    if (!formData.whatsappId) return
+
+    try {
+      setIsSyncingTemplates(true)
+      await api.post("/templates/sync", { whatsappId: Number(formData.whatsappId) })
+      await fetchTemplates(formData.whatsappId)
+    } catch {
+      setSubmitError("Erro ao sincronizar templates")
+    } finally {
+      setIsSyncingTemplates(false)
+    }
+  }, [formData.whatsappId, fetchTemplates])
+
+  useEffect(() => {
+    if (open) {
+      fetchWhatsApps()
+    }
+  }, [open, fetchWhatsApps])
+
   useEffect(() => {
     if (open && campaign) {
-      setFormData(buildFormData(campaign))
-      setSelectedContactIds(buildSelectedIds(campaign))
+      setFormData({
+        name: campaign.name,
+        whatsappId: String(campaign.whatsappId),
+        templateName: campaign.templateName || "",
+        templateLanguage: campaign.templateLanguage || "pt_BR",
+        scheduledAt: campaign.scheduledAt ? campaign.scheduledAt.slice(0, 16) : ""
+      })
+      setSelectedContactIds(
+        new Set((campaign.contacts ?? []).map((cc) => cc.contactId))
+      )
     }
     if (!open) {
       resetForm()
     }
   }, [open, campaign, resetForm])
+
+  useEffect(() => {
+    if (open && formData.whatsappId) {
+      fetchTemplates(formData.whatsappId)
+    }
+  }, [open, formData.whatsappId, fetchTemplates])
+
+  useEffect(() => {
+    if (formData.templateName && templates.length > 0) {
+      const tpl = templates.find(
+        t => t.name === formData.templateName && t.language === formData.templateLanguage
+      )
+      if (tpl) {
+        setSelectedTemplate(tpl)
+        const bodyText = extractBodyText(tpl.components)
+        const count = countVariables(bodyText)
+        setParameterValues(prev =>
+          prev.length === count ? prev : Array(count).fill("")
+        )
+      }
+    }
+  }, [formData.templateName, formData.templateLanguage, templates])
 
   const searchContacts = useCallback(async (query: string) => {
     try {
@@ -126,9 +317,34 @@ export function CampaignForm({
 
   const handleFieldChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
-    if (errors[field as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }))
+
+    if (field === "whatsappId") {
+      setFormData((prev) => ({ ...prev, [field]: value, templateName: "", templateLanguage: "pt_BR" }))
+      setSelectedTemplate(null)
+      setParameterValues([])
+      setTemplates([])
     }
+
+    if (field === "templateName") {
+      const tpl = templates.find(t => t.name === value)
+      if (tpl) {
+        setFormData((prev) => ({ ...prev, templateName: tpl.name, templateLanguage: tpl.language }))
+        setSelectedTemplate(tpl)
+        const bodyText = extractBodyText(tpl.components)
+        setParameterValues(Array(countVariables(bodyText)).fill(""))
+      } else {
+        setSelectedTemplate(null)
+        setParameterValues([])
+      }
+    }
+  }
+
+  const handleParameterChange = (index: number, value: string) => {
+    setParameterValues(prev => {
+      const next = [...prev]
+      next[index] = value
+      return next
+    })
   }
 
   const handleContactToggle = (contactId: number) => {
@@ -148,20 +364,34 @@ export function CampaignForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const formErrors = validate(formData, selectedContactIds)
+    const formErrors: FormErrors = {}
+
+    if (!formData.name.trim()) formErrors.name = "Nome da campanha e obrigatorio"
+    if (!formData.whatsappId) formErrors.whatsappId = "Selecione uma conexao WhatsApp"
+    if (!formData.templateName) formErrors.template = "Selecione um template"
+    if (selectedContactIds.size === 0) formErrors.contacts = "Selecione pelo menos um contato"
+
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors)
       return
     }
+
     try {
       setIsSubmitting(true)
       setSubmitError("")
+
+      const bodyComponents = buildTemplateComponents()
+
       const payload = {
         name: formData.name.trim(),
-        message: formData.message.trim(),
+        whatsappId: Number(formData.whatsappId),
+        templateName: formData.templateName,
+        templateLanguage: formData.templateLanguage,
+        templateComponents: bodyComponents,
         scheduledAt: formData.scheduledAt || undefined,
         contactIds: Array.from(selectedContactIds),
       }
+
       if (isEditing && campaign) {
         await api.put(`/campaigns/${campaign.id}`, payload)
       } else {
@@ -179,6 +409,18 @@ export function CampaignForm({
     }
   }
 
+  const buildTemplateComponents = () => {
+    const hasParams = parameterValues.some(v => v.trim() !== "")
+    if (!hasParams) return []
+
+    return [{
+      type: "body" as const,
+      parameters: parameterValues
+        .filter(v => v.trim() !== "")
+        .map(v => ({ type: "text" as const, text: v }))
+    }]
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto font-[Inter]">
@@ -189,22 +431,11 @@ export function CampaignForm({
           <DialogDescription>
             {isEditing
               ? "Atualize as informacoes da campanha."
-              : "Preencha os dados para criar uma nova campanha."}
+              : "Selecione um template aprovado e os contatos para envio."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {isEditing && campaign && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">Status:</span>
-              <span
-                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_MAP[campaign.status].color}`}
-              >
-                {STATUS_MAP[campaign.status].label}
-              </span>
-            </div>
-          )}
-
           <div className="space-y-2">
             <Label htmlFor="campaign-name">
               Nome <span className="text-red-500">*</span>
@@ -221,21 +452,109 @@ export function CampaignForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="campaign-message">
-              Mensagem <span className="text-red-500">*</span>
+            <Label htmlFor="campaign-whatsapp">
+              Conexao WhatsApp <span className="text-red-500">*</span>
             </Label>
-            <textarea
-              id="campaign-message"
-              value={formData.message}
-              onChange={(e) => handleFieldChange("message", e.target.value)}
-              placeholder="Digite a mensagem da campanha"
-              rows={4}
-              className={`flex w-full rounded-xl border bg-white px-4 py-2 text-sm transition-colors placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none ${
-                errors.message ? "border-red-500" : "border-gray-200"
-              }`}
-            />
-            {errors.message && <p className="text-sm text-red-500">{errors.message}</p>}
+            <div className="relative">
+              <select
+                id="campaign-whatsapp"
+                value={formData.whatsappId}
+                onChange={(e) => handleFieldChange("whatsappId", e.target.value)}
+                className={`flex w-full appearance-none rounded-xl border bg-white px-4 py-2 pr-10 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
+                  errors.whatsappId ? "border-red-500" : "border-gray-200"
+                }`}
+              >
+                <option value="">Selecione uma conexao</option>
+                {whatsapps.map((wa) => (
+                  <option key={wa.id} value={wa.id}>
+                    {wa.name} {wa.number ? `(${wa.number})` : ""}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            </div>
+            {errors.whatsappId && <p className="text-sm text-red-500">{errors.whatsappId}</p>}
           </div>
+
+          {formData.whatsappId && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>
+                  Template <span className="text-red-500">*</span>
+                </Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSyncTemplates}
+                  disabled={isSyncingTemplates}
+                  className="text-xs"
+                >
+                  {isSyncingTemplates ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-3 w-3" />
+                  )}
+                  Sincronizar templates
+                </Button>
+              </div>
+
+              {isLoadingTemplates ? (
+                <div className="flex items-center justify-center rounded-xl border border-gray-200 py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                </div>
+              ) : templates.length === 0 ? (
+                <div className="rounded-xl border border-gray-200 p-6 text-center">
+                  <FileText className="mx-auto mb-2 h-8 w-8 text-gray-300" />
+                  <p className="text-sm text-gray-500">
+                    Nenhum template aprovado encontrado.
+                  </p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    Clique em &quot;Sincronizar templates&quot; para buscar da Meta.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="relative">
+                    <select
+                      value={formData.templateName}
+                      onChange={(e) => handleFieldChange("templateName", e.target.value)}
+                      className={`flex w-full appearance-none rounded-xl border bg-white px-4 py-2 pr-10 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
+                        errors.template ? "border-red-500" : "border-gray-200"
+                      }`}
+                    >
+                      <option value="">Selecione um template</option>
+                      {templates.map((tpl) => (
+                        <option key={`${tpl.name}-${tpl.language}`} value={tpl.name}>
+                          {tpl.name} ({tpl.language}) - {CATEGORY_LABELS[tpl.category] || tpl.category}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  </div>
+                  {errors.template && <p className="text-sm text-red-500">{errors.template}</p>}
+                </div>
+              )}
+
+              {selectedTemplate && (
+                <div className="mt-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {CATEGORY_LABELS[selectedTemplate.category] || selectedTemplate.category}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {selectedTemplate.language}
+                    </Badge>
+                  </div>
+                  <TemplatePreview
+                    components={selectedTemplate.components}
+                    parameterValues={parameterValues}
+                    onParameterChange={handleParameterChange}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="campaign-scheduled">Agendar envio</Label>

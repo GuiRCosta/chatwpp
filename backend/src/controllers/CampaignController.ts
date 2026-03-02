@@ -50,7 +50,20 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     stripUnknown: true
   })
 
-  const campaign = await CampaignService.createCampaign(tenantId, validated)
+  const { contactIds, ...campaignData } = validated
+
+  const campaign = await CampaignService.createCampaign(
+    tenantId,
+    campaignData as Parameters<typeof CampaignService.createCampaign>[1]
+  )
+
+  if (contactIds && contactIds.length > 0) {
+    await CampaignService.addContactsToCampaign(
+      campaign.id,
+      tenantId,
+      contactIds as number[]
+    )
+  }
 
   return res.status(201).json({
     success: true,
