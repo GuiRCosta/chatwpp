@@ -97,10 +97,10 @@ export function Dashboard() {
           ])
 
         const newStats = {
-          openTickets: ticketsRes.data.data?.length || 0,
-          contacts: contactsRes.data.data?.length || 0,
-          activeCampaigns: campaignsRes.data.data?.length || 0,
-          openOpportunities: opportunitiesRes.data.data?.length || 0
+          openTickets: ticketsRes.data.data?.count ?? ticketsRes.data.data?.tickets?.length ?? 0,
+          contacts: contactsRes.data.data?.count ?? contactsRes.data.data?.contacts?.length ?? 0,
+          activeCampaigns: campaignsRes.data.data?.count ?? campaignsRes.data.data?.campaigns?.length ?? 0,
+          openOpportunities: opportunitiesRes.data.data?.count ?? opportunitiesRes.data.data?.opportunities?.length ?? 0
         }
 
         setStats(newStats)

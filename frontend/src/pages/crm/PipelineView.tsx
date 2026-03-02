@@ -77,13 +77,16 @@ export function PipelineView() {
     try {
       const response = await api.get<ApiResponse<Pipeline[]>>("/pipelines")
       if (response.data.success) {
-        setPipelines(response.data.data)
-        if (response.data.data.length > 0 && !selectedPipelineId) {
-          setSelectedPipelineId(response.data.data[0].id.toString())
+        const data = Array.isArray(response.data.data)
+          ? response.data.data
+          : []
+        setPipelines(data)
+        if (data.length > 0 && !selectedPipelineId) {
+          setSelectedPipelineId(data[0].id.toString())
         }
       }
-    } catch (error) {
-      console.error("Failed to fetch pipelines:", error)
+    } catch {
+      setPipelines([])
     }
   }
 
@@ -100,14 +103,18 @@ export function PipelineView() {
         "/kanbans"
       )
 
-      if (kanbanResponse.data.success && kanbanResponse.data.data.length > 0) {
-        const firstKanban = kanbanResponse.data.data[0]
+      const kanbans = Array.isArray(kanbanResponse.data.data)
+        ? kanbanResponse.data.data
+        : []
+
+      if (kanbanResponse.data.success && kanbans.length > 0) {
+        const firstKanban = kanbans[0]
 
         const kanbanDetailResponse = await api.get<
           ApiResponse<KanbanWithStages>
         >(`/kanbans/${firstKanban.id}`)
 
-        if (kanbanDetailResponse.data.success) {
+        if (kanbanDetailResponse.data.success && kanbanDetailResponse.data.data) {
           setKanban(kanbanDetailResponse.data.data)
 
           const oppResponse = await api.get<
@@ -118,13 +125,18 @@ export function PipelineView() {
             }
           })
 
-          if (oppResponse.data.success) {
-            setOpportunities(oppResponse.data.data.opportunities)
+          if (oppResponse.data.success && oppResponse.data.data) {
+            setOpportunities(
+              Array.isArray(oppResponse.data.data.opportunities)
+                ? oppResponse.data.data.opportunities
+                : []
+            )
           }
         }
       }
-    } catch (error) {
-      console.error("Failed to fetch kanban data:", error)
+    } catch {
+      setKanban(null)
+      setOpportunities([])
     } finally {
       setIsLoading(false)
     }
@@ -139,11 +151,15 @@ export function PipelineView() {
           limit: 100
         }
       })
-      if (response.data.success) {
-        setContacts(response.data.data.contacts)
+      if (response.data.success && response.data.data) {
+        setContacts(
+          Array.isArray(response.data.data.contacts)
+            ? response.data.data.contacts
+            : []
+        )
       }
-    } catch (error) {
-      console.error("Failed to fetch contacts:", error)
+    } catch {
+      setContacts([])
     }
   }
 
@@ -195,7 +211,7 @@ export function PipelineView() {
         payload
       )
 
-      if (response.data.success) {
+      if (response.data.success && response.data.data) {
         setOpportunities([...opportunities, response.data.data])
         setDialogOpen(false)
         setFormData({

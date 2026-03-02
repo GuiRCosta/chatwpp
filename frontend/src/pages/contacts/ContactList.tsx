@@ -48,13 +48,14 @@ export function ContactList() {
         }
       )
 
-      if (response.data.success) {
-        setContacts(response.data.data.contacts)
-        setTotal(response.data.data.count)
-        setHasMore(response.data.data.hasMore)
+      if (response.data.success && response.data.data) {
+        const data = response.data.data
+        setContacts(Array.isArray(data.contacts) ? data.contacts : [])
+        setTotal(data.count ?? 0)
+        setHasMore(data.hasMore ?? false)
       }
-    } catch (error) {
-      console.error("Failed to fetch contacts:", error)
+    } catch {
+      setContacts([])
     } finally {
       setIsLoading(false)
     }

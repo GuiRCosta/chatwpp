@@ -41,7 +41,7 @@ export function ContactForm() {
       setIsLoading(true)
       const response = await api.get<ApiResponse<Contact>>(`/contacts/${id}`)
 
-      if (response.data.success) {
+      if (response.data.success && response.data.data) {
         const contact = response.data.data
         setFormData({
           name: contact.name,
@@ -49,8 +49,8 @@ export function ContactForm() {
           email: contact.email || ""
         })
       }
-    } catch (error) {
-      console.error("Failed to fetch contact:", error)
+    } catch {
+      // Contact not found or network error
     } finally {
       setIsLoading(false)
     }

@@ -61,7 +61,8 @@ export function Settings() {
     try {
       setIsLoadingSettings(true)
       const response = await api.get<{ data: Setting[] }>("/settings")
-      const parsed = parseSettingsFromApi(response.data.data)
+      const settings = Array.isArray(response.data.data) ? response.data.data : []
+      const parsed = parseSettingsFromApi(settings)
       setGeneralSettings(parsed)
     } catch (err) {
       const message =
@@ -76,7 +77,7 @@ export function Settings() {
     try {
       setIsLoadingQueues(true)
       const response = await api.get<{ data: Queue[] }>("/queues")
-      setQueues(response.data.data)
+      setQueues(Array.isArray(response.data.data) ? response.data.data : [])
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro ao carregar filas"
@@ -90,7 +91,7 @@ export function Settings() {
     try {
       setIsLoadingWhatsApp(true)
       const response = await api.get<{ data: WhatsApp[] }>("/whatsapp")
-      setConnections(response.data.data)
+      setConnections(Array.isArray(response.data.data) ? response.data.data : [])
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro ao carregar conexoes"
@@ -106,7 +107,7 @@ export function Settings() {
     try {
       setIsLoadingUsers(true)
       const response = await api.get<{ data: User[] }>("/users")
-      setUsers(response.data.data)
+      setUsers(Array.isArray(response.data.data) ? response.data.data : [])
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro ao carregar usuarios"

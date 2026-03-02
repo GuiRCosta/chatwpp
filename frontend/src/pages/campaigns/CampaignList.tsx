@@ -84,10 +84,11 @@ export function CampaignList() {
         { params }
       )
 
-      if (response.data.success) {
-        setCampaigns(response.data.data.campaigns)
-        setTotal(response.data.data.count)
-        setHasMore(response.data.data.hasMore)
+      if (response.data.success && response.data.data) {
+        const data = response.data.data
+        setCampaigns(Array.isArray(data.campaigns) ? data.campaigns : [])
+        setTotal(data.count ?? 0)
+        setHasMore(data.hasMore ?? false)
       }
     } catch {
       setCampaigns([])
