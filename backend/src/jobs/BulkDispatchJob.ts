@@ -5,7 +5,7 @@ import WhatsApp from "../models/WhatsApp"
 import Contact from "../models/Contact"
 import { sendTextMessage } from "../libs/waba/wabaClient"
 import { emitToTenant } from "../libs/socket"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 export const QUEUE_NAME = "bulk-dispatch"
 

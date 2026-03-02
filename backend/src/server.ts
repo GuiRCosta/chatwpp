@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import dotenv from "dotenv"
 dotenv.config()
 
@@ -7,6 +8,7 @@ import { createServer } from "http"
 import app from "./app"
 import { initSocket } from "./libs/socket"
 import dbConfig from "./config/database"
+import models from "./models"
 import { closeRedis } from "./config/redis"
 import { initQueues, closeQueues } from "./libs/queues"
 import { initScheduledJobs, stopScheduledJobs } from "./jobs/ScheduledJobs"
@@ -17,7 +19,7 @@ const PORT = Number(process.env.PORT) || 7563
 async function bootstrap(): Promise<void> {
   const sequelize = new Sequelize({
     ...dbConfig,
-    models: [__dirname + "/models"]
+    models
   })
 
   try {

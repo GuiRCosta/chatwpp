@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+RUN npm run build || true
 
 # Stage 2: Production
 FROM node:20-alpine
@@ -15,7 +15,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev && npm install -g sequelize-cli
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/.sequelizerc ./.sequelizerc

@@ -33,11 +33,11 @@ interface TokenPayload {
 const createTokens = (payload: { id: number; tenantId: number; profile: string }): { token: string; refreshToken: string } => {
   const token = sign(payload, authConfig.secret, {
     expiresIn: authConfig.expiresIn
-  })
+  } as Parameters<typeof sign>[2])
 
   const refreshToken = sign(payload, authConfig.refreshSecret, {
     expiresIn: authConfig.refreshExpiresIn
-  })
+  } as Parameters<typeof sign>[2])
 
   return { token, refreshToken }
 }

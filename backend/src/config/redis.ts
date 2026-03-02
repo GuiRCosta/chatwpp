@@ -1,5 +1,5 @@
 import Redis from "ioredis"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 const redisConfig = {
   host: process.env.REDIS_HOST || "localhost",

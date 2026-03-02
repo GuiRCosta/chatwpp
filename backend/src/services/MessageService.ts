@@ -5,7 +5,7 @@ import { AppError } from "../helpers/AppError"
 import { emitToTicket, emitToTenant } from "../libs/socket"
 import { getQueue } from "../libs/queues"
 import { QUEUE_NAME as SEND_MESSAGE_QUEUE } from "../jobs/SendMessageJob"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 interface ListParams {
   ticketId: number

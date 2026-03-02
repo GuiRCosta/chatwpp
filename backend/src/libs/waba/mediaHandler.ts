@@ -2,7 +2,7 @@ import path from "path"
 import fs from "fs"
 import crypto from "crypto"
 import { getMediaUrl, downloadMedia } from "./wabaClient"
-import logger from "../../helpers/logger"
+import { logger } from "../../helpers/logger"
 
 const UPLOAD_DIR = path.resolve(__dirname, "..", "..", "..", "public")
 

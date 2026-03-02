@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from "axios"
-import logger from "../../helpers/logger"
+import { logger } from "../../helpers/logger"
 import {
   SendTextPayload,
   SendMediaPayload,

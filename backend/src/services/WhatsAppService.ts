@@ -9,7 +9,7 @@ import {
   getPhoneNumbers,
   subscribeApp
 } from "../libs/waba/wabaClient"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 interface ListParams {
   tenantId: number

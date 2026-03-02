@@ -7,7 +7,7 @@ import Message from "../../models/Message"
 import TicketLog from "../../models/TicketLog"
 import { emitToTenant, emitToTicket } from "../socket"
 import { downloadAndSaveMedia } from "./mediaHandler"
-import logger from "../../helpers/logger"
+import { logger } from "../../helpers/logger"
 import {
   WabaWebhookBody,
   WabaValue,

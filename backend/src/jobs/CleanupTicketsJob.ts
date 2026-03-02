@@ -6,7 +6,7 @@ import TicketLog from "../models/TicketLog"
 import Setting from "../models/Setting"
 import Tenant from "../models/Tenant"
 import { emitToTenant } from "../libs/socket"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 export const QUEUE_NAME = "cleanup-tickets"
 

@@ -93,7 +93,7 @@ export const findCampaignById = async (id: number, tenantId: number): Promise<Ca
     error: 0
   }
 
-  statusCounts.forEach((item: { status: string; count: number }) => {
+  ;(statusCounts as unknown as Array<{ status: string; count: number }>).forEach((item) => {
     const status = item.status as "pending" | "sent" | "delivered" | "read" | "error"
     campaignWithCounts.contactCounts[status] = Number(item.count)
   })

@@ -1,42 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.2
-    command:
-      - "--api.dashboard=true"
-      - "--providers.docker=true"
-      - "--providers.docker.swarmMode=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      # HTTP -> HTTPS redirect (ACME HTTP challenge is intercepted before redirect)
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - letsencrypt:/letsencrypt
-    networks:
-      - zflow-public
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-      labels:
-        - "traefik.enable=true"
-        # Dashboard: traefik.${DOMAIN} (protected by basicAuth)
-        # Generate credentials: htpasswd -nB admin
-        - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)"
-        - "traefik.http.routers.dashboard.service=api@internal"
-        - "traefik.http.routers.dashboard.entrypoints=websecure"
-        - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-        - "traefik.http.routers.dashboard.middlewares=auth"
-        - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
-        - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
-
   postgres:
     image: postgres:15-alpine
     environment:
@@ -56,7 +18,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - zflow-internal
+      zflow-internal:
+        aliases:
+          - zflow-db
     deploy:
       replicas: 1
       restart_policy:
@@ -83,7 +47,9 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - zflow-internal
+      zflow-internal:
+        aliases:
+          - zflow-redis
     deploy:
       replicas: 1
       restart_policy:
@@ -112,14 +78,14 @@ services:
       FRONTEND_URL: https://${DOMAIN}
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
       RUN_SEEDS: ${RUN_SEEDS:-false}
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: zflow-db
       POSTGRES_USER: ${POSTGRES_USER:-zflow}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB:-zflow}
       DB_PORT: 5432
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      REDIS_HOST: redis
+      REDIS_HOST: zflow-redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       USER_LIMIT: ${USER_LIMIT:-10}
@@ -140,6 +106,7 @@ services:
         max-size: "10m"
         max-file: "5"
     networks:
+      - IdevaNet
       - zflow-internal
     deploy:
       replicas: 1
@@ -156,6 +123,46 @@ services:
         parallelism: 1
         delay: 30s
         order: start-first
+      labels:
+        # API routes - strip /api prefix and forward to backend
+        - "traefik.enable=true"
+        - "traefik.http.routers.zflow-api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.zflow-api.entrypoints=websecure"
+        - "traefik.http.routers.zflow-api.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.zflow-api.priority=20"
+        - "traefik.http.middlewares.zflow-strip-api.stripprefix.prefixes=/api"
+        - "traefik.http.routers.zflow-api.middlewares=zflow-strip-api"
+        - "traefik.http.services.zflow-api.loadbalancer.server.port=7563"
+        # Socket.IO - WebSocket support
+        - "traefik.http.routers.zflow-ws.rule=Host(`${DOMAIN}`) && PathPrefix(`/socket.io`)"
+        - "traefik.http.routers.zflow-ws.entrypoints=websecure"
+        - "traefik.http.routers.zflow-ws.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.zflow-ws.priority=20"
+        - "traefik.http.routers.zflow-ws.service=zflow-api"
+        # Webhook - direct to backend
+        - "traefik.http.routers.zflow-webhook.rule=Host(`${DOMAIN}`) && PathPrefix(`/webhook`)"
+        - "traefik.http.routers.zflow-webhook.entrypoints=websecure"
+        - "traefik.http.routers.zflow-webhook.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.zflow-webhook.priority=20"
+        - "traefik.http.routers.zflow-webhook.service=zflow-api"
+        # Health check - direct to backend
+        - "traefik.http.routers.zflow-health.rule=Host(`${DOMAIN}`) && Path(`/health`)"
+        - "traefik.http.routers.zflow-health.entrypoints=websecure"
+        - "traefik.http.routers.zflow-health.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.zflow-health.priority=20"
+        - "traefik.http.routers.zflow-health.service=zflow-api"
+        # Public files (uploads/media) - direct to backend
+        - "traefik.http.routers.zflow-public.rule=Host(`${DOMAIN}`) && PathPrefix(`/public`)"
+        - "traefik.http.routers.zflow-public.entrypoints=websecure"
+        - "traefik.http.routers.zflow-public.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.zflow-public.priority=20"
+        - "traefik.http.routers.zflow-public.service=zflow-api"
+        # Bull Board dashboard
+        - "traefik.http.routers.zflow-admin.rule=Host(`${DOMAIN}`) && PathPrefix(`/admin/queues`)"
+        - "traefik.http.routers.zflow-admin.entrypoints=websecure"
+        - "traefik.http.routers.zflow-admin.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.zflow-admin.priority=20"
+        - "traefik.http.routers.zflow-admin.service=zflow-api"
 
   frontend:
     image: ${REGISTRY:-}zflow-frontend:${TAG:-latest}
@@ -165,8 +172,7 @@ services:
         VITE_META_APP_ID: ${META_APP_ID:-}
         VITE_META_CONFIG_ID: ${META_CONFIG_ID:-}
     networks:
-      - zflow-public
-      - zflow-internal
+      - IdevaNet
     deploy:
       replicas: 1
       restart_policy:
@@ -183,10 +189,12 @@ services:
         delay: 10s
         order: start-first
       labels:
+        # SPA fallback - lowest priority, catches all other routes
         - "traefik.enable=true"
         - "traefik.http.routers.zflow.rule=Host(`${DOMAIN}`)"
         - "traefik.http.routers.zflow.entrypoints=websecure"
-        - "traefik.http.routers.zflow.tls.certresolver=letsencrypt"
+        - "traefik.http.routers.zflow.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.zflow.priority=10"
         - "traefik.http.services.zflow.loadbalancer.server.port=8080"
         - "traefik.http.middlewares.zflow-headers.headers.stsSeconds=31536000"
         - "traefik.http.middlewares.zflow-headers.headers.stsIncludeSubdomains=true"
@@ -195,11 +203,10 @@ services:
         - "traefik.http.routers.zflow.middlewares=zflow-headers"
 
 networks:
-  zflow-public:
-    driver: overlay
+  IdevaNet:
+    external: true
   zflow-internal:
     driver: overlay
-    internal: true
 
 volumes:
   postgres_data:
@@ -207,4 +214,3 @@ volumes:
   backend_uploads:
   backend_public:
   backend_logs:
-  letsencrypt:

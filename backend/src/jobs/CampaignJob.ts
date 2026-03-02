@@ -6,7 +6,7 @@ import Contact from "../models/Contact"
 import WhatsApp from "../models/WhatsApp"
 import { sendTextMessage, sendMediaMessage } from "../libs/waba/wabaClient"
 import { emitToTenant } from "../libs/socket"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 export const QUEUE_NAME = "campaign"
 

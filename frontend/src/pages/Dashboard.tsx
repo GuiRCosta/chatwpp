@@ -104,10 +104,8 @@ export function Dashboard() {
         }
 
         setStats(newStats)
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error"
-        throw new Error(`Failed to fetch dashboard stats: ${errorMessage}`)
+      } catch {
+        // Silently handle - stats will stay at 0
       } finally {
         setIsLoading(false)
       }
@@ -119,10 +117,8 @@ export function Dashboard() {
         try {
           const user = JSON.parse(userStr)
           setUserName(user.name || user.email || "Usuário")
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Unknown error"
-          throw new Error(`Failed to parse user data: ${errorMessage}`)
+        } catch {
+          // Ignore invalid JSON in localStorage
         }
       }
     }

@@ -5,7 +5,7 @@ import * as SendMessageJob from "../jobs/SendMessageJob"
 import * as BulkDispatchJob from "../jobs/BulkDispatchJob"
 import * as CampaignJob from "../jobs/CampaignJob"
 import * as CleanupTicketsJob from "../jobs/CleanupTicketsJob"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 interface QueueDefinition {
   name: string

@@ -4,7 +4,7 @@ import Campaign from "../models/Campaign"
 import { getQueue } from "../libs/queues"
 import { QUEUE_NAME as CAMPAIGN_QUEUE } from "./CampaignJob"
 import { QUEUE_NAME as CLEANUP_QUEUE } from "./CleanupTicketsJob"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 const scheduledTasks: cron.ScheduledTask[] = []
 

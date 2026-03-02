@@ -10,11 +10,9 @@ const dbConfig = {
   password: process.env.POSTGRES_PASSWORD || "postgres",
   database: process.env.POSTGRES_DB || "zflow",
   define: {
-    charset: "utf8mb4",
-    collate: "utf8mb4_bin"
+    underscored: false
   },
   dialectOptions: {
-    charset: "utf8mb4",
     ssl: process.env.DB_SSL === "true"
       ? { require: true, rejectUnauthorized: false }
       : undefined
@@ -26,6 +24,9 @@ const dbConfig = {
     idle: 10000,
     acquire: 30000,
     evict: 10000
+  },
+  retry: {
+    max: 3
   },
   timezone: "UTC"
 }

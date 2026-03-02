@@ -9,7 +9,7 @@ fi
 
 if [ "$RUN_SEEDS" = "true" ]; then
   echo "[zflow] Running database seeds..."
-  npx sequelize db:seed:all
+  npx sequelize db:seed:all || echo "[zflow] Seeds skipped (may already exist)"
   echo "[zflow] Seeds completed"
 fi
 

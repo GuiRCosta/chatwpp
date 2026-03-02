@@ -22,7 +22,9 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
       )
 
       if (response.data.success) {
-        const notifications = response.data.data
+        const notifications = Array.isArray(response.data.data)
+          ? response.data.data
+          : []
         const unreadCount = notifications.filter((n) => !n.isRead).length
 
         set({

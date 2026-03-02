@@ -2,7 +2,7 @@ import { Request, Response } from "express"
 
 import { verifyWebhook, processWebhook } from "../libs/waba/webhookHandler"
 import { verifySignature } from "../libs/waba/webhookSignature"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 export const verify = async (req: Request, res: Response): Promise<Response | void> => {
   const mode = req.query["hub.mode"] as string | undefined

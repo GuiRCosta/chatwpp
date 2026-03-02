@@ -11,7 +11,7 @@ interface ListParams {
 }
 
 export const listFastReplies = async ({ tenantId, userId, searchParam = "" }: ListParams): Promise<FastReply[]> => {
-  const where: Record<string, unknown> = { tenantId, userId }
+  const where: Record<string | symbol, unknown> = { tenantId, userId }
 
   if (searchParam) {
     where[Op.or] = [

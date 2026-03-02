@@ -6,7 +6,7 @@ import Contact from "../models/Contact"
 import WhatsApp from "../models/WhatsApp"
 import { sendTextMessage, sendMediaMessage } from "../libs/waba/wabaClient"
 import { emitToTicket } from "../libs/socket"
-import logger from "../helpers/logger"
+import { logger } from "../helpers/logger"
 
 export const QUEUE_NAME = "send-message"
 
@@ -16,6 +16,7 @@ export interface SendMessageData {
   tenantId: number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-shadow
 export async function process(job: Job<SendMessageData>): Promise<void> {
   const { messageId, ticketId, tenantId: _tenantId } = job.data
 
@@ -54,7 +55,7 @@ export async function process(job: Job<SendMessageData>): Promise<void> {
     }
 
     const type = mediaTypeMap[message.mediaType] || "document"
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:7563"
+    const backendUrl = globalThis.process.env.BACKEND_URL || "http://localhost:7563"
     const fullMediaUrl = `${backendUrl}/public/${message.mediaUrl}`
 
     response = await sendMediaMessage(
