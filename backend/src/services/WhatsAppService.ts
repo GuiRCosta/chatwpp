@@ -1,6 +1,8 @@
 import { Op } from "sequelize"
 
 import WhatsApp from "../models/WhatsApp"
+import UserWhatsApp from "../models/UserWhatsApp"
+import User from "../models/User"
 import { AppError } from "../helpers/AppError"
 import { emitToTenant } from "../libs/socket"
 import {
@@ -18,6 +20,9 @@ interface ListParams {
 export const listWhatsApps = async ({ tenantId }: ListParams): Promise<WhatsApp[]> => {
   const whatsapps = await WhatsApp.findAll({
     where: { tenantId },
+    include: [
+      { model: UserWhatsApp, as: "userWhatsApps", include: [{ model: User, as: "user", attributes: ["id", "name", "email"] }] }
+    ],
     order: [["name", "ASC"]]
   })
 
@@ -26,7 +31,10 @@ export const listWhatsApps = async ({ tenantId }: ListParams): Promise<WhatsApp[
 
 export const findWhatsAppById = async (id: number, tenantId: number): Promise<WhatsApp> => {
   const whatsapp = await WhatsApp.findOne({
-    where: { id, tenantId }
+    where: { id, tenantId },
+    include: [
+      { model: UserWhatsApp, as: "userWhatsApps", include: [{ model: User, as: "user", attributes: ["id", "name", "email"] }] }
+    ]
   })
 
   if (!whatsapp) {
@@ -58,6 +66,7 @@ export const createWhatsApp = async (tenantId: number, data: {
   greetingMessage?: string
   farewellMessage?: string
   isDefault?: boolean
+  userIds?: number[]
 }): Promise<WhatsApp> => {
   const tenant = await (await import("../models/Tenant")).default.findByPk(tenantId)
 
@@ -88,9 +97,19 @@ export const createWhatsApp = async (tenantId: number, data: {
     isDefault: data.isDefault || false
   })
 
-  emitToTenant(tenantId, "whatsapp:created", whatsapp)
+  if (data.userIds && data.userIds.length > 0) {
+    const entries = data.userIds.map(userId => ({
+      userId,
+      whatsappId: whatsapp.id
+    }))
+    await UserWhatsApp.bulkCreate(entries)
+  }
 
-  return whatsapp
+  const created = await findWhatsAppById(whatsapp.id, tenantId)
+
+  emitToTenant(tenantId, "whatsapp:created", created)
+
+  return created
 }
 
 export const updateWhatsApp = async (id: number, tenantId: number, data: {
@@ -104,6 +123,7 @@ export const updateWhatsApp = async (id: number, tenantId: number, data: {
   farewellMessage?: string
   isDefault?: boolean
   status?: string
+  userIds?: number[]
 }): Promise<WhatsApp> => {
   const whatsapp = await WhatsApp.findOne({ where: { id, tenantId } })
 
@@ -118,11 +138,26 @@ export const updateWhatsApp = async (id: number, tenantId: number, data: {
     )
   }
 
-  await whatsapp.update(data)
+  const { userIds, ...updateData } = data
 
-  emitToTenant(tenantId, "whatsapp:updated", whatsapp)
+  await whatsapp.update(updateData)
 
-  return whatsapp
+  if (userIds !== undefined) {
+    await UserWhatsApp.destroy({ where: { whatsappId: id } })
+    if (userIds.length > 0) {
+      const entries = userIds.map(userId => ({
+        userId,
+        whatsappId: id
+      }))
+      await UserWhatsApp.bulkCreate(entries)
+    }
+  }
+
+  const updated = await findWhatsAppById(id, tenantId)
+
+  emitToTenant(tenantId, "whatsapp:updated", updated)
+
+  return updated
 }
 
 export const onboardFromFBL = async (tenantId: number, data: {
@@ -130,6 +165,7 @@ export const onboardFromFBL = async (tenantId: number, data: {
   wabaId: string
   phoneNumberId: string
   name: string
+  userIds?: number[]
 }): Promise<WhatsApp> => {
   const existing = await WhatsApp.findOne({
     where: { tenantId, wabaPhoneNumberId: data.phoneNumberId }
@@ -187,7 +223,17 @@ export const onboardFromFBL = async (tenantId: number, data: {
     farewellMessage: ""
   })
 
-  const { wabaToken: _wabaToken, wabaWebhookSecret: _wabaWebhookSecret, ...safeWhatsapp } = whatsapp.toJSON()
+  if (data.userIds && data.userIds.length > 0) {
+    const entries = data.userIds.map(userId => ({
+      userId,
+      whatsappId: whatsapp.id
+    }))
+    await UserWhatsApp.bulkCreate(entries)
+  }
+
+  const created = await findWhatsAppById(whatsapp.id, tenantId)
+
+  const { wabaToken: _wabaToken, wabaWebhookSecret: _wabaWebhookSecret, ...safeWhatsapp } = created.toJSON()
   emitToTenant(tenantId, "whatsapp:created", safeWhatsapp)
 
   logger.info(
@@ -195,7 +241,7 @@ export const onboardFromFBL = async (tenantId: number, data: {
     tenantId, whatsapp.id, displayNumber
   )
 
-  return whatsapp
+  return created
 }
 
 export const deleteWhatsApp = async (id: number, tenantId: number): Promise<void> => {
@@ -209,6 +255,7 @@ export const deleteWhatsApp = async (id: number, tenantId: number): Promise<void
     throw new AppError("Cannot delete the default WhatsApp connection. Set another as default first.", 400)
   }
 
+  await UserWhatsApp.destroy({ where: { whatsappId: id } })
   await whatsapp.destroy()
 
   emitToTenant(tenantId, "whatsapp:deleted", { id })

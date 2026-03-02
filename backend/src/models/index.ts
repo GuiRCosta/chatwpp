@@ -28,6 +28,7 @@ import ApiConfig from "./ApiConfig"
 import BanList from "./BanList"
 import CallLog from "./CallLog"
 import BulkDispatch from "./BulkDispatch"
+import UserWhatsApp from "./UserWhatsApp"
 
 const models = [
   Tenant,
@@ -59,7 +60,8 @@ const models = [
   ApiConfig,
   BanList,
   CallLog,
-  BulkDispatch
+  BulkDispatch,
+  UserWhatsApp
 ]
 
 export {
@@ -92,7 +94,8 @@ export {
   ApiConfig,
   BanList,
   CallLog,
-  BulkDispatch
+  BulkDispatch,
+  UserWhatsApp
 }
 
 export default models

@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Smartphone, Plus, Wifi, WifiOff, Loader2 } from "lucide-react"
+import {
+  Smartphone,
+  Plus,
+  Wifi,
+  WifiOff,
+  Loader2,
+  Pencil,
+  Trash2,
+  Users as UsersIcon
+} from "lucide-react"
 import {
   Card,
   CardContent,
@@ -20,7 +29,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/Dialog"
-import type { WhatsApp } from "@/types"
+import type { WhatsApp, User } from "@/types"
 import { formatWhatsAppStatus, isWhatsAppOnline } from "./types"
 import {
   loadFacebookSDK,
@@ -36,25 +45,82 @@ interface OnboardData {
   wabaId: string
   phoneNumberId: string
   name: string
+  userIds?: number[]
 }
 
 interface WhatsAppTabProps {
   connections: WhatsApp[]
+  users: User[]
   isLoading: boolean
   onOnboard: (data: OnboardData) => Promise<void>
+  onUpdateWhatsApp: (id: number, data: { name?: string; userIds?: number[] }) => Promise<void>
+  onDeleteWhatsApp: (id: number) => Promise<void>
+}
+
+function UserCheckboxList({
+  users,
+  selectedIds,
+  onToggle,
+  disabled
+}: {
+  users: User[]
+  selectedIds: Set<number>
+  onToggle: (userId: number) => void
+  disabled?: boolean
+}) {
+  if (users.length === 0) {
+    return (
+      <p className="text-sm text-gray-500">Nenhum usuario disponivel</p>
+    )
+  }
+
+  return (
+    <div className="max-h-48 space-y-1 overflow-y-auto rounded-lg border border-gray-200 p-2">
+      {users.map((user) => (
+        <label
+          key={user.id}
+          className="flex cursor-pointer items-center gap-2 rounded-md p-2 transition-colors hover:bg-gray-50"
+        >
+          <input
+            type="checkbox"
+            checked={selectedIds.has(user.id)}
+            onChange={() => onToggle(user.id)}
+            disabled={disabled}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-900">{user.name}</span>
+          <span className="text-xs text-gray-400">{user.email}</span>
+        </label>
+      ))}
+    </div>
+  )
 }
 
 export function WhatsAppTab({
   connections,
+  users,
   isLoading,
-  onOnboard
+  onOnboard,
+  onUpdateWhatsApp,
+  onDeleteWhatsApp
 }: WhatsAppTabProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [newName, setNewName] = useState("")
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set())
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sdkReady, setSdkReady] = useState(false)
   const sdkLoadAttempted = useRef(false)
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingConnection, setEditingConnection] = useState<WhatsApp | null>(null)
+  const [editName, setEditName] = useState("")
+  const [editUserIds, setEditUserIds] = useState<Set<number>>(new Set())
+  const [isSaving, setIsSaving] = useState(false)
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deletingConnection, setDeletingConnection] = useState<WhatsApp | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!META_APP_ID || sdkLoadAttempted.current) return
@@ -67,6 +133,30 @@ export function WhatsAppTab({
           `Erro ao carregar Facebook SDK: ${err instanceof Error ? err.message : String(err)}`
         )
       })
+  }, [])
+
+  const handleToggleUser = useCallback((userId: number) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(userId)) {
+        next.delete(userId)
+      } else {
+        next.add(userId)
+      }
+      return next
+    })
+  }, [])
+
+  const handleToggleEditUser = useCallback((userId: number) => {
+    setEditUserIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(userId)) {
+        next.delete(userId)
+      } else {
+        next.add(userId)
+      }
+      return next
+    })
   }, [])
 
   const handleConnectWithFacebook = useCallback(async () => {
@@ -83,10 +173,12 @@ export function WhatsAppTab({
         code: result.code,
         wabaId: result.wabaId,
         phoneNumberId: result.phoneNumberId,
-        name: newName.trim()
+        name: newName.trim(),
+        userIds: Array.from(selectedUserIds)
       })
 
       setNewName("")
+      setSelectedUserIds(new Set())
       setDialogOpen(false)
     } catch (err) {
       const message =
@@ -95,15 +187,68 @@ export function WhatsAppTab({
     } finally {
       setIsConnecting(false)
     }
-  }, [newName, onOnboard])
+  }, [newName, selectedUserIds, onOnboard])
 
   const handleDialogChange = useCallback((open: boolean) => {
     setDialogOpen(open)
     if (!open) {
       setNewName("")
+      setSelectedUserIds(new Set())
       setError(null)
     }
   }, [])
+
+  const handleOpenEdit = useCallback((conn: WhatsApp) => {
+    setEditingConnection(conn)
+    setEditName(conn.name)
+    const currentUserIds = new Set(
+      (conn.userWhatsApps ?? []).map((uw) => uw.userId)
+    )
+    setEditUserIds(currentUserIds)
+    setEditDialogOpen(true)
+  }, [])
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!editingConnection) return
+
+    setIsSaving(true)
+    try {
+      await onUpdateWhatsApp(editingConnection.id, {
+        name: editName.trim() || undefined,
+        userIds: Array.from(editUserIds)
+      })
+      setEditDialogOpen(false)
+      setEditingConnection(null)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erro ao atualizar conexao"
+      setError(message)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [editingConnection, editName, editUserIds, onUpdateWhatsApp])
+
+  const handleOpenDelete = useCallback((conn: WhatsApp) => {
+    setDeletingConnection(conn)
+    setDeleteDialogOpen(true)
+  }, [])
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!deletingConnection) return
+
+    setIsDeleting(true)
+    try {
+      await onDeleteWhatsApp(deletingConnection.id)
+      setDeleteDialogOpen(false)
+      setDeletingConnection(null)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erro ao excluir conexao"
+      setError(message)
+    } finally {
+      setIsDeleting(false)
+    }
+  }, [deletingConnection, onDeleteWhatsApp])
 
   return (
     <Card className="rounded-2xl bg-white">
@@ -140,6 +285,19 @@ export function WhatsAppTab({
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder="Ex: WhatsApp Principal"
+                    disabled={isConnecting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <UsersIcon className="h-4 w-4" />
+                    Atendentes Responsaveis
+                  </Label>
+                  <UserCheckboxList
+                    users={users}
+                    selectedIds={selectedUserIds}
+                    onToggle={handleToggleUser}
                     disabled={isConnecting}
                   />
                 </div>
@@ -189,45 +347,180 @@ export function WhatsAppTab({
           </p>
         ) : (
           <div className="space-y-2">
-            {connections.map((conn) => (
-              <div
-                key={conn.id}
-                className="flex items-center justify-between rounded-xl border border-gray-100 p-4 transition-colors hover:bg-gray-50"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`h-3 w-3 rounded-full ${
-                      isWhatsAppOnline(conn.status)
-                        ? "bg-green-500"
-                        : "bg-red-500"
-                    }`}
-                  />
-                  <div>
-                    <p className="font-medium text-gray-900">{conn.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {conn.number || "Sem numero"}
-                    </p>
+            {connections.map((conn) => {
+              const assignedUsers = (conn.userWhatsApps ?? [])
+                .map((uw) => uw.user)
+                .filter(Boolean)
+
+              return (
+                <div
+                  key={conn.id}
+                  className="rounded-xl border border-gray-100 p-4 transition-colors hover:bg-gray-50"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`h-3 w-3 rounded-full ${
+                          isWhatsAppOnline(conn.status)
+                            ? "bg-green-500"
+                            : "bg-red-500"
+                        }`}
+                      />
+                      <div>
+                        <p className="font-medium text-gray-900">{conn.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {conn.number || "Sem numero"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isWhatsAppOnline(conn.status) ? (
+                        <Wifi className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <WifiOff className="h-4 w-4 text-red-500" />
+                      )}
+                      <Badge
+                        variant={
+                          isWhatsAppOnline(conn.status) ? "success" : "destructive"
+                        }
+                      >
+                        {formatWhatsAppStatus(conn.status)}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEdit(conn)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Pencil className="h-4 w-4 text-gray-500" />
+                      </Button>
+                      {!conn.isDefault && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenDelete(conn)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {isWhatsAppOnline(conn.status) ? (
-                    <Wifi className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <WifiOff className="h-4 w-4 text-red-500" />
+
+                  {assignedUsers.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1 pl-6">
+                      {assignedUsers.map((u) => (
+                        <Badge
+                          key={u!.id}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {u!.name}
+                        </Badge>
+                      ))}
+                    </div>
                   )}
-                  <Badge
-                    variant={
-                      isWhatsAppOnline(conn.status) ? "success" : "destructive"
-                    }
-                  >
-                    {formatWhatsAppStatus(conn.status)}
-                  </Badge>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </CardContent>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Conexao</DialogTitle>
+            <DialogDescription>
+              Altere o nome e os atendentes responsaveis
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editName">Nome da Conexao</Label>
+              <Input
+                id="editName"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                disabled={isSaving}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <UsersIcon className="h-4 w-4" />
+                Atendentes Responsaveis
+              </Label>
+              <UserCheckboxList
+                users={users}
+                selectedIds={editUserIds}
+                onToggle={handleToggleEditUser}
+                disabled={isSaving}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              rounded="lg"
+              onClick={() => setEditDialogOpen(false)}
+              disabled={isSaving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              rounded="lg"
+              onClick={handleSaveEdit}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Conexao</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir a conexao &quot;{deletingConnection?.name}&quot;? Esta acao nao pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              rounded="lg"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              rounded="lg"
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                "Excluir"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

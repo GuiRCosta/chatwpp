@@ -1,10 +1,11 @@
-import { Op } from "sequelize"
+import { Op, fn, col } from "sequelize"
 
 import WhatsApp from "../../models/WhatsApp"
 import Contact from "../../models/Contact"
 import Ticket from "../../models/Ticket"
 import Message from "../../models/Message"
 import TicketLog from "../../models/TicketLog"
+import UserWhatsApp from "../../models/UserWhatsApp"
 import { emitToTenant, emitToTicket } from "../socket"
 import { downloadAndSaveMedia } from "./mediaHandler"
 import { logger } from "../../helpers/logger"
@@ -170,6 +171,51 @@ async function findOrCreateContact(
   return contact
 }
 
+async function pickAssignedUser(
+  whatsappId: number,
+  tenantId: number
+): Promise<number | undefined> {
+  const assignments = await UserWhatsApp.findAll({
+    where: { whatsappId }
+  })
+
+  if (assignments.length === 0) return undefined
+  if (assignments.length === 1) return assignments[0].userId
+
+  const userIds = assignments.map(a => a.userId)
+
+  const ticketCounts = await Ticket.findAll({
+    attributes: [
+      "userId",
+      [fn("COUNT", col("id")), "ticketCount"]
+    ],
+    where: {
+      tenantId,
+      userId: { [Op.in]: userIds },
+      status: { [Op.in]: ["open", "pending"] }
+    },
+    group: ["userId"],
+    raw: true
+  }) as unknown as Array<{ userId: number; ticketCount: string }>
+
+  const countMap = new Map(
+    ticketCounts.map(tc => [tc.userId, Number(tc.ticketCount)])
+  )
+
+  let leastLoadedUserId = userIds[0]
+  let minCount = countMap.get(userIds[0]) ?? 0
+
+  for (const userId of userIds) {
+    const count = countMap.get(userId) ?? 0
+    if (count < minCount) {
+      minCount = count
+      leastLoadedUserId = userId
+    }
+  }
+
+  return leastLoadedUserId
+}
+
 async function findOrCreateTicket(
   tenantId: number,
   contact: Contact,
@@ -188,11 +234,14 @@ async function findOrCreateTicket(
 
   const protocol = Math.random().toString(36).substring(2, 10).toUpperCase()
 
+  const assignedUserId = await pickAssignedUser(whatsapp.id, tenantId)
+
   const ticket = await Ticket.create({
     tenantId,
     contactId: contact.id,
     whatsappId: whatsapp.id,
-    status: "pending",
+    userId: assignedUserId || null,
+    status: assignedUserId ? "open" : "pending",
     channel: "whatsapp",
     protocol,
     lastMessageAt: new Date(),

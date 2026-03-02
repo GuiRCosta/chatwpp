@@ -9,7 +9,8 @@ export const createWhatsAppSchema = yup.object().shape({
   number: yup.string().nullable(),
   greetingMessage: yup.string().nullable(),
   farewellMessage: yup.string().nullable(),
-  isDefault: yup.boolean().default(false)
+  isDefault: yup.boolean().default(false),
+  userIds: yup.array().of(yup.number().integer().positive()).default([])
 })
 
 export const onboardFBLSchema = yup.object().shape({
@@ -20,7 +21,8 @@ export const onboardFBLSchema = yup.object().shape({
   phoneNumberId: yup.string()
     .matches(/^\d+$/, "Phone number ID must be numeric")
     .required("Phone number ID is required"),
-  name: yup.string().min(2).max(100).required("Connection name is required")
+  name: yup.string().min(2).max(100).required("Connection name is required"),
+  userIds: yup.array().of(yup.number().integer().positive()).default([])
 })
 
 export const updateWhatsAppSchema = yup.object().shape({
@@ -33,5 +35,6 @@ export const updateWhatsAppSchema = yup.object().shape({
   greetingMessage: yup.string().nullable(),
   farewellMessage: yup.string().nullable(),
   isDefault: yup.boolean(),
-  status: yup.string().oneOf(["connected", "disconnected", "opening"])
+  status: yup.string().oneOf(["connected", "disconnected", "opening"]),
+  userIds: yup.array().of(yup.number().integer().positive())
 })

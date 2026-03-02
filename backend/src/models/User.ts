@@ -19,6 +19,7 @@ import UserQueue from "./UserQueue"
 import TicketNote from "./TicketNote"
 import Notification from "./Notification"
 import TodoList from "./TodoList"
+import UserWhatsApp from "./UserWhatsApp"
 
 @Table({ tableName: "Users", timestamps: true })
 export default class User extends Model {
@@ -81,4 +82,7 @@ export default class User extends Model {
 
   @HasMany(() => TodoList)
   todoLists!: TodoList[]
+
+  @HasMany(() => UserWhatsApp)
+  userWhatsApps!: UserWhatsApp[]
 }

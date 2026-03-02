@@ -111,6 +111,15 @@ export interface Tag {
   updatedAt: string
 }
 
+export interface UserWhatsApp {
+  id: number
+  userId: number
+  whatsappId: number
+  user?: Pick<User, "id" | "name" | "email">
+  createdAt: string
+  updatedAt: string
+}
+
 export interface WhatsApp {
   id: number
   name: string
@@ -120,6 +129,7 @@ export interface WhatsApp {
   wabaPhoneNumberId?: string
   tenantId: number
   isDefault: boolean
+  userWhatsApps?: UserWhatsApp[]
   createdAt: string
   updatedAt: string
 }

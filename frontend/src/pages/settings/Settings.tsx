@@ -190,6 +190,7 @@ export function Settings() {
       wabaId: string
       phoneNumberId: string
       name: string
+      userIds?: number[]
     }) => {
       try {
         setError(null)
@@ -200,6 +201,36 @@ export function Settings() {
           err instanceof Error ? err.message : "Erro ao conectar WhatsApp"
         setError(message)
         throw err
+      }
+    },
+    [fetchConnections]
+  )
+
+  const handleUpdateWhatsApp = useCallback(
+    async (id: number, data: { name?: string; userIds?: number[] }) => {
+      try {
+        setError(null)
+        await api.put(`/whatsapp/${id}`, data)
+        await fetchConnections()
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Erro ao atualizar conexao"
+        setError(message)
+      }
+    },
+    [fetchConnections]
+  )
+
+  const handleDeleteWhatsApp = useCallback(
+    async (id: number) => {
+      try {
+        setError(null)
+        await api.delete(`/whatsapp/${id}`)
+        await fetchConnections()
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Erro ao excluir conexao"
+        setError(message)
       }
     },
     [fetchConnections]
@@ -269,8 +300,11 @@ export function Settings() {
         <TabsContent value="whatsapp" className="mt-6">
           <WhatsAppTab
             connections={connections}
+            users={users}
             isLoading={isLoadingWhatsApp}
             onOnboard={handleOnboard}
+            onUpdateWhatsApp={handleUpdateWhatsApp}
+            onDeleteWhatsApp={handleDeleteWhatsApp}
           />
         </TabsContent>
 

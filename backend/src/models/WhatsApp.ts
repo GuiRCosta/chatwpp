@@ -15,6 +15,7 @@ import {
 
 import Tenant from "./Tenant"
 import Ticket from "./Ticket"
+import UserWhatsApp from "./UserWhatsApp"
 
 @Table({ tableName: "WhatsApps", timestamps: true })
 export default class WhatsApp extends Model {
@@ -74,4 +75,7 @@ export default class WhatsApp extends Model {
 
   @HasMany(() => Ticket)
   tickets!: Ticket[]
+
+  @HasMany(() => UserWhatsApp)
+  userWhatsApps!: UserWhatsApp[]
 }
