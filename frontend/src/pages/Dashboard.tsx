@@ -96,11 +96,14 @@ export function Dashboard() {
             api.get("/opportunities", { params: { status: "open" } })
           ])
 
+        const safeCount = (res: { data: { meta?: { total?: number }; data?: unknown } }) =>
+          res.data.meta?.total ?? (Array.isArray(res.data.data) ? res.data.data.length : 0)
+
         const newStats = {
-          openTickets: ticketsRes.data.data?.count ?? ticketsRes.data.data?.tickets?.length ?? 0,
-          contacts: contactsRes.data.data?.count ?? contactsRes.data.data?.contacts?.length ?? 0,
-          activeCampaigns: campaignsRes.data.data?.count ?? campaignsRes.data.data?.campaigns?.length ?? 0,
-          openOpportunities: opportunitiesRes.data.data?.count ?? opportunitiesRes.data.data?.opportunities?.length ?? 0
+          openTickets: safeCount(ticketsRes),
+          contacts: safeCount(contactsRes),
+          activeCampaigns: safeCount(campaignsRes),
+          openOpportunities: safeCount(opportunitiesRes)
         }
 
         setStats(newStats)

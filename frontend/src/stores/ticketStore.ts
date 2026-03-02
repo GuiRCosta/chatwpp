@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import api from "@/lib/api"
-import type { Ticket, ApiResponse } from "@/types"
+import type { Ticket, PaginatedResponse } from "@/types"
 
 interface TicketState {
   tickets: Ticket[]
@@ -41,22 +41,18 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
         params.search = searchParam
       }
 
-      const response = await api.get<
-        ApiResponse<{
-          tickets: Ticket[]
-          count: number
-          hasMore: boolean
-        }>
-      >("/tickets", { params })
+      const response = await api.get<PaginatedResponse<Ticket>>(
+        "/tickets",
+        { params }
+      )
 
       if (!response.data.success) {
         set({ tickets: [], isLoading: false })
         return
       }
 
-      const data = response.data.data
       set({
-        tickets: Array.isArray(data?.tickets) ? data.tickets : [],
+        tickets: Array.isArray(response.data.data) ? response.data.data : [],
         isLoading: false
       })
     } catch {

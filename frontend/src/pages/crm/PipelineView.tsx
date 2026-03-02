@@ -26,7 +26,8 @@ import type {
   Stage,
   Opportunity,
   Contact,
-  ApiResponse
+  ApiResponse,
+  PaginatedResponse
 } from "@/types"
 
 interface KanbanWithStages extends Kanban {
@@ -38,12 +39,6 @@ interface OpportunityFormData {
   stageId: string
   title: string
   value: string
-}
-
-interface OpportunitiesResponse {
-  opportunities: Opportunity[]
-  count: number
-  hasMore: boolean
 }
 
 export function PipelineView() {
@@ -118,17 +113,17 @@ export function PipelineView() {
           setKanban(kanbanDetailResponse.data.data)
 
           const oppResponse = await api.get<
-            ApiResponse<OpportunitiesResponse>
+            PaginatedResponse<Opportunity>
           >("/opportunities", {
             params: {
               pipelineId: selectedPipelineId
             }
           })
 
-          if (oppResponse.data.success && oppResponse.data.data) {
+          if (oppResponse.data.success) {
             setOpportunities(
-              Array.isArray(oppResponse.data.data.opportunities)
-                ? oppResponse.data.data.opportunities
+              Array.isArray(oppResponse.data.data)
+                ? oppResponse.data.data
                 : []
             )
           }
@@ -144,18 +139,17 @@ export function PipelineView() {
 
   const fetchContacts = async () => {
     try {
-      const response = await api.get<
-        ApiResponse<{ contacts: Contact[]; count: number; hasMore: boolean }>
-      >("/contacts", {
-        params: {
-          limit: 100
+      const response = await api.get<PaginatedResponse<Contact>>(
+        "/contacts",
+        {
+          params: {
+            limit: 100
+          }
         }
-      })
-      if (response.data.success && response.data.data) {
+      )
+      if (response.data.success) {
         setContacts(
-          Array.isArray(response.data.data.contacts)
-            ? response.data.data.contacts
-            : []
+          Array.isArray(response.data.data) ? response.data.data : []
         )
       }
     } catch {

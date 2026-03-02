@@ -9,13 +9,7 @@ import { DataTable, DataTableColumn } from "@/components/shared/DataTable"
 import { SearchInput } from "@/components/shared/SearchInput"
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import api from "@/lib/api"
-import type { Contact, ApiResponse } from "@/types"
-
-interface ContactsResponse {
-  contacts: Contact[]
-  count: number
-  hasMore: boolean
-}
+import type { Contact, PaginatedResponse } from "@/types"
 
 export function ContactList() {
   const navigate = useNavigate()
@@ -37,7 +31,7 @@ export function ContactList() {
   const fetchContacts = async () => {
     try {
       setIsLoading(true)
-      const response = await api.get<ApiResponse<ContactsResponse>>(
+      const response = await api.get<PaginatedResponse<Contact>>(
         "/contacts",
         {
           params: {
@@ -48,11 +42,10 @@ export function ContactList() {
         }
       )
 
-      if (response.data.success && response.data.data) {
-        const data = response.data.data
-        setContacts(Array.isArray(data.contacts) ? data.contacts : [])
-        setTotal(data.count ?? 0)
-        setHasMore(data.hasMore ?? false)
+      if (response.data.success) {
+        setContacts(Array.isArray(response.data.data) ? response.data.data : [])
+        setTotal(response.data.meta?.total ?? 0)
+        setHasMore(response.data.meta?.hasMore ?? false)
       }
     } catch {
       setContacts([])

@@ -17,15 +17,9 @@ import { SearchInput } from "@/components/shared/SearchInput"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
 import api from "@/lib/api"
-import type { Campaign, ApiResponse } from "@/types"
+import type { Campaign, PaginatedResponse } from "@/types"
 
 type CampaignStatus = Campaign["status"]
-
-interface CampaignsResponse {
-  campaigns: Campaign[]
-  count: number
-  hasMore: boolean
-}
 
 type StatusFilter = "all" | CampaignStatus
 
@@ -79,16 +73,15 @@ export function CampaignList() {
         params.status = statusFilter
       }
 
-      const response = await api.get<ApiResponse<CampaignsResponse>>(
+      const response = await api.get<PaginatedResponse<Campaign>>(
         "/campaigns",
         { params }
       )
 
-      if (response.data.success && response.data.data) {
-        const data = response.data.data
-        setCampaigns(Array.isArray(data.campaigns) ? data.campaigns : [])
-        setTotal(data.count ?? 0)
-        setHasMore(data.hasMore ?? false)
+      if (response.data.success) {
+        setCampaigns(Array.isArray(response.data.data) ? response.data.data : [])
+        setTotal(response.data.meta?.total ?? 0)
+        setHasMore(response.data.meta?.hasMore ?? false)
       }
     } catch {
       setCampaigns([])
