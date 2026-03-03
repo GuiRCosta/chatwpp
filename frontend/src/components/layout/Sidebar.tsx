@@ -7,12 +7,20 @@ import {
   Megaphone,
   Settings2,
   LogOut,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
+import { useSidebarStore } from "@/stores/sidebarStore"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar"
 import { Badge } from "@/components/ui/Badge"
 import { Separator } from "@/components/ui/Separator"
 import { cn } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/Tooltip"
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -25,6 +33,7 @@ const navItems = [
 export function Sidebar() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+  const { collapsed, toggle } = useSidebarStore()
   const isSuperAdmin = user?.profile === "superadmin"
 
   const handleLogout = async () => {
@@ -42,20 +51,29 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-[#08090A] text-white flex flex-col">
+    <aside
+      className={cn(
+        "fixed left-0 top-0 z-40 h-screen bg-[#08090A] text-white flex flex-col transition-all duration-300",
+        collapsed ? "w-[72px]" : "w-64"
+      )}
+    >
       {/* Logo Section */}
-      <div className="p-6">
+      <div className={cn("p-6", collapsed && "px-4")}>
         <div className="flex items-center gap-3 group cursor-pointer">
-          <div className="flex gap-1">
+          <div className="flex gap-1 shrink-0">
             <div className="w-1.5 rounded-full bg-white h-6 transition-all duration-300 group-hover:h-8" />
             <div className="w-1.5 rounded-full bg-white h-8 transition-all duration-300 group-hover:h-10" />
             <div className="w-1.5 rounded-full bg-white h-6 transition-all duration-300 group-hover:h-8" />
           </div>
-          <span className="text-xl font-bold tracking-wider">ZFLOW</span>
+          {!collapsed && (
+            <span className="text-xl font-bold tracking-wider">ZFLOW</span>
+          )}
         </div>
-        <p className="text-xs text-gray-400 mt-2 ml-1">
-          Engenharia de Automacao & IA
-        </p>
+        {!collapsed && (
+          <p className="text-xs text-gray-400 mt-2 ml-1">
+            Engenharia de Automacao & IA
+          </p>
+        )}
       </div>
 
       {/* Navigation */}
@@ -63,20 +81,32 @@ export function Sidebar() {
         <ul className="space-y-1">
           {navItems.map((item) => (
             <li key={item.href}>
-              <NavLink
-                to={item.href}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                    isActive
-                      ? "bg-white/10 text-white"
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                  )
-                }
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="text-sm font-medium">{item.name}</span>
-              </NavLink>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <NavLink
+                    to={item.href}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                        collapsed && "justify-center px-2",
+                        isActive
+                          ? "bg-white/10 text-white"
+                          : "text-gray-400 hover:text-white hover:bg-white/5"
+                      )
+                    }
+                  >
+                    <item.icon className="w-5 h-5 shrink-0" />
+                    {!collapsed && (
+                      <span className="text-sm font-medium">{item.name}</span>
+                    )}
+                  </NavLink>
+                </TooltipTrigger>
+                {collapsed && (
+                  <TooltipContent side="right" sideOffset={8}>
+                    {item.name}
+                  </TooltipContent>
+                )}
+              </Tooltip>
             </li>
           ))}
 
@@ -87,20 +117,34 @@ export function Sidebar() {
               </li>
 
               <li>
-                <NavLink
-                  to="/settings"
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                      isActive
-                        ? "bg-white/10 text-white"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
-                    )
-                  }
-                >
-                  <Settings2 className="w-5 h-5" />
-                  <span className="text-sm font-medium">Configuracoes</span>
-                </NavLink>
+                <Tooltip delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <NavLink
+                      to="/settings"
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                          collapsed && "justify-center px-2",
+                          isActive
+                            ? "bg-white/10 text-white"
+                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                        )
+                      }
+                    >
+                      <Settings2 className="w-5 h-5 shrink-0" />
+                      {!collapsed && (
+                        <span className="text-sm font-medium">
+                          Configuracoes
+                        </span>
+                      )}
+                    </NavLink>
+                  </TooltipTrigger>
+                  {collapsed && (
+                    <TooltipContent side="right" sideOffset={8}>
+                      Configuracoes
+                    </TooltipContent>
+                  )}
+                </Tooltip>
               </li>
             </>
           )}
@@ -109,31 +153,77 @@ export function Sidebar() {
 
       {/* User Section */}
       <div className="p-4 border-t border-white/10">
-        <div className="flex items-center gap-3 mb-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user?.avatar} alt={user?.name} />
-            <AvatarFallback className="bg-white/10 text-white text-sm">
-              {user?.name ? getInitials(user.name) : "U"}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
-              {user?.name || "Usuario"}
-            </p>
-            <Badge variant="secondary" className="mt-1 text-xs">
-              {user?.role || "User"}
-            </Badge>
-          </div>
-        </div>
+        {!collapsed ? (
+          <>
+            <div className="flex items-center gap-3 mb-3">
+              <Avatar className="h-10 w-10 shrink-0">
+                <AvatarImage src={user?.avatar} alt={user?.name} />
+                <AvatarFallback className="bg-white/10 text-white text-sm">
+                  {user?.name ? getInitials(user.name) : "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {user?.name || "Usuario"}
+                </p>
+                <Badge variant="secondary" className="mt-1 text-xs">
+                  {user?.role || "User"}
+                </Badge>
+              </div>
+            </div>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Sair</span>
-        </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sair</span>
+            </button>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-2">
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Avatar className="h-9 w-9 cursor-default">
+                  <AvatarImage src={user?.avatar} alt={user?.name} />
+                  <AvatarFallback className="bg-white/10 text-white text-xs">
+                    {user?.name ? getInitials(user.name) : "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                {user?.name || "Usuario"}
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                Sair
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
       </div>
+
+      {/* Collapse Toggle */}
+      <button
+        onClick={toggle}
+        className="absolute -right-3 top-20 h-6 w-6 rounded-full bg-[#08090A] border border-white/20 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/40 transition-all duration-200"
+      >
+        {collapsed ? (
+          <ChevronsRight className="w-3.5 h-3.5" />
+        ) : (
+          <ChevronsLeft className="w-3.5 h-3.5" />
+        )}
+      </button>
     </aside>
   )
 }

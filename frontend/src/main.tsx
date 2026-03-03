@@ -4,14 +4,17 @@ import { BrowserRouter } from "react-router-dom"
 
 import App from "./App"
 import { ErrorBoundary } from "./components/ErrorBoundary"
+import { TooltipProvider } from "./components/ui/Tooltip"
 import "./globals.css"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ErrorBoundary>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <TooltipProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </TooltipProvider>
     </ErrorBoundary>
   </StrictMode>
 )
