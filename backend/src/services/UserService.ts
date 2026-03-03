@@ -5,6 +5,7 @@ import User from "../models/User"
 import Queue from "../models/Queue"
 import UserQueue from "../models/UserQueue"
 import { AppError } from "../helpers/AppError"
+import { sanitizeText } from "../helpers/sanitize"
 import { emitToTenant } from "../libs/socket"
 
 interface ListParams {
@@ -34,7 +35,7 @@ export const listUsers = async ({ tenantId, searchParam = "", pageNumber = "1", 
 
   const { rows: users, count } = await User.findAndCountAll({
     where,
-    attributes: { exclude: ["passwordHash"] },
+    attributes: { exclude: ["passwordHash", "tokenVersion", "loginAttempts", "lockedUntil"] },
     include: [
       { model: UserQueue, as: "userQueues", include: [{ model: Queue, as: "queue" }] }
     ],
@@ -51,7 +52,7 @@ export const listUsers = async ({ tenantId, searchParam = "", pageNumber = "1", 
 export const findUserById = async (id: number, tenantId: number): Promise<User> => {
   const user = await User.findOne({
     where: { id, tenantId },
-    attributes: { exclude: ["passwordHash"] },
+    attributes: { exclude: ["passwordHash", "tokenVersion", "loginAttempts", "lockedUntil"] },
     include: [
       { model: UserQueue, as: "userQueues", include: [{ model: Queue, as: "queue" }] }
     ]
@@ -92,8 +93,8 @@ export const createUser = async (tenantId: number, data: {
 
   const user = await User.create({
     tenantId,
-    name: data.name,
-    email: data.email,
+    name: sanitizeText(data.name),
+    email: sanitizeText(data.email),
     passwordHash,
     profile: data.profile || "user"
   })
@@ -142,8 +143,8 @@ export const updateUser = async (id: number, tenantId: number, data: {
   }
 
   const updateData: Record<string, unknown> = {}
-  if (data.name !== undefined) updateData.name = data.name
-  if (data.email !== undefined) updateData.email = data.email
+  if (data.name !== undefined) updateData.name = sanitizeText(data.name)
+  if (data.email !== undefined) updateData.email = sanitizeText(data.email)
   if (data.profile !== undefined) updateData.profile = data.profile
   if (data.configs !== undefined) updateData.configs = data.configs
   if (data.password) updateData.passwordHash = await hash(data.password, 10)

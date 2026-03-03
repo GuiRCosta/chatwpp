@@ -59,6 +59,13 @@ export default class User extends Model {
   @Column
   tokenVersion!: number
 
+  @Default(0)
+  @Column
+  loginAttempts!: number
+
+  @Column(DataType.DATE)
+  lockedUntil!: Date | null
+
   @CreatedAt
   createdAt!: Date
 

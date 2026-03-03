@@ -17,9 +17,12 @@ interface ListParams {
   tenantId: number
 }
 
+const WHATSAPP_SAFE_EXCLUDE = ["wabaToken", "wabaWebhookSecret"]
+
 export const listWhatsApps = async ({ tenantId }: ListParams): Promise<WhatsApp[]> => {
   const whatsapps = await WhatsApp.findAll({
     where: { tenantId },
+    attributes: { exclude: WHATSAPP_SAFE_EXCLUDE },
     include: [
       { model: UserWhatsApp, as: "userWhatsApps", include: [{ model: User, as: "user", attributes: ["id", "name", "email"] }] }
     ],
@@ -32,6 +35,7 @@ export const listWhatsApps = async ({ tenantId }: ListParams): Promise<WhatsApp[
 export const findWhatsAppById = async (id: number, tenantId: number): Promise<WhatsApp> => {
   const whatsapp = await WhatsApp.findOne({
     where: { id, tenantId },
+    attributes: { exclude: WHATSAPP_SAFE_EXCLUDE },
     include: [
       { model: UserWhatsApp, as: "userWhatsApps", include: [{ model: User, as: "user", attributes: ["id", "name", "email"] }] }
     ]

@@ -100,8 +100,16 @@ function UserFormDialog({
     if (!formData.name.trim()) formErrors.name = "Nome e obrigatorio"
     if (!formData.email.trim()) formErrors.email = "Email e obrigatorio"
     if (!isEditing && !formData.password) formErrors.password = "Senha e obrigatoria"
-    if (formData.password && formData.password.length < 6) {
-      formErrors.password = "Senha deve ter no minimo 6 caracteres"
+    if (formData.password) {
+      if (formData.password.length < 8) {
+        formErrors.password = "Minimo 8 caracteres"
+      } else if (!/[a-z]/.test(formData.password)) {
+        formErrors.password = "Deve conter letra minuscula"
+      } else if (!/[A-Z]/.test(formData.password)) {
+        formErrors.password = "Deve conter letra maiuscula"
+      } else if (!/[0-9]/.test(formData.password)) {
+        formErrors.password = "Deve conter um numero"
+      }
     }
 
     if (Object.keys(formErrors).length > 0) {
@@ -198,7 +206,7 @@ function UserFormDialog({
               type="password"
               value={formData.password}
               onChange={(e) => handleFieldChange("password", e.target.value)}
-              placeholder={isEditing ? "Deixe vazio para manter" : "Minimo 6 caracteres"}
+              placeholder={isEditing ? "Deixe vazio para manter" : "Min. 8 chars, maiuscula, minuscula, numero"}
               className={errors.password ? "border-red-500" : ""}
             />
             {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}

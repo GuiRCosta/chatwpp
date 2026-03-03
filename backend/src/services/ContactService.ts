@@ -5,6 +5,7 @@ import ContactTag from "../models/ContactTag"
 import Tag from "../models/Tag"
 import Ticket from "../models/Ticket"
 import { AppError } from "../helpers/AppError"
+import { sanitizeText } from "../helpers/sanitize"
 import { emitToTenant } from "../libs/socket"
 
 interface ListParams {
@@ -102,9 +103,9 @@ export const createContact = async (tenantId: number, data: {
 
   const contact = await Contact.create({
     tenantId,
-    name: data.name,
+    name: sanitizeText(data.name),
     number: data.number,
-    email: data.email || "",
+    email: data.email ? sanitizeText(data.email) : "",
     isGroup: data.isGroup || false,
     customFields: data.customFields || {}
   })
