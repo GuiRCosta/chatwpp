@@ -113,6 +113,13 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Header com resolucao dinamica de titulo para sub-rotas (/contacts/*, /campaigns/*)
 - [x] Socket events contact:created e contact:updated escutados no useSocket (toast info em tempo real)
 
+### Fase 11: Seguranca Completa - Fase 2 (CONCLUIDA)
+
+- [x] Password complexity: min 8 chars, uppercase, lowercase, numero obrigatorios (backend validator + frontend form)
+- [x] Account lockout: 5 tentativas falhas → bloqueio 30 minutos (loginAttempts + lockedUntil no User model + migration)
+- [x] DTOs: campos sensiveis removidos das respostas (passwordHash, tokenVersion, loginAttempts, lockedUntil no User; wabaToken, wabaWebhookSecret no WhatsApp)
+- [x] XSS sanitization: DOMPurify no backend (isomorphic-dompurify) e frontend (dompurify) para inputs de nome, email em User e Contact services
+
 ### Fase 6: Testes (CONCLUIDA)
 
 - [x] Backend: 66 arquivos, 670 testes, cobertura 93.62% statements
@@ -152,9 +159,9 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 |---|------|-------|---------|
 | A.2.1 | ~~**Verificar tokenVersion no isAuth middleware**~~ | ~~Sessao nao revogada~~ | ~~1h~~ | **CONCLUIDO** |
 | A.2.2 | ~~**Rate limiting em `/auth/login`**~~ | ~~Brute force de senhas~~ | ~~1h~~ | **CONCLUIDO** |
-| A.2.3 | **Account lockout** apos 5 tentativas falhas (desbloqueio por tempo ou admin) | Brute force continuado | 3h |
-| A.2.4 | **Requisitos de complexidade de senha** - validator aceita minimo 6 chars sem regras | Senhas fracas | 1h |
-| A.2.5 | **Implementar DTOs** - models expostos diretamente (passwordHash, tokenVersion, wabaToken vazam nas responses) | Data leak | 4h |
+| A.2.3 | ~~**Account lockout** apos 5 tentativas falhas (desbloqueio por tempo ou admin)~~ | ~~Brute force continuado~~ | ~~3h~~ | **CONCLUIDO** |
+| A.2.4 | ~~**Requisitos de complexidade de senha** - validator aceita minimo 6 chars sem regras~~ | ~~Senhas fracas~~ | ~~1h~~ | **CONCLUIDO** |
+| A.2.5 | ~~**Implementar DTOs** - models expostos diretamente (passwordHash, tokenVersion, wabaToken vazam nas responses)~~ | ~~Data leak~~ | ~~4h~~ | **CONCLUIDO** |
 
 #### A.3 Webhook e Entrada
 
@@ -162,7 +169,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 |---|------|-------|---------|
 | A.3.1 | ~~**Tornar verificacao de assinatura do webhook obrigatoria**~~ | ~~Webhook spoofing~~ | ~~1h~~ | **CONCLUIDO** |
 | A.3.2 | **Completar validators faltando** - Sem validacao: templates, galleries, todolists, calllogs, notifications, settings, chatflows, auto-replies | Injection/invalid data | 6h |
-| A.3.3 | **Sanitizar HTML/XSS no frontend** - sem DOMPurify; cores de tags e mensagens injetadas sem sanitizacao | XSS persistente | 3h |
+| A.3.3 | ~~**Sanitizar HTML/XSS no frontend e backend** - DOMPurify para sanitizacao de inputs~~ | ~~XSS persistente~~ | ~~3h~~ | **CONCLUIDO** |
 | A.3.4 | ~~**Reduzir limite de payload JSON** de 50MB para 10MB~~ | ~~DoS via payload~~ | ~~30min~~ | **CONCLUIDO** |
 | A.3.5 | **Validar conteudo de uploads** alem do MIME type (magic bytes) | Upload de malware | 3h |
 | A.3.6 | **Adicionar CSRF protection** - cookie-parser habilitado mas sem tokens CSRF | CSRF attack | 3h |
@@ -345,6 +352,10 @@ IMPACTO BAIXO
 | ~~Rotas faltando no App.tsx~~ | ~~1h~~ | ~~Navegacao funcional~~ | **CONCLUIDO** |
 | ~~Reduzir payload limit 10MB~~ | ~~30min~~ | ~~DoS prevention~~ | **CONCLUIDO** |
 | ~~.env.example~~ | ~~1h~~ | ~~DX e seguranca~~ | **CONCLUIDO** |
+| ~~Password complexity (8+ chars, upper/lower/num)~~ | ~~1h~~ | ~~Senhas fortes~~ | **CONCLUIDO** |
+| ~~Account lockout (5 tentativas → 30min)~~ | ~~3h~~ | ~~Anti brute-force~~ | **CONCLUIDO** |
+| ~~DTOs (strip sensitive fields)~~ | ~~4h~~ | ~~Data leak prevention~~ | **CONCLUIDO** |
+| ~~XSS sanitization (DOMPurify)~~ | ~~3h~~ | ~~XSS prevention~~ | **CONCLUIDO** |
 
 ---
 
@@ -1197,4 +1208,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time + UX essencial concluidos)*
+*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time + UX essencial + seguranca fase 2 concluidos)*
