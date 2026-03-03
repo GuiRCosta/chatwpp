@@ -11,6 +11,7 @@ import TicketLog from "../models/TicketLog"
 import TicketNote from "../models/TicketNote"
 import { AppError } from "../helpers/AppError"
 import { emitToTenant } from "../libs/socket"
+import { dispatchEvent } from "../libs/webhookDispatcher"
 
 interface ListParams {
   tenantId: number
@@ -20,6 +21,7 @@ interface ListParams {
   status?: string
   userId?: number
   queueIds?: number[]
+  whatsappId?: number
   showAll?: boolean
 }
 
@@ -37,6 +39,7 @@ export const listTickets = async ({
   status,
   userId,
   queueIds,
+  whatsappId,
   showAll = false
 }: ListParams): Promise<ListResult> => {
   const offset = (Number(pageNumber) - 1) * Number(limit)
@@ -53,6 +56,10 @@ export const listTickets = async ({
 
   if (queueIds && queueIds.length > 0) {
     where.queueId = { [Op.in]: queueIds }
+  }
+
+  if (whatsappId) {
+    where.whatsappId = whatsappId
   }
 
   const includeConditions: Array<Record<string, unknown>> = [
@@ -167,6 +174,17 @@ export const createTicket = async (tenantId: number, userId: number, data: {
 
   emitToTenant(tenantId, "ticket:created", createdTicket)
 
+  dispatchEvent(tenantId, "conversation_created", {
+    id: createdTicket.id,
+    status: createdTicket.status,
+    contact: createdTicket.contact
+      ? { id: createdTicket.contact.id, name: createdTicket.contact.name, number: createdTicket.contact.number }
+      : undefined,
+    whatsapp: createdTicket.whatsapp
+      ? { id: createdTicket.whatsapp.id, name: createdTicket.whatsapp.name }
+      : undefined
+  })
+
   return createdTicket
 }
 
@@ -192,6 +210,13 @@ export const updateTicket = async (id: number, tenantId: number, userId: number,
       ticketId: id,
       type: "status_changed",
       payload: { userId, from: oldStatus, to: data.status }
+    })
+
+    dispatchEvent(tenantId, "conversation_status_changed", {
+      id,
+      from: oldStatus,
+      to: data.status,
+      userId
     })
   }
 

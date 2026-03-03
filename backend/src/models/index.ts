@@ -30,6 +30,7 @@ import CallLog from "./CallLog"
 import BulkDispatch from "./BulkDispatch"
 import UserWhatsApp from "./UserWhatsApp"
 import MessageTemplate from "./MessageTemplate"
+import TenantWebhook from "./TenantWebhook"
 
 const models = [
   Tenant,
@@ -63,7 +64,8 @@ const models = [
   CallLog,
   BulkDispatch,
   UserWhatsApp,
-  MessageTemplate
+  MessageTemplate,
+  TenantWebhook
 ]
 
 export {
@@ -98,7 +100,8 @@ export {
   CallLog,
   BulkDispatch,
   UserWhatsApp,
-  MessageTemplate
+  MessageTemplate,
+  TenantWebhook
 }
 
 export default models

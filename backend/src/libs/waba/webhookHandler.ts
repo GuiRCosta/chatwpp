@@ -7,6 +7,7 @@ import Message from "../../models/Message"
 import TicketLog from "../../models/TicketLog"
 import UserWhatsApp from "../../models/UserWhatsApp"
 import { emitToTenant, emitToTicket } from "../socket"
+import { dispatchEvent } from "../webhookDispatcher"
 import { downloadAndSaveMedia } from "./mediaHandler"
 import { logger } from "../../helpers/logger"
 import {
@@ -140,6 +141,15 @@ async function processMessage(
       { model: Contact, as: "contact", attributes: ["id", "name", "number", "profilePicUrl"] }
     ]
   }))
+
+  dispatchEvent(tenantId, "message_created", {
+    id: message.id,
+    body,
+    fromMe: false,
+    ticketId: ticket.id,
+    contact: { id: contact.id, name: contact.name, number: contact.number },
+    whatsapp: { id: whatsapp.id, name: whatsapp.name, number: whatsapp.number }
+  })
 }
 
 async function findOrCreateContact(
@@ -167,6 +177,12 @@ async function findOrCreateContact(
   })
 
   emitToTenant(tenantId, "contact:created", contact)
+
+  dispatchEvent(tenantId, "contact_created", {
+    id: contact.id,
+    name: contact.name,
+    number: contact.number
+  })
 
   return contact
 }
@@ -259,6 +275,13 @@ async function findOrCreateTicket(
       { model: Contact, as: "contact", attributes: ["id", "name", "number", "profilePicUrl"] }
     ]
   }))
+
+  dispatchEvent(tenantId, "conversation_created", {
+    id: ticket.id,
+    status: ticket.status,
+    contact: { id: contact.id, name: contact.name, number: contact.number },
+    whatsapp: { id: whatsapp.id, name: whatsapp.name, number: whatsapp.number }
+  })
 
   return ticket
 }

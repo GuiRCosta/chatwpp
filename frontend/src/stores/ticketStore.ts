@@ -8,10 +8,12 @@ interface TicketState {
   isLoading: boolean
   filter: "open" | "pending" | "closed" | "all"
   searchParam: string
+  whatsappId: number | null
   fetchTickets: () => Promise<void>
   selectTicket: (ticket: Ticket) => void
   setFilter: (filter: "open" | "pending" | "closed" | "all") => void
   setSearchParam: (param: string) => void
+  setWhatsappId: (id: number | null) => void
   updateTicket: (ticket: Ticket) => void
   clearSelection: () => void
 }
@@ -22,12 +24,13 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
   isLoading: false,
   filter: "open",
   searchParam: "",
+  whatsappId: null,
 
   fetchTickets: async () => {
     try {
       set({ isLoading: true })
 
-      const { filter, searchParam } = get()
+      const { filter, searchParam, whatsappId } = get()
       const params: Record<string, string | number> = {
         pageNumber: 1,
         limit: 100
@@ -39,6 +42,10 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
 
       if (searchParam) {
         params.search = searchParam
+      }
+
+      if (whatsappId) {
+        params.whatsappId = whatsappId
       }
 
       const response = await api.get<PaginatedResponse<Ticket>>(
@@ -66,12 +73,16 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
 
   setFilter: (filter: "open" | "pending" | "closed" | "all") => {
     set({ filter })
-    // Auto-fetch with new filter
     get().fetchTickets()
   },
 
   setSearchParam: (param: string) => {
     set({ searchParam: param })
+  },
+
+  setWhatsappId: (id: number | null) => {
+    set({ whatsappId: id })
+    get().fetchTickets()
   },
 
   updateTicket: (updatedTicket: Ticket) => {
@@ -80,7 +91,6 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
         ticket.id === updatedTicket.id ? updatedTicket : ticket
       )
 
-      // Also update selected ticket if it matches
       const updatedSelectedTicket =
         state.selectedTicket?.id === updatedTicket.id
           ? updatedTicket

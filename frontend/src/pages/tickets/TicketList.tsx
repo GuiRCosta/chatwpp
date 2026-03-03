@@ -1,15 +1,23 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Search } from "lucide-react"
+import { Inbox, Search, Smartphone } from "lucide-react"
 import { useTicketStore } from "@/stores/ticketStore"
 import { cn } from "@/lib/utils"
+import api from "@/lib/api"
 import { Input } from "@/components/ui/Input"
 import { ScrollArea } from "@/components/ui/ScrollArea"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/Avatar"
 import { Badge } from "@/components/ui/Badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/Select"
 import ChatPanel from "./ChatPanel"
-import type { Ticket } from "@/types"
+import type { Ticket, WhatsApp } from "@/types"
 
 const statusColors = {
   open: "bg-green-500",
@@ -79,6 +87,11 @@ function TicketCard({ ticket, isSelected, onClick }: {
               <span className="text-xs text-gray-500">
                 {statusLabels[ticket.status]}
               </span>
+              {ticket.whatsapp?.name && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {ticket.whatsapp.name}
+                </Badge>
+              )}
             </div>
 
             {ticket.unreadMessages > 0 && (
@@ -99,16 +112,30 @@ export default function TicketList() {
     selectedTicket,
     isLoading,
     filter,
+    whatsappId,
     fetchTickets,
     selectTicket,
     setFilter,
-    setSearchParam
+    setSearchParam,
+    setWhatsappId
   } = useTicketStore()
 
   const [localSearch, setLocalSearch] = useState("")
+  const [connections, setConnections] = useState<WhatsApp[]>([])
+
+  const fetchConnections = useCallback(async () => {
+    try {
+      const response = await api.get<{ data: WhatsApp[] }>("/whatsapp")
+      const list = Array.isArray(response.data.data) ? response.data.data : []
+      setConnections(list)
+    } catch {
+      setConnections([])
+    }
+  }, [])
 
   useEffect(() => {
     fetchTickets()
+    fetchConnections()
   }, [])
 
   useEffect(() => {
@@ -124,6 +151,10 @@ export default function TicketList() {
     selectTicket(ticket)
   }
 
+  const handleInboxChange = (value: string) => {
+    setWhatsappId(value === "all" ? null : Number(value))
+  }
+
   const filterTabs = [
     { key: "open" as const, label: "Abertos" },
     { key: "pending" as const, label: "Pendentes" },
@@ -137,7 +168,42 @@ export default function TicketList() {
       <div className="w-96 bg-white border-r border-gray-200/60 flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-gray-200/60">
-          <h1 className="text-2xl font-bold text-[#0A0A0A] mb-4">Tickets</h1>
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold text-[#0A0A0A]">Tickets</h1>
+          </div>
+
+          {/* Inbox Selector */}
+          {connections.length > 1 && (
+            <div className="mb-4">
+              <Select
+                value={whatsappId ? String(whatsappId) : "all"}
+                onValueChange={handleInboxChange}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Inbox className="h-4 w-4 text-gray-500" />
+                    <SelectValue placeholder="Todas as caixas" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as caixas</SelectItem>
+                  {connections.map((conn) => (
+                    <SelectItem key={conn.id} value={String(conn.id)}>
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="h-3.5 w-3.5 text-gray-400" />
+                        <span>{conn.name}</span>
+                        {conn.number && (
+                          <span className="text-xs text-gray-400">
+                            {conn.number}
+                          </span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Filter Tabs */}
           <div className="flex gap-2 mb-4">

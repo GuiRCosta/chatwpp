@@ -24,6 +24,7 @@ import { templateRoutes } from "./templateRoutes"
 import { autoreplyRoutes } from "./autoreplyRoutes"
 import { chatflowRoutes } from "./chatflowRoutes"
 import { uploadRoutes } from "./uploadRoutes"
+import { webhookConfigRoutes } from "./webhookConfigRoutes"
 import { isAuth } from "../middleware/isAuth"
 
 const appRoutes = Router()
@@ -60,5 +61,6 @@ appRoutes.use("/templates", templateRoutes)
 appRoutes.use("/auto-replies", autoreplyRoutes)
 appRoutes.use("/chatflows", chatflowRoutes)
 appRoutes.use("/upload", uploadRoutes)
+appRoutes.use("/webhook-configs", webhookConfigRoutes)
 
 export { appRoutes }

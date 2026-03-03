@@ -356,6 +356,18 @@ export interface CallLog {
   updatedAt: string
 }
 
+// Webhooks
+export interface TenantWebhook {
+  id: number
+  url: string
+  events: string[]
+  secret: string | null
+  isActive: boolean
+  tenantId: number
+  createdAt: string
+  updatedAt: string
+}
+
 // Todo Lists
 export interface TodoList {
   id: number

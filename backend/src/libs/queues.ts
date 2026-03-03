@@ -5,6 +5,7 @@ import * as SendMessageJob from "../jobs/SendMessageJob"
 import * as BulkDispatchJob from "../jobs/BulkDispatchJob"
 import * as CampaignJob from "../jobs/CampaignJob"
 import * as CleanupTicketsJob from "../jobs/CleanupTicketsJob"
+import * as WebhookDispatchJob from "../jobs/WebhookDispatchJob"
 import { logger } from "../helpers/logger"
 
 interface QueueDefinition {
@@ -60,6 +61,18 @@ const queueDefinitions: QueueDefinition[] = [
         removeOnFail: 500
       }
     }
+  },
+  {
+    name: WebhookDispatchJob.QUEUE_NAME,
+    processor: WebhookDispatchJob.process,
+    options: {
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 5000 },
+        removeOnComplete: 500,
+        removeOnFail: 2000
+      }
+    }
   }
 ]
 
@@ -67,7 +80,8 @@ const concurrencyMap: Record<string, number> = {
   [SendMessageJob.QUEUE_NAME]: 5,
   [BulkDispatchJob.QUEUE_NAME]: 1,
   [CampaignJob.QUEUE_NAME]: 1,
-  [CleanupTicketsJob.QUEUE_NAME]: 1
+  [CleanupTicketsJob.QUEUE_NAME]: 1,
+  [WebhookDispatchJob.QUEUE_NAME]: 3
 }
 
 const queues: Map<string, Bull.Queue> = new Map()

@@ -5,7 +5,7 @@ import { createTicketSchema, updateTicketSchema } from "../validators/TicketVali
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId, userId, userProfile } = req
-  const { searchParam, pageNumber, limit, status, queueIds, showAll } = req.query
+  const { searchParam, pageNumber, limit, status, queueIds, showAll, whatsappId } = req.query
 
   const parsedQueueIds = queueIds
     ? String(queueIds).split(",").map(Number).filter(Boolean)
@@ -21,6 +21,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     status: status ? String(status) : undefined,
     userId,
     queueIds: parsedQueueIds,
+    whatsappId: whatsappId ? Number(whatsappId) : undefined,
     showAll: showAll === "true" || isAdmin
   })
 

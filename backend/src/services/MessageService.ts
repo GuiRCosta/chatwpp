@@ -3,6 +3,7 @@ import Ticket from "../models/Ticket"
 import Contact from "../models/Contact"
 import { AppError } from "../helpers/AppError"
 import { emitToTicket, emitToTenant } from "../libs/socket"
+import { dispatchEvent } from "../libs/webhookDispatcher"
 import { getQueue } from "../libs/queues"
 import { QUEUE_NAME as SEND_MESSAGE_QUEUE } from "../jobs/SendMessageJob"
 import { logger } from "../helpers/logger"
@@ -93,6 +94,16 @@ export const createMessage = async (ticketId: number, tenantId: number, data: {
       { model: Contact, as: "contact", attributes: ["id", "name", "number", "profilePicUrl"] }
     ]
   }))
+
+  dispatchEvent(tenantId, "message_created", {
+    id: message.id,
+    body: data.body,
+    fromMe: data.fromMe !== false,
+    ticketId,
+    contact: createdMessage?.contact
+      ? { id: createdMessage.contact.id, name: createdMessage.contact.name, number: createdMessage.contact.number }
+      : undefined
+  })
 
   if (data.fromMe !== false) {
     try {

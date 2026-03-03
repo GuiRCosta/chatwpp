@@ -4,6 +4,7 @@ import {
   Smartphone,
   Users,
   ListOrdered,
+  Link2,
   Loader2
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs"
@@ -21,6 +22,7 @@ import { GeneralTab } from "./GeneralTab"
 import { QueuesTab } from "./QueuesTab"
 import { WhatsAppTab } from "./WhatsAppTab"
 import { UsersTab } from "./UsersTab"
+import { WebhooksTab } from "./WebhooksTab"
 
 function parseSettingsFromApi(settings: Setting[]): GeneralSettings {
   return settings.reduce<GeneralSettings>(
@@ -252,7 +254,7 @@ export function Settings() {
       )}
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${canViewUsers ? "grid-cols-5" : "grid-cols-4"}`}>
           <TabsTrigger value="general" className="flex items-center gap-2">
             <SettingsIcon className="h-4 w-4" />
             Geral
@@ -264,6 +266,10 @@ export function Settings() {
           <TabsTrigger value="whatsapp" className="flex items-center gap-2">
             <Smartphone className="h-4 w-4" />
             WhatsApp
+          </TabsTrigger>
+          <TabsTrigger value="webhooks" className="flex items-center gap-2">
+            <Link2 className="h-4 w-4" />
+            Integracoes
           </TabsTrigger>
           {canViewUsers && (
             <TabsTrigger value="users" className="flex items-center gap-2">
@@ -306,6 +312,10 @@ export function Settings() {
             onUpdateWhatsApp={handleUpdateWhatsApp}
             onDeleteWhatsApp={handleDeleteWhatsApp}
           />
+        </TabsContent>
+
+        <TabsContent value="webhooks" className="mt-6">
+          <WebhooksTab />
         </TabsContent>
 
         {canViewUsers && (
