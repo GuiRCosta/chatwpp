@@ -241,14 +241,14 @@ export function Settings() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-[#0A0A0A]">Configuracoes</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0A]">Configuracoes</h1>
         <p className="mt-1 text-gray-500">
           Gerencie as configuracoes do sistema
         </p>
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+        <div className="rounded-[2rem] border border-red-200 bg-red-50 p-4 text-sm text-red-600">
           {error}
         </div>
       )}

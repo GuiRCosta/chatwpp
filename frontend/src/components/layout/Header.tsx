@@ -39,13 +39,13 @@ export function Header({ title = "Dashboard" }: HeaderProps) {
   return (
     <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6">
       <div>
-        <h1 className="text-2xl font-bold text-[#0A0A0A]">{title}</h1>
+        <h1 className="text-xl font-medium tracking-tight text-gray-900">{title}</h1>
       </div>
 
       <div className="flex items-center gap-4">
         {/* Notifications */}
         <button
-          className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
           onClick={() => navigate("/notifications")}
         >
           <Bell className="w-5 h-5 text-gray-600" />

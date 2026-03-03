@@ -40,13 +40,13 @@ export function DataTable<T extends object>({
   return (
     <div
       className={cn(
-        "w-full overflow-hidden rounded-2xl border border-gray-200/60 bg-white shadow-sm",
+        "w-full overflow-hidden rounded-[2rem] border border-gray-200/60 bg-white shadow-sm",
         className
       )}
     >
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
+          <thead className="bg-gray-50 text-left text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-gray-500">
             <tr>
               {columns.map((column) => (
                 <th key={column.key} className="px-4 py-3 font-medium">

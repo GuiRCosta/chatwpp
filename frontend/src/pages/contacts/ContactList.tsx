@@ -157,7 +157,7 @@ export function ContactList() {
   return (
     <div className="space-y-6 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-[#0A0A0A]">Contatos</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0A]">Contatos</h1>
         <Button onClick={() => navigate("/contacts/new")}>
           <Plus className="h-4 w-4" />
           Novo Contato

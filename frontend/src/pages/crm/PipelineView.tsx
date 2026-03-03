@@ -238,7 +238,7 @@ export function PipelineView() {
   return (
     <div className="space-y-6 p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-[#0A0A0A]">CRM</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0A]">CRM</h1>
         <div className="flex items-center gap-4">
           <Select value={selectedPipelineId} onValueChange={setSelectedPipelineId}>
             <SelectTrigger className="w-[250px]">
@@ -270,7 +270,7 @@ export function PipelineView() {
           onMoveOpportunity={handleMoveOpportunity}
         />
       ) : (
-        <div className="flex min-h-[400px] items-center justify-center rounded-2xl border border-gray-200 bg-white">
+        <div className="flex min-h-[400px] items-center justify-center rounded-[2rem] border border-gray-200 bg-white">
           <p className="text-gray-500">
             Selecione um pipeline para visualizar o funil
           </p>

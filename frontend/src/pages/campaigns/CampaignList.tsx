@@ -282,7 +282,7 @@ export function CampaignList() {
   return (
     <div className="space-y-6 p-8 font-[Inter]">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-[#0A0A0A]">Campanhas</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0A]">Campanhas</h1>
         <Button onClick={() => { setCampaignToEdit(undefined); setFormOpen(true) }}>
           <Plus className="h-4 w-4" />
           Nova Campanha
@@ -302,7 +302,7 @@ export function CampaignList() {
             <button
               key={tab.value}
               onClick={() => handleStatusFilter(tab.value)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`rounded-full px-3 py-1.5 text-[0.7rem] font-medium transition-colors ${
                 statusFilter === tab.value
                   ? "bg-blue-600 text-white"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -315,7 +315,7 @@ export function CampaignList() {
       </div>
 
       {!isLoading && campaigns.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl bg-white p-16 text-center shadow-sm">
+        <div className="flex flex-col items-center justify-center rounded-[2rem] bg-white p-16 text-center shadow-sm">
           <Megaphone className="mb-4 h-12 w-12 text-gray-300" />
           <h3 className="mb-2 text-lg font-semibold text-gray-700">
             Nenhuma campanha encontrada

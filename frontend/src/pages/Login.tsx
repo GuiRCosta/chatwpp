@@ -32,7 +32,7 @@ export function Login() {
 
   return (
     <div className="min-h-screen bg-[#08090A] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white rounded-3xl shadow-2xl border-0">
+      <Card className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl border-0">
         <CardHeader className="space-y-4 pb-4">
           {/* Logo */}
           <div className="flex flex-col items-center gap-4">
@@ -42,10 +42,10 @@ export function Login() {
               <div className="w-2 rounded-full bg-[#1A1A1A] h-12 transition-all duration-300 group-hover:h-16" />
             </div>
             <div className="text-center">
-              <h1 className="text-3xl font-bold tracking-wider text-[#0A0A0A]">
+              <h1 className="text-3xl font-semibold tracking-wider text-[#0A0A0A]">
                 ZFLOW
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-gray-500 mt-1">
                 Engenharia de Automacao & IA
               </p>
             </div>
@@ -88,7 +88,7 @@ export function Login() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-full text-sm">
                 {error}
               </div>
             )}

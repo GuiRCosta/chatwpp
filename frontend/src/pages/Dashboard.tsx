@@ -27,7 +27,7 @@ function StatCard({
   isLoading
 }: StatCardProps) {
   return (
-    <Card className="rounded-2xl border border-gray-200/60 bg-white shadow-sm">
+    <Card className="rounded-[2rem] border border-gray-200/60 bg-white shadow-sm">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -38,7 +38,7 @@ function StatCard({
               </>
             ) : (
               <>
-                <p className="mb-1 text-4xl font-bold text-[#0A0A0A]">
+                <p className="mb-1 text-4xl font-semibold tracking-tight text-[#0A0A0A]">
                   {value.toLocaleString()}
                 </p>
                 <p className="text-sm text-gray-500">{label}</p>
@@ -133,7 +133,7 @@ export function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-bold text-[#0A0A0A]">
+        <h1 className="text-3xl font-semibold tracking-tight text-[#0A0A0A]">
           {getGreeting()}, {userName}
         </h1>
         <p className="mt-2 text-gray-500">

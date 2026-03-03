@@ -83,6 +83,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Configuracoes (4 tabs: Geral, Filas, WhatsApp, Usuarios)
 - [x] Componentes: DataTable, SearchInput, StatusBadge, ConfirmDialog, ErrorBoundary
 - [x] Audio: useAudioRecorder hook, AudioRecorder, AudioPreview, AudioPlayer
+- [x] Sidebar colapsavel (toggle expand/collapse com estado persistido em localStorage + tooltips)
 
 ### Fase 6: Testes (CONCLUIDA)
 
@@ -200,7 +201,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 | # | Item | Beneficio | Esforco |
 |---|------|-----------|---------|
-| C.2.1 | **Sidebar responsiva** com drawer mobile | Usabilidade mobile | 4h |
+| C.2.1 | **Sidebar responsiva** com drawer mobile (collapse desktop ja implementado) | Usabilidade mobile | 2h |
 | C.2.2 | **React Hook Form** para formularios | DX, performance, validacao consistente | 8h |
 | C.2.3 | **DataTable scroll horizontal** em mobile | Tabelas visiveis em tela pequena | 2h |
 | C.2.4 | **Chat panel adaptavel** para mobile (fullscreen) | Conversas legiveis em mobile | 4h |
@@ -928,6 +929,10 @@ Para ir para Live mode:
 | 2.7 | Link "Configuracoes" → navega para `/settings` | [ ] |
 | 2.8 | Rota ativa destacada visualmente | [ ] |
 | 2.9 | Secao do usuario no rodape (nome + perfil) | [ ] |
+| 2.10 | Botao de collapse/expand na borda direita do sidebar | [ ] |
+| 2.11 | Sidebar colapsado mostra apenas icones com tooltips | [ ] |
+| 2.12 | Estado do sidebar persistido entre recarregamentos (localStorage) | [ ] |
+| 2.13 | Transicao suave ao expandir/colapsar (300ms) | [ ] |
 
 ### 3. Header (barra superior)
 
@@ -1164,4 +1169,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 2 de marco de 2026*
+*Ultima atualizacao: 3 de marco de 2026*

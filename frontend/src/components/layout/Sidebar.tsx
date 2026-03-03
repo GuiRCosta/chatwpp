@@ -70,7 +70,7 @@ export function Sidebar() {
           )}
         </div>
         {!collapsed && (
-          <p className="text-xs text-gray-400 mt-2 ml-1">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-gray-400 mt-2 ml-1">
             Engenharia de Automacao & IA
           </p>
         )}
@@ -87,7 +87,7 @@ export function Sidebar() {
                     to={item.href}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                        "flex items-center gap-3 px-3 py-2.5 rounded-full transition-all duration-200",
                         collapsed && "justify-center px-2",
                         isActive
                           ? "bg-white/10 text-white"
@@ -97,7 +97,7 @@ export function Sidebar() {
                   >
                     <item.icon className="w-5 h-5 shrink-0" />
                     {!collapsed && (
-                      <span className="text-sm font-medium">{item.name}</span>
+                      <span className="text-[0.7rem] font-medium uppercase tracking-[0.2em]">{item.name}</span>
                     )}
                   </NavLink>
                 </TooltipTrigger>
@@ -123,7 +123,7 @@ export function Sidebar() {
                       to="/settings"
                       className={({ isActive }) =>
                         cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                          "flex items-center gap-3 px-3 py-2.5 rounded-full transition-all duration-200",
                           collapsed && "justify-center px-2",
                           isActive
                             ? "bg-white/10 text-white"
@@ -133,7 +133,7 @@ export function Sidebar() {
                     >
                       <Settings2 className="w-5 h-5 shrink-0" />
                       {!collapsed && (
-                        <span className="text-sm font-medium">
+                        <span className="text-[0.7rem] font-medium uppercase tracking-[0.2em]">
                           Configuracoes
                         </span>
                       )}
@@ -174,7 +174,7 @@ export function Sidebar() {
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
+              className="flex items-center gap-2 w-full px-3 py-2 rounded-full text-[0.7rem] uppercase tracking-[0.2em] text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
             >
               <LogOut className="w-4 h-4" />
               <span>Sair</span>
@@ -200,7 +200,7 @@ export function Sidebar() {
               <TooltipTrigger asChild>
                 <button
                   onClick={handleLogout}
-                  className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
+                  className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition-all duration-200"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>

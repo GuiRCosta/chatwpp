@@ -169,7 +169,7 @@ export default function TicketList() {
         {/* Header */}
         <div className="p-4 border-b border-gray-200/60">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-[#0A0A0A]">Tickets</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-[#0A0A0A]">Tickets</h1>
           </div>
 
           {/* Inbox Selector */}
@@ -212,7 +212,7 @@ export default function TicketList() {
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
                 className={cn(
-                  "px-3 py-1.5 text-sm font-medium rounded-lg transition-colors",
+                  "px-3 py-1.5 text-[0.7rem] font-medium rounded-full transition-colors",
                   filter === tab.key
                     ? "bg-blue-600 text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
