@@ -15,6 +15,7 @@ interface ChatState {
   sendMessage: (ticketId: number, body: string, mediaUrl?: string, mediaType?: string) => Promise<void>
   sendAudioMessage: (ticketId: number, blob: Blob, mimeType: string, duration: number) => Promise<void>
   addMessage: (message: Message) => void
+  updateMessage: (message: Partial<Message> & { id: number }) => void
   clearMessages: () => void
   markAsRead: (ticketId: number) => Promise<void>
 }
@@ -163,6 +164,14 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         messages: [...state.messages, message]
       }
     })
+  },
+
+  updateMessage: (updated: Partial<Message> & { id: number }) => {
+    set((state) => ({
+      messages: state.messages.map((m) =>
+        m.id === updated.id ? { ...m, ...updated } : m
+      )
+    }))
   },
 
   clearMessages: () => {

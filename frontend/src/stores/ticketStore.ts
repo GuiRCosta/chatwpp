@@ -2,19 +2,23 @@ import { create } from "zustand"
 import api from "@/lib/api"
 import type { Ticket, PaginatedResponse } from "@/types"
 
+type TicketFilter = "open" | "pending" | "closed" | "all"
+
 interface TicketState {
   tickets: Ticket[]
   selectedTicket: Ticket | null
   isLoading: boolean
-  filter: "open" | "pending" | "closed" | "all"
+  filter: TicketFilter
   searchParam: string
   whatsappId: number | null
   fetchTickets: () => Promise<void>
   selectTicket: (ticket: Ticket) => void
-  setFilter: (filter: "open" | "pending" | "closed" | "all") => void
+  setFilter: (filter: TicketFilter) => void
   setSearchParam: (param: string) => void
   setWhatsappId: (id: number | null) => void
+  addTicket: (ticket: Ticket) => void
   updateTicket: (ticket: Ticket) => void
+  removeTicket: (ticketId: number) => void
   clearSelection: () => void
 }
 
@@ -85,6 +89,24 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
     get().fetchTickets()
   },
 
+  addTicket: (ticket: Ticket) => {
+    set((state) => {
+      const exists = state.tickets.some((t) => t.id === ticket.id)
+      if (exists) return state
+
+      const { filter, whatsappId } = state
+
+      const matchesFilter =
+        filter === "all" || ticket.status === filter
+      const matchesWhatsApp =
+        !whatsappId || ticket.whatsappId === whatsappId
+
+      if (!matchesFilter || !matchesWhatsApp) return state
+
+      return { tickets: [ticket, ...state.tickets] }
+    })
+  },
+
   updateTicket: (updatedTicket: Ticket) => {
     set((state) => {
       const updatedTickets = state.tickets.map((ticket) =>
@@ -101,6 +123,14 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
         selectedTicket: updatedSelectedTicket
       }
     })
+  },
+
+  removeTicket: (ticketId: number) => {
+    set((state) => ({
+      tickets: state.tickets.filter((t) => t.id !== ticketId),
+      selectedTicket:
+        state.selectedTicket?.id === ticketId ? null : state.selectedTicket
+    }))
   },
 
   clearSelection: () => {

@@ -6,6 +6,7 @@ import { useChatStore } from "@/stores/chatStore"
 import { AudioPlayer } from "@/components/chat/AudioPlayer"
 import { AudioRecorder } from "@/components/chat/AudioRecorder"
 import { useTicketStore } from "@/stores/ticketStore"
+import { getSocket } from "@/lib/socket"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import { ScrollArea } from "@/components/ui/ScrollArea"
@@ -152,12 +153,17 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
     if (ticket) {
       fetchMessages(ticket.id)
       markAsRead(ticket.id)
+
+      const socket = getSocket()
+      socket?.emit("joinTicket", ticket.id)
     }
 
     return () => {
+      const socket = getSocket()
+      socket?.emit("leaveTicket", ticket.id)
       clearMessages()
     }
-  }, [ticket.id])
+  }, [ticket.id, fetchMessages, markAsRead, clearMessages])
 
   useEffect(() => {
     // Auto-scroll to bottom when new messages arrive
