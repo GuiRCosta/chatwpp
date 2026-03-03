@@ -105,6 +105,14 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] ChatPanel: joinTicket/leaveTicket rooms para receber mensagens do ticket aberto
 - [x] Sidebar de tickets atualiza lastMessage e unreadMessages em tempo real
 
+### Fase 10: UX Essencial - Toasts e Rotas (CONCLUIDA)
+
+- [x] Instalacao do sonner (toast library shadcn-compatible) + Toaster global em main.tsx
+- [x] Toast feedback (success/error) em todas as operacoes CRUD: contatos, campanhas, configuracoes gerais, filas, WhatsApp, webhooks, usuarios
+- [x] Rotas faltando adicionadas: /contacts/new e /contacts/:id/edit no App.tsx
+- [x] Header com resolucao dinamica de titulo para sub-rotas (/contacts/*, /campaigns/*)
+- [x] Socket events contact:created e contact:updated escutados no useSocket (toast info em tempo real)
+
 ### Fase 6: Testes (CONCLUIDA)
 
 - [x] Backend: 66 arquivos, 670 testes, cobertura 93.62% statements
@@ -172,7 +180,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 | B.1.1 | ~~**`ticket:updated`** - conectar ao ticketStore~~ | ~~Tickets nao atualizam em tempo real~~ | ~~1h~~ | **CONCLUIDO** |
 | B.1.2 | ~~**`message:created`** - conectar ao chatStore~~ | ~~Mensagens novas nao aparecem sem refresh~~ | ~~1h~~ | **CONCLUIDO** |
 | B.1.3 | ~~**`ticket:created`** - escutar no frontend~~ | ~~Novos tickets invisiveis~~ | ~~30min~~ | **CONCLUIDO** |
-| B.1.4 | **`contact:created`** - Nao escutado no frontend | Contatos criados via webhook nao aparecem | 30min |
+| B.1.4 | ~~**`contact:created`** - Nao escutado no frontend~~ | ~~Contatos criados via webhook nao aparecem~~ | ~~30min~~ | **CONCLUIDO** |
 | B.1.5 | **Eventos de campanha** - started/updated/cancelled nao escutados | Status de campanha nao atualiza live | 30min |
 
 #### B.2 Health Check e Resiliencia
@@ -186,7 +194,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 | # | Item | Impacto | Esforco |
 |---|------|---------|---------|
-| B.3.1 | **`/contacts/new`** e **`/contacts/:id/edit`** no App.tsx | Navegacao quebrada | 30min |
+| B.3.1 | ~~**`/contacts/new`** e **`/contacts/:id/edit`** no App.tsx~~ | ~~Navegacao quebrada~~ | ~~30min~~ | **CONCLUIDO** |
 | B.3.2 | **`/campaigns/new`** e **`/campaigns/:id/edit`** no App.tsx | Navegacao quebrada | 30min |
 | B.3.3 | **`/campaigns/:id`** - pagina de detalhe (referenciada mas nao existe) | Nao da pra ver detalhes | 4h |
 
@@ -194,7 +202,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 | # | Item | Impacto | Esforco |
 |---|------|---------|---------|
-| B.4.1 | **Sistema de toast/snackbar** - Nenhum feedback visual para acoes (sucesso/erro) | UX confusa | 2h |
+| B.4.1 | ~~**Sistema de toast/snackbar** - Nenhum feedback visual para acoes (sucesso/erro)~~ | ~~UX confusa~~ | ~~2h~~ | **CONCLUIDO** |
 | B.4.2 | **Loading em transicoes de rota** | Sensacao de travamento | 1h |
 | B.4.3 | **Forgot password** - link existe no login mas nao implementado | Usuarios trancados fora | 6h |
 
@@ -333,8 +341,8 @@ IMPACTO BAIXO
 | ~~Webhook signature obrigatoria~~ | ~~1h~~ | ~~Prevenir spoofing~~ | **CONCLUIDO** |
 | ~~Conectar socket ticket:updated~~ | ~~1h~~ | ~~Real-time funcional~~ | **CONCLUIDO** |
 | ~~Conectar socket message:created~~ | ~~1h~~ | ~~Chat em tempo real~~ | **CONCLUIDO** |
-| Sistema de toast (sonner) | 2h | UX dramaticamente melhor |
-| Rotas faltando no App.tsx | 1h | Navegacao funcional |
+| ~~Sistema de toast (sonner)~~ | ~~2h~~ | ~~UX dramaticamente melhor~~ | **CONCLUIDO** |
+| ~~Rotas faltando no App.tsx~~ | ~~1h~~ | ~~Navegacao funcional~~ | **CONCLUIDO** |
 | ~~Reduzir payload limit 10MB~~ | ~~30min~~ | ~~DoS prevention~~ | **CONCLUIDO** |
 | ~~.env.example~~ | ~~1h~~ | ~~DX e seguranca~~ | **CONCLUIDO** |
 
@@ -346,7 +354,7 @@ IMPACTO BAIXO
 |---------|--------|--------------|
 | Token storage | localStorage vs httpOnly cookie | httpOnly cookie |
 | Form library | Manual vs React Hook Form | React Hook Form |
-| Toast library | sonner vs react-hot-toast | sonner (shadcn compat) |
+| ~~Toast library~~ | ~~sonner vs react-hot-toast~~ | ~~sonner (shadcn compat)~~ | **DECIDIDO: sonner** |
 | API docs | Swagger vs Redoc | Swagger |
 | Monitoramento | Sentry vs Datadog | Sentry (custo) |
 | Media storage | Local fs vs S3 vs R2 | Cloudflare R2 |
@@ -1189,4 +1197,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time concluidos)*
+*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time + UX essencial concluidos)*
