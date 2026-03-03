@@ -9,6 +9,9 @@ import { ContactList } from "@/pages/contacts/ContactList"
 import { PipelineView } from "@/pages/crm/PipelineView"
 import { CampaignList } from "@/pages/campaigns/CampaignList"
 import { Settings } from "@/pages/settings/Settings"
+import { PrivacyPolicy } from "@/pages/legal/PrivacyPolicy"
+import { TermsOfService } from "@/pages/legal/TermsOfService"
+import { DataDeletion } from "@/pages/legal/DataDeletion"
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -30,6 +33,9 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/data-deletion" element={<DataDeletion />} />
       <Route
         path="/"
         element={
