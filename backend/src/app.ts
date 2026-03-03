@@ -24,13 +24,13 @@ app.use(helmet())
 app.use(cookieParser())
 app.use(
   express.json({
-    limit: "50mb",
+    limit: "10mb",
     verify: (req: express.Request, _res, buf) => {
       (req as express.Request & { rawBody?: Buffer }).rawBody = buf
     }
   })
 )
-app.use(express.urlencoded({ extended: true, limit: "50mb" }))
+app.use(express.urlencoded({ extended: true, limit: "10mb" }))
 
 app.use(
   "/public",

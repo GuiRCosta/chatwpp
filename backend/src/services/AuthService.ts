@@ -30,7 +30,7 @@ interface TokenPayload {
   tokenVersion: number
 }
 
-const createTokens = (payload: { id: number; tenantId: number; profile: string }): { token: string; refreshToken: string } => {
+const createTokens = (payload: { id: number; tenantId: number; profile: string; tokenVersion: number }): { token: string; refreshToken: string } => {
   const token = sign(payload, authConfig.secret, {
     expiresIn: authConfig.expiresIn
   } as Parameters<typeof sign>[2])
@@ -64,7 +64,8 @@ export const login = async ({ email, password }: LoginPayload): Promise<TokenRes
   const tokenPayload = {
     id: user.id,
     tenantId: user.tenantId,
-    profile: user.profile
+    profile: user.profile,
+    tokenVersion: user.tokenVersion
   }
 
   const { token, refreshToken } = createTokens(tokenPayload)
@@ -94,10 +95,15 @@ export const refreshTokens = async (oldRefreshToken: string): Promise<{ token: s
       throw new AppError("User not found", 401)
     }
 
+    if (user.tokenVersion !== decoded.tokenVersion) {
+      throw new AppError("Token revoked", 401)
+    }
+
     const tokenPayload = {
       id: user.id,
       tenantId: user.tenantId,
-      profile: user.profile
+      profile: user.profile,
+      tokenVersion: user.tokenVersion
     }
 
     return createTokens(tokenPayload)

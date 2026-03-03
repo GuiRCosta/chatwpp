@@ -84,6 +84,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Componentes: DataTable, SearchInput, StatusBadge, ConfirmDialog, ErrorBoundary
 - [x] Audio: useAudioRecorder hook, AudioRecorder, AudioPreview, AudioPlayer
 - [x] Sidebar colapsavel (toggle expand/collapse com estado persistido em localStorage + tooltips)
+- [x] Design system alignment (tipografia, border-radius, badges, botoes, nav links, filter tabs, headings em 15 arquivos)
 
 ### Fase 6: Testes (CONCLUIDA)
 
@@ -1169,4 +1170,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 3 de marco de 2026*
+*Ultima atualizacao: 3 de marco de 2026 (design system concluido)*

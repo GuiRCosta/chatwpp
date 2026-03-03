@@ -23,14 +23,17 @@ export const verify = async (req: Request, res: Response): Promise<Response | vo
 export const receive = async (req: Request, res: Response): Promise<Response> => {
   const appSecret = process.env.META_APP_SECRET
 
-  if (appSecret) {
-    const signature = req.headers["x-hub-signature-256"] as string | undefined
-    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody
+  if (!appSecret) {
+    logger.error("META_APP_SECRET not configured - rejecting webhook")
+    return res.status(500).json({ error: "Webhook signature verification not configured" })
+  }
 
-    if (rawBody && !verifySignature(rawBody, signature, appSecret)) {
-      logger.warn("Invalid webhook signature")
-      return res.status(403).json({ error: "Invalid signature" })
-    }
+  const signature = req.headers["x-hub-signature-256"] as string | undefined
+  const rawBody = (req as Request & { rawBody?: Buffer }).rawBody
+
+  if (!rawBody || !verifySignature(rawBody, signature, appSecret)) {
+    logger.warn("Invalid webhook signature")
+    return res.status(403).json({ error: "Invalid signature" })
   }
 
   res.status(200).json({ status: "received" })

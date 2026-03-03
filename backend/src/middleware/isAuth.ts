@@ -2,11 +2,13 @@ import { Request, Response, NextFunction } from "express"
 import { verify } from "jsonwebtoken"
 import authConfig from "../config/auth"
 import { AppError } from "../helpers/AppError"
+import User from "../models/User"
 
 interface TokenPayload {
   id: number
   tenantId: number
   profile: string
+  tokenVersion: number
   iat: number
   exp: number
 }
@@ -21,7 +23,7 @@ declare global {
   }
 }
 
-export function isAuth(req: Request, _res: Response, next: NextFunction): void {
+export async function isAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization
 
   if (!authHeader) {
@@ -37,12 +39,23 @@ export function isAuth(req: Request, _res: Response, next: NextFunction): void {
   try {
     const decoded = verify(token, authConfig.secret) as TokenPayload
 
+    const user = await User.findByPk(decoded.id, {
+      attributes: ["id", "tokenVersion"]
+    })
+
+    if (!user || user.tokenVersion !== decoded.tokenVersion) {
+      throw new AppError("Token revoked", 401)
+    }
+
     req.userId = decoded.id
     req.tenantId = decoded.tenantId
     req.userProfile = decoded.profile
 
     return next()
-  } catch {
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error
+    }
     throw new AppError("Invalid or expired token", 401)
   }
 }
