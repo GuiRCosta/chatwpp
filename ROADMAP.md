@@ -85,6 +85,25 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Audio: useAudioRecorder hook, AudioRecorder, AudioPreview, AudioPlayer
 - [x] Sidebar colapsavel (toggle expand/collapse com estado persistido em localStorage + tooltips)
 - [x] Design system alignment (tipografia, border-radius, badges, botoes, nav links, filter tabs, headings em 15 arquivos)
+- [x] Header dinamico por rota (titulo muda conforme pagina ativa: Dashboard, Tickets, Contatos, CRM, Campanhas, Configuracoes)
+- [x] Facebook SDK configurado (VITE_META_APP_ID e VITE_META_CONFIG_ID como GitHub Actions variables)
+
+### Fase 8: Seguranca Quick Wins (CONCLUIDA)
+
+- [x] Validacao de JWT_SECRET e JWT_REFRESH_SECRET no startup (crash se ausente ou default)
+- [x] Verificacao de tokenVersion no isAuth middleware (revogacao imediata de sessoes)
+- [x] Rate limiting em /auth/login (5 tentativas por 15min por IP)
+- [x] Webhook signature verification obrigatoria (rejeita se META_APP_SECRET ausente)
+- [x] Payload JSON/urlencoded reduzido de 50MB para 10MB
+- [x] .env.example com todas variaveis documentadas
+
+### Fase 9: Socket.IO Real-Time (CONCLUIDA)
+
+- [x] useSocket reescrito: ticket:created/updated/deleted, message:created/updated conectados aos stores
+- [x] ticketStore: addTicket (com filtros) e removeTicket
+- [x] chatStore: updateMessage para ACK updates em tempo real
+- [x] ChatPanel: joinTicket/leaveTicket rooms para receber mensagens do ticket aberto
+- [x] Sidebar de tickets atualiza lastMessage e unreadMessages em tempo real
 
 ### Fase 6: Testes (CONCLUIDA)
 
@@ -114,17 +133,17 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 | # | Item | Risco | Esforco |
 |---|------|-------|---------|
-| A.1.1 | **Validar que JWT secrets foram configurados** no startup - `auth.ts` usa "change-this-secret-in-production" como fallback | Token forgery | 1h |
+| A.1.1 | ~~**Validar que JWT secrets foram configurados** no startup~~ | ~~Token forgery~~ | ~~1h~~ | **CONCLUIDO** |
 | A.1.2 | **Encriptar wabaToken** no banco - armazenado em texto plano no model WhatsApp | Token leak via SQL injection ou backup | 4h |
 | A.1.3 | **Mover tokens para httpOnly cookies** - localStorage vulneravel a XSS (qualquer script injetado rouba o token) | Session hijacking | 6h |
-| A.1.4 | **Criar `.env.example`** com todas variaveis obrigatorias documentadas | Misconfiguracao em deploy | 1h |
+| A.1.4 | ~~**Criar `.env.example`** com todas variaveis obrigatorias documentadas~~ | ~~Misconfiguracao em deploy~~ | ~~1h~~ | **CONCLUIDO** |
 
 #### A.2 Autenticacao
 
 | # | Item | Risco | Esforco |
 |---|------|-------|---------|
-| A.2.1 | **Verificar tokenVersion no isAuth middleware** - logout incrementa tokenVersion mas isAuth NAO valida; tokens antigos continuam validos ate expirar (15min) | Sessao nao revogada | 1h |
-| A.2.2 | **Rate limiting em `/auth/login`** - sem protecao contra brute force (global 300/min nao e suficiente) | Brute force de senhas | 1h |
+| A.2.1 | ~~**Verificar tokenVersion no isAuth middleware**~~ | ~~Sessao nao revogada~~ | ~~1h~~ | **CONCLUIDO** |
+| A.2.2 | ~~**Rate limiting em `/auth/login`**~~ | ~~Brute force de senhas~~ | ~~1h~~ | **CONCLUIDO** |
 | A.2.3 | **Account lockout** apos 5 tentativas falhas (desbloqueio por tempo ou admin) | Brute force continuado | 3h |
 | A.2.4 | **Requisitos de complexidade de senha** - validator aceita minimo 6 chars sem regras | Senhas fracas | 1h |
 | A.2.5 | **Implementar DTOs** - models expostos diretamente (passwordHash, tokenVersion, wabaToken vazam nas responses) | Data leak | 4h |
@@ -133,10 +152,10 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 | # | Item | Risco | Esforco |
 |---|------|-------|---------|
-| A.3.1 | **Tornar verificacao de assinatura do webhook obrigatoria** - se `META_APP_SECRET` nao esta setado, aceita qualquer request | Webhook spoofing | 1h |
+| A.3.1 | ~~**Tornar verificacao de assinatura do webhook obrigatoria**~~ | ~~Webhook spoofing~~ | ~~1h~~ | **CONCLUIDO** |
 | A.3.2 | **Completar validators faltando** - Sem validacao: templates, galleries, todolists, calllogs, notifications, settings, chatflows, auto-replies | Injection/invalid data | 6h |
 | A.3.3 | **Sanitizar HTML/XSS no frontend** - sem DOMPurify; cores de tags e mensagens injetadas sem sanitizacao | XSS persistente | 3h |
-| A.3.4 | **Reduzir limite de payload JSON** de 50MB para 10MB | DoS via payload | 30min |
+| A.3.4 | ~~**Reduzir limite de payload JSON** de 50MB para 10MB~~ | ~~DoS via payload~~ | ~~30min~~ | **CONCLUIDO** |
 | A.3.5 | **Validar conteudo de uploads** alem do MIME type (magic bytes) | Upload de malware | 3h |
 | A.3.6 | **Adicionar CSRF protection** - cookie-parser habilitado mas sem tokens CSRF | CSRF attack | 3h |
 
@@ -150,9 +169,9 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 | # | Item | Impacto | Esforco |
 |---|------|---------|---------|
-| B.1.1 | **`ticket:updated`** - Listener faz `console.info` em vez de atualizar ticketStore | Tickets nao atualizam em tempo real | 1h |
-| B.1.2 | **`message:created`** - Listener faz `console.info` em vez de atualizar chatStore | Mensagens novas nao aparecem sem refresh | 1h |
-| B.1.3 | **`ticket:created`** - Nao escutado no frontend | Novos tickets invisiveis | 30min |
+| B.1.1 | ~~**`ticket:updated`** - conectar ao ticketStore~~ | ~~Tickets nao atualizam em tempo real~~ | ~~1h~~ | **CONCLUIDO** |
+| B.1.2 | ~~**`message:created`** - conectar ao chatStore~~ | ~~Mensagens novas nao aparecem sem refresh~~ | ~~1h~~ | **CONCLUIDO** |
+| B.1.3 | ~~**`ticket:created`** - escutar no frontend~~ | ~~Novos tickets invisiveis~~ | ~~30min~~ | **CONCLUIDO** |
 | B.1.4 | **`contact:created`** - Nao escutado no frontend | Contatos criados via webhook nao aparecem | 30min |
 | B.1.5 | **Eventos de campanha** - started/updated/cancelled nao escutados | Status de campanha nao atualiza live | 30min |
 
@@ -308,16 +327,16 @@ IMPACTO BAIXO
 
 | Item | Esforco | Impacto |
 |------|---------|---------|
-| Verificar tokenVersion no isAuth | 1h | Seguranca critica |
-| Rate limit em /auth/login | 1h | Brute force prevention |
-| Validar JWT secrets no startup | 1h | Prevenir deploy inseguro |
-| Webhook signature obrigatoria | 1h | Prevenir spoofing |
-| Conectar socket ticket:updated | 1h | Real-time funcional |
-| Conectar socket message:created | 1h | Chat em tempo real |
+| ~~Verificar tokenVersion no isAuth~~ | ~~1h~~ | ~~Seguranca critica~~ | **CONCLUIDO** |
+| ~~Rate limit em /auth/login~~ | ~~1h~~ | ~~Brute force prevention~~ | **CONCLUIDO** |
+| ~~Validar JWT secrets no startup~~ | ~~1h~~ | ~~Prevenir deploy inseguro~~ | **CONCLUIDO** |
+| ~~Webhook signature obrigatoria~~ | ~~1h~~ | ~~Prevenir spoofing~~ | **CONCLUIDO** |
+| ~~Conectar socket ticket:updated~~ | ~~1h~~ | ~~Real-time funcional~~ | **CONCLUIDO** |
+| ~~Conectar socket message:created~~ | ~~1h~~ | ~~Chat em tempo real~~ | **CONCLUIDO** |
 | Sistema de toast (sonner) | 2h | UX dramaticamente melhor |
 | Rotas faltando no App.tsx | 1h | Navegacao funcional |
-| Reduzir payload limit 10MB | 30min | DoS prevention |
-| .env.example | 1h | DX e seguranca |
+| ~~Reduzir payload limit 10MB~~ | ~~30min~~ | ~~DoS prevention~~ | **CONCLUIDO** |
+| ~~.env.example~~ | ~~1h~~ | ~~DX e seguranca~~ | **CONCLUIDO** |
 
 ---
 
@@ -1170,4 +1189,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 3 de marco de 2026 (design system concluido)*
+*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time concluidos)*
