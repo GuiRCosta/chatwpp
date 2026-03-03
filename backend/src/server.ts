@@ -38,7 +38,7 @@ async function bootstrap(): Promise<void> {
   initSocket(httpServer)
 
   httpServer.listen(PORT, () => {
-    logger.info(`ZFlow backend running on port ${PORT}`)
+    logger.info(`Nuvio backend running on port ${PORT}`)
     logger.info(`Environment: ${process.env.NODE_ENV || "development"}`)
   })
 

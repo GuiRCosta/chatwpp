@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test"
 test.describe("Authentication", () => {
   test("should show login page", async ({ page }) => {
     await page.goto("/login")
-    await expect(page.getByRole("heading", { name: /zflow/i })).toBeVisible()
+    await expect(page.getByRole("heading", { name: /nuvio/i })).toBeVisible()
     await expect(page.getByLabel(/email/i)).toBeVisible()
     await expect(page.getByLabel(/senha/i)).toBeVisible()
   })
@@ -15,7 +15,7 @@ test.describe("Authentication", () => {
 
   test("should login with valid credentials", async ({ page }) => {
     await page.goto("/login")
-    await page.getByLabel(/email/i).fill("admin@zflow.com")
+    await page.getByLabel(/email/i).fill("admin@nuvio.com")
     await page.getByLabel(/senha/i).fill("admin123")
     await page.getByRole("button", { name: /entrar/i }).click()
 

@@ -23,8 +23,8 @@ export async function process(job: Job<WebhookDispatchData>): Promise<void> {
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "X-ZFlow-Event": event,
-    "User-Agent": "ZFlow-Webhook/1.0"
+    "X-Nuvio-Event": event,
+    "User-Agent": "Nuvio-Webhook/1.0"
   }
 
   if (secret) {
@@ -32,7 +32,7 @@ export async function process(job: Job<WebhookDispatchData>): Promise<void> {
       .createHmac("sha256", secret)
       .update(body)
       .digest("hex")
-    headers["X-ZFlow-Signature"] = signature
+    headers["X-Nuvio-Signature"] = signature
   }
 
   const response = await fetch(url, {

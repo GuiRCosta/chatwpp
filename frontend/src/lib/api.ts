@@ -10,7 +10,7 @@ const api = axios.create({
 // Request interceptor: add Bearer token from localStorage
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("zflow:token")
+    const token = localStorage.getItem("nuvio:token")
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -32,7 +32,7 @@ api.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        const refreshToken = localStorage.getItem("zflow:refreshToken")
+        const refreshToken = localStorage.getItem("nuvio:refreshToken")
 
         if (!refreshToken) {
           throw new Error("No refresh token available")
@@ -45,8 +45,8 @@ api.interceptors.response.use(
         if (response.data.success) {
           const { token, refreshToken: newRefreshToken } = response.data.data
 
-          localStorage.setItem("zflow:token", token)
-          localStorage.setItem("zflow:refreshToken", newRefreshToken)
+          localStorage.setItem("nuvio:token", token)
+          localStorage.setItem("nuvio:refreshToken", newRefreshToken)
 
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${token}`
@@ -54,9 +54,9 @@ api.interceptors.response.use(
         }
       } catch (refreshError) {
         // Refresh failed, clear tokens and redirect to login
-        localStorage.removeItem("zflow:token")
-        localStorage.removeItem("zflow:refreshToken")
-        localStorage.removeItem("zflow:user")
+        localStorage.removeItem("nuvio:token")
+        localStorage.removeItem("nuvio:refreshToken")
+        localStorage.removeItem("nuvio:user")
 
         window.location.href = "/login"
         return Promise.reject(refreshError)

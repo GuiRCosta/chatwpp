@@ -19,7 +19,7 @@ describe("api", () => {
       let capturedAuth = ""
 
       vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
-        if (key === "zflow:token") return "my-jwt-token"
+        if (key === "nuvio:token") return "my-jwt-token"
         return null
       })
 
@@ -58,8 +58,8 @@ describe("api", () => {
       let attempt = 0
 
       vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
-        if (key === "zflow:token") return "expired-token"
-        if (key === "zflow:refreshToken") return "valid-refresh-token"
+        if (key === "nuvio:token") return "expired-token"
+        if (key === "nuvio:refreshToken") return "valid-refresh-token"
         return null
       })
 
@@ -92,17 +92,17 @@ describe("api", () => {
 
       expect(response.data.success).toBe(true)
       expect(response.data.data.value).toBe("protected-data")
-      expect(localStorage.setItem).toHaveBeenCalledWith("zflow:token", "new-jwt-token")
+      expect(localStorage.setItem).toHaveBeenCalledWith("nuvio:token", "new-jwt-token")
       expect(localStorage.setItem).toHaveBeenCalledWith(
-        "zflow:refreshToken",
+        "nuvio:refreshToken",
         "new-refresh-token"
       )
     })
 
     it("on refresh failure, clears tokens and redirects to /login", async () => {
       vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
-        if (key === "zflow:token") return "expired-token"
-        if (key === "zflow:refreshToken") return "invalid-refresh-token"
+        if (key === "nuvio:token") return "expired-token"
+        if (key === "nuvio:refreshToken") return "invalid-refresh-token"
         return null
       })
 
@@ -123,9 +123,9 @@ describe("api", () => {
 
       await expect(api.get("/secure-endpoint")).rejects.toThrow()
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:token")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:refreshToken")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:user")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:token")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:refreshToken")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:user")
       expect(window.location.href).toBe("/login")
     })
 
@@ -143,9 +143,9 @@ describe("api", () => {
 
       await expect(api.get("/no-refresh")).rejects.toThrow()
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:token")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:refreshToken")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:user")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:token")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:refreshToken")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:user")
       expect(window.location.href).toBe("/login")
     })
 

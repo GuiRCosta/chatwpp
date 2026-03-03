@@ -38,9 +38,9 @@ export const useAuthStore = create<AuthState>()((set) => ({
       const { token, refreshToken, user } = response.data.data
 
       // Store in localStorage
-      localStorage.setItem("zflow:token", token)
-      localStorage.setItem("zflow:refreshToken", refreshToken)
-      localStorage.setItem("zflow:user", JSON.stringify(user))
+      localStorage.setItem("nuvio:token", token)
+      localStorage.setItem("nuvio:refreshToken", refreshToken)
+      localStorage.setItem("nuvio:user", JSON.stringify(user))
 
       // Update state
       set({
@@ -65,9 +65,9 @@ export const useAuthStore = create<AuthState>()((set) => ({
       console.error("Logout error:", error)
     } finally {
       // Clear localStorage
-      localStorage.removeItem("zflow:token")
-      localStorage.removeItem("zflow:refreshToken")
-      localStorage.removeItem("zflow:user")
+      localStorage.removeItem("nuvio:token")
+      localStorage.removeItem("nuvio:refreshToken")
+      localStorage.removeItem("nuvio:user")
 
       // Disconnect socket
       disconnectSocket()
@@ -82,8 +82,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
 
   initialize: () => {
-    const token = localStorage.getItem("zflow:token")
-    const userStr = localStorage.getItem("zflow:user")
+    const token = localStorage.getItem("nuvio:token")
+    const userStr = localStorage.getItem("nuvio:user")
 
     if (token && userStr) {
       try {
@@ -100,9 +100,9 @@ export const useAuthStore = create<AuthState>()((set) => ({
       } catch (error) {
         console.error("Failed to initialize auth state:", error)
         // Clear invalid data
-        localStorage.removeItem("zflow:token")
-        localStorage.removeItem("zflow:refreshToken")
-        localStorage.removeItem("zflow:user")
+        localStorage.removeItem("nuvio:token")
+        localStorage.removeItem("nuvio:refreshToken")
+        localStorage.removeItem("nuvio:user")
       }
     }
   }

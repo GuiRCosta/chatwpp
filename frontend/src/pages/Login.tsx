@@ -43,10 +43,10 @@ export function Login() {
             </div>
             <div className="text-center">
               <h1 className="text-3xl font-semibold tracking-wider text-[#0A0A0A]">
-                ZFLOW
+                NUVIO
               </h1>
               <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-gray-500 mt-1">
-                Engenharia de Automacao & IA
+                CRM & Atendimento inteligente
               </p>
             </div>
           </div>

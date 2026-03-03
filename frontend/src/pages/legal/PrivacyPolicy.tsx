@@ -15,7 +15,7 @@ export function PrivacyPolicy() {
               1. Introducao
             </h2>
             <p>
-              A IDEVA Reserva ("nos", "nosso") opera a plataforma ZFlow CRM
+              A IDEVA Reserva ("nos", "nosso") opera a plataforma Nuvio
               ("Servico"), acessivel em crm.ideva.ai. Esta politica descreve
               como coletamos, usamos, armazenamos e protegemos suas informacoes
               pessoais ao utilizar nosso Servico.
@@ -172,7 +172,7 @@ export function PrivacyPolicy() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-400">
-          ZFlow CRM &copy; {new Date().getFullYear()} IDEVA Reserva
+          Nuvio &copy; {new Date().getFullYear()} IDEVA Reserva
         </div>
       </div>
     </div>

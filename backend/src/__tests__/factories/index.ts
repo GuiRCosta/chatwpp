@@ -34,7 +34,7 @@ export function buildTenant(overrides: Record<string, unknown> = {}) {
   const data = {
     id: 1,
     name: "Test Tenant",
-    domain: "test.zflow.com",
+    domain: "test.nuvio.com",
     status: "active",
     maxUsers: 10,
     maxConnections: 5,

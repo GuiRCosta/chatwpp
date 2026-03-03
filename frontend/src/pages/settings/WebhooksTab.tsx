@@ -407,7 +407,7 @@ export function WebhooksTab() {
               </div>
               <p className="text-xs text-gray-500">
                 O secret sera usado para assinar os payloads via header
-                X-ZFlow-Signature
+                X-Nuvio-Signature
               </p>
             </div>
           </div>

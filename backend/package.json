@@ -1,7 +1,7 @@
 {
-  "name": "zflow-backend",
+  "name": "nuvio-backend",
   "version": "1.0.0",
-  "description": "ZFlow - Multi-channel customer service platform",
+  "description": "Nuvio - CRM & Atendimento inteligente",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
@@ -18,7 +18,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "author": "ZFlow",
+  "author": "Nuvio",
   "license": "MIT",
   "dependencies": {
     "@bull-board/api": "^5.21.1",

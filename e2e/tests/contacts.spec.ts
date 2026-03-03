@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test"
 test.describe("Contacts", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/login")
-    await page.getByLabel(/email/i).fill("admin@zflow.com")
+    await page.getByLabel(/email/i).fill("admin@nuvio.com")
     await page.getByLabel(/senha/i).fill("admin123")
     await page.getByRole("button", { name: /entrar/i }).click()
     await expect(page).toHaveURL(/.*dashboard/)

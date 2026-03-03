@@ -69,10 +69,10 @@ describe("authStore", () => {
     it("stores token, refreshToken, and user in localStorage", async () => {
       await useAuthStore.getState().login("test@example.com", "password123")
 
-      expect(localStorage.setItem).toHaveBeenCalledWith("zflow:token", "test-jwt-token")
-      expect(localStorage.setItem).toHaveBeenCalledWith("zflow:refreshToken", "test-refresh-token")
+      expect(localStorage.setItem).toHaveBeenCalledWith("nuvio:token", "test-jwt-token")
+      expect(localStorage.setItem).toHaveBeenCalledWith("nuvio:refreshToken", "test-refresh-token")
       expect(localStorage.setItem).toHaveBeenCalledWith(
-        "zflow:user",
+        "nuvio:user",
         expect.stringContaining('"name":"Test User"')
       )
     })
@@ -123,7 +123,7 @@ describe("authStore", () => {
         isAuthenticated: true,
         isLoading: false
       })
-      localStorage.setItem("zflow:token", "test-jwt-token")
+      localStorage.setItem("nuvio:token", "test-jwt-token")
 
       await useAuthStore.getState().logout()
 
@@ -140,13 +140,13 @@ describe("authStore", () => {
         isAuthenticated: true,
         isLoading: false
       })
-      localStorage.setItem("zflow:token", "test-jwt-token")
+      localStorage.setItem("nuvio:token", "test-jwt-token")
 
       await useAuthStore.getState().logout()
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:token")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:refreshToken")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:user")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:token")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:refreshToken")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:user")
     })
 
     it("calls disconnectSocket", async () => {
@@ -158,7 +158,7 @@ describe("authStore", () => {
         isAuthenticated: true,
         isLoading: false
       })
-      localStorage.setItem("zflow:token", "test-jwt-token")
+      localStorage.setItem("nuvio:token", "test-jwt-token")
 
       await useAuthStore.getState().logout()
 
@@ -178,8 +178,8 @@ describe("authStore", () => {
         updatedAt: "2024-01-01T00:00:00.000Z"
       }
 
-      localStorage.setItem("zflow:token", "stored-token")
-      localStorage.setItem("zflow:user", JSON.stringify(user))
+      localStorage.setItem("nuvio:token", "stored-token")
+      localStorage.setItem("nuvio:user", JSON.stringify(user))
 
       useAuthStore.getState().initialize()
 
@@ -192,8 +192,8 @@ describe("authStore", () => {
     it("calls connectSocket with stored token", async () => {
       const { connectSocket } = await import("@/lib/socket")
 
-      localStorage.setItem("zflow:token", "stored-token")
-      localStorage.setItem("zflow:user", JSON.stringify({ id: 1, name: "Test" }))
+      localStorage.setItem("nuvio:token", "stored-token")
+      localStorage.setItem("nuvio:user", JSON.stringify({ id: 1, name: "Test" }))
 
       useAuthStore.getState().initialize()
 
@@ -201,14 +201,14 @@ describe("authStore", () => {
     })
 
     it("clears localStorage on invalid JSON", () => {
-      localStorage.setItem("zflow:token", "stored-token")
-      localStorage.setItem("zflow:user", "invalid-json{{{")
+      localStorage.setItem("nuvio:token", "stored-token")
+      localStorage.setItem("nuvio:user", "invalid-json{{{")
 
       useAuthStore.getState().initialize()
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:token")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:refreshToken")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("zflow:user")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:token")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:refreshToken")
+      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:user")
 
       const state = useAuthStore.getState()
       expect(state.isAuthenticated).toBe(false)

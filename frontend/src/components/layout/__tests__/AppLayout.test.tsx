@@ -50,7 +50,7 @@ describe("AppLayout", () => {
   it("renders sidebar", () => {
     renderWithRouter()
 
-    expect(screen.getByText("ZFLOW")).toBeInTheDocument()
+    expect(screen.getByText("NUVIO")).toBeInTheDocument()
     // "Dashboard" appears in sidebar nav link, header title, and outlet content
     const dashboardElements = screen.getAllByText("Dashboard")
     expect(dashboardElements.length).toBeGreaterThanOrEqual(1)

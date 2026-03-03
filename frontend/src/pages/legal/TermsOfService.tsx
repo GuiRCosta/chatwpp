@@ -15,7 +15,7 @@ export function TermsOfService() {
               1. Aceitacao dos termos
             </h2>
             <p>
-              Ao acessar ou utilizar a plataforma ZFlow CRM ("Servico"),
+              Ao acessar ou utilizar a plataforma Nuvio ("Servico"),
               operada pela IDEVA Reserva ("nos", "nosso"), voce concorda com
               estes Termos de Servico. Se voce nao concordar, nao utilize o
               Servico.
@@ -27,7 +27,7 @@ export function TermsOfService() {
               2. Descricao do servico
             </h2>
             <p>
-              O ZFlow CRM e uma plataforma de gerenciamento de relacionamento
+              O Nuvio e uma plataforma de gerenciamento de relacionamento
               com o cliente (CRM) que oferece:
             </p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
@@ -98,11 +98,11 @@ export function TermsOfService() {
             <p>
               O Servico utiliza a API oficial do WhatsApp Business fornecida
               pela Meta Platforms, Inc. Ao conectar seu numero de WhatsApp ao
-              ZFlow, voce:
+              Nuvio, voce:
             </p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
               <li>
-                Autoriza o ZFlow a enviar e receber mensagens em nome da sua
+                Autoriza o Nuvio a enviar e receber mensagens em nome da sua
                 empresa.
               </li>
               <li>
@@ -206,7 +206,7 @@ export function TermsOfService() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-400">
-          ZFlow CRM &copy; {new Date().getFullYear()} IDEVA Reserva
+          Nuvio &copy; {new Date().getFullYear()} IDEVA Reserva
         </div>
       </div>
     </div>

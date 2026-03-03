@@ -5,7 +5,7 @@ module.exports = {
     await queryInterface.bulkInsert("Tenants", [
       {
         id: 1,
-        name: "ZFlow Admin",
+        name: "Nuvio Admin",
         status: "active",
         maxUsers: 99,
         maxConnections: 99,

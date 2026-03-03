@@ -17,7 +17,7 @@ export function DataDeletion() {
             <p>
               A IDEVA Reserva respeita seu direito a privacidade e a exclusao
               dos seus dados pessoais. Para solicitar a remocao dos seus dados
-              da plataforma ZFlow CRM, siga as instrucoes abaixo.
+              da plataforma Nuvio, siga as instrucoes abaixo.
             </p>
           </section>
 
@@ -33,7 +33,7 @@ export function DataDeletion() {
               >
                 realfgstmkt@gmail.com
               </a>{" "}
-              com o assunto <strong>"Exclusao de Dados - ZFlow CRM"</strong> e
+              com o assunto <strong>"Exclusao de Dados - Nuvio"</strong> e
               inclua:
             </p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
@@ -53,7 +53,7 @@ export function DataDeletion() {
             <p>
               Se voce e um usuario da plataforma, solicite ao administrador da
               sua organizacao que remova sua conta e dados pelo painel de
-              Configuracoes do ZFlow CRM.
+              Configuracoes do Nuvio.
             </p>
           </section>
 
@@ -99,7 +99,7 @@ export function DataDeletion() {
               Revogar acesso do Facebook/WhatsApp
             </h2>
             <p>
-              Alem de solicitar a exclusao no ZFlow, voce pode revogar o acesso
+              Alem de solicitar a exclusao no Nuvio, voce pode revogar o acesso
               do aplicativo diretamente nas configuracoes do Facebook:
             </p>
             <ol className="list-decimal pl-6 space-y-2 mt-2">
@@ -136,7 +136,7 @@ export function DataDeletion() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-gray-200 text-center text-sm text-gray-400">
-          ZFlow CRM &copy; {new Date().getFullYear()} IDEVA Reserva
+          Nuvio &copy; {new Date().getFullYear()} IDEVA Reserva
         </div>
       </div>
     </div>

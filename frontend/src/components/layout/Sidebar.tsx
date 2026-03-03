@@ -66,12 +66,12 @@ export function Sidebar() {
             <div className="w-1.5 rounded-full bg-white h-6 transition-all duration-300 group-hover:h-8" />
           </div>
           {!collapsed && (
-            <span className="text-xl font-bold tracking-wider">ZFLOW</span>
+            <span className="text-xl font-bold tracking-wider">NUVIO</span>
           )}
         </div>
         {!collapsed && (
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-gray-400 mt-2 ml-1">
-            Engenharia de Automacao & IA
+            CRM & Atendimento inteligente
           </p>
         )}
       </div>

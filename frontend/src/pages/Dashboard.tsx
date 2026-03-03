@@ -115,7 +115,7 @@ export function Dashboard() {
     }
 
     const loadUserName = () => {
-      const userStr = localStorage.getItem("zflow:user")
+      const userStr = localStorage.getItem("nuvio:user")
       if (userStr) {
         try {
           const user = JSON.parse(userStr)

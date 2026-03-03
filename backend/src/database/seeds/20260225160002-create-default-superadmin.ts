@@ -10,7 +10,7 @@ module.exports = {
         id: 1,
         tenantId: 1,
         name: "Super Admin",
-        email: "admin@zflow.com",
+        email: "admin@nuvio.com",
         passwordHash,
         profile: "superadmin",
         isOnline: false,

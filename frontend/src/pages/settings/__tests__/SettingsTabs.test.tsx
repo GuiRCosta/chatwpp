@@ -11,7 +11,7 @@ import type { Queue, WhatsApp, User } from "@/types"
 
 describe("GeneralTab", () => {
   const defaultSettings: GeneralSettings = {
-    companyName: "ZFlow CRM",
+    companyName: "Nuvio CRM",
     businessHoursOpen: "08:00",
     businessHoursClose: "18:00",
     autoCloseTimeout: "24"
@@ -35,7 +35,7 @@ describe("GeneralTab", () => {
 
     const input = screen.getByLabelText("Nome da Empresa")
     expect(input).toBeInTheDocument()
-    expect(input).toHaveValue("ZFlow CRM")
+    expect(input).toHaveValue("Nuvio CRM")
   })
 
   it("renders business hours open input", () => {

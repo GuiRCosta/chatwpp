@@ -6,12 +6,12 @@ interface SidebarState {
 }
 
 export const useSidebarStore = create<SidebarState>()((set) => ({
-  collapsed: localStorage.getItem("zflow:sidebar-collapsed") === "true",
+  collapsed: localStorage.getItem("nuvio:sidebar-collapsed") === "true",
 
   toggle: () =>
     set((state) => {
       const next = !state.collapsed
-      localStorage.setItem("zflow:sidebar-collapsed", String(next))
+      localStorage.setItem("nuvio:sidebar-collapsed", String(next))
       return { collapsed: next }
     }),
 }))

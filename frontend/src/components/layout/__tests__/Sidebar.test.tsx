@@ -57,10 +57,10 @@ describe("Sidebar", () => {
     expect(campaignsLink).toHaveAttribute("href", "/campaigns")
   })
 
-  it("renders the ZFLOW logo text", () => {
+  it("renders the NUVIO logo text", () => {
     render(<Sidebar />)
 
-    expect(screen.getByText("ZFLOW")).toBeInTheDocument()
+    expect(screen.getByText("NUVIO")).toBeInTheDocument()
   })
 
   it("renders the logout button", () => {
