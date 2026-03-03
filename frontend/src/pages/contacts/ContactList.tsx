@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge"
 import { DataTable, DataTableColumn } from "@/components/shared/DataTable"
 import { SearchInput } from "@/components/shared/SearchInput"
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
+import { toast } from "sonner"
 import api from "@/lib/api"
 import type { Contact, PaginatedResponse } from "@/types"
 
@@ -65,9 +66,10 @@ export function ContactList() {
 
     try {
       await api.delete(`/contacts/${contactToDelete.id}`)
+      toast.success("Contato excluido com sucesso")
       fetchContacts()
-    } catch (error) {
-      console.error("Failed to delete contact:", error)
+    } catch {
+      toast.error("Erro ao excluir contato")
     }
   }
 

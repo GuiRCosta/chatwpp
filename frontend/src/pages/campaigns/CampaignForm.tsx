@@ -8,6 +8,7 @@ import {
   FileText,
   ChevronDown
 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
@@ -394,8 +395,10 @@ export function CampaignForm({
 
       if (isEditing && campaign) {
         await api.put(`/campaigns/${campaign.id}`, payload)
+        toast.success("Campanha atualizada com sucesso")
       } else {
         await api.post("/campaigns", payload)
+        toast.success("Campanha criada com sucesso")
       }
       onSuccess()
       onOpenChange(false)
@@ -403,7 +406,9 @@ export function CampaignForm({
       const fallback = isEditing
         ? "Falha ao atualizar a campanha. Tente novamente."
         : "Falha ao criar a campanha. Tente novamente."
-      setSubmitError(error instanceof Error ? (error.message || fallback) : fallback)
+      const message = error instanceof Error ? (error.message || fallback) : fallback
+      setSubmitError(message)
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }

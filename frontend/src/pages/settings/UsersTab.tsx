@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { Users, Search, Loader2, Plus, Save, ChevronDown, Pencil, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import {
   Card,
   CardContent,
@@ -124,8 +125,10 @@ function UserFormDialog({
 
       if (isEditing && editingUser) {
         await api.put(`/users/${editingUser.id}`, payload)
+        toast.success("Usuario atualizado com sucesso")
       } else {
         await api.post("/users", payload)
+        toast.success("Usuario criado com sucesso")
       }
 
       onSuccess()
@@ -134,7 +137,9 @@ function UserFormDialog({
       const fallback = isEditing
         ? "Falha ao atualizar usuario. Tente novamente."
         : "Falha ao criar usuario. Tente novamente."
-      setSubmitError(error instanceof Error ? (error.message || fallback) : fallback)
+      const message = error instanceof Error ? (error.message || fallback) : fallback
+      setSubmitError(message)
+      toast.error(message)
     } finally {
       setIsSubmitting(false)
     }
@@ -293,8 +298,9 @@ export function UsersTab({ users, isLoading, onRefresh }: UsersTabProps) {
     try {
       await api.delete(`/users/${userToDelete.id}`)
       onRefresh()
+      toast.success("Usuario excluido com sucesso")
     } catch {
-      // Error handled silently
+      toast.error("Erro ao excluir usuario")
     }
   }
 

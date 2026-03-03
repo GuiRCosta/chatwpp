@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card"
+import { toast } from "sonner"
 import api from "@/lib/api"
 import type { Contact, ApiResponse } from "@/types"
 
@@ -93,13 +94,15 @@ export function ContactForm() {
 
       if (isEditing) {
         await api.put(`/contacts/${id}`, payload)
+        toast.success("Contato atualizado com sucesso")
       } else {
         await api.post("/contacts", payload)
+        toast.success("Contato criado com sucesso")
       }
 
       navigate("/contacts")
-    } catch (error) {
-      console.error("Failed to save contact:", error)
+    } catch {
+      toast.error("Erro ao salvar contato")
     } finally {
       setIsSaving(false)
     }

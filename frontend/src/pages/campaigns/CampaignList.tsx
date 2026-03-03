@@ -9,6 +9,7 @@ import {
   Trash2,
   Eye
 } from "lucide-react"
+import { toast } from "sonner"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Button } from "@/components/ui/Button"
@@ -117,8 +118,9 @@ export function CampaignList() {
     try {
       await api.post(`/campaigns/${campaign.id}/start`)
       fetchCampaigns()
+      toast.success("Campanha iniciada")
     } catch {
-      // Error handled silently; toast notification could be added
+      toast.error("Erro ao iniciar campanha")
     }
   }
 
@@ -134,8 +136,9 @@ export function CampaignList() {
     try {
       await api.post(`/campaigns/${campaignToCancel.id}/cancel`)
       fetchCampaigns()
+      toast.success("Campanha cancelada")
     } catch {
-      // Error handled silently; toast notification could be added
+      toast.error("Erro ao cancelar campanha")
     }
   }
 
@@ -151,8 +154,9 @@ export function CampaignList() {
     try {
       await api.delete(`/campaigns/${campaignToDelete.id}`)
       fetchCampaigns()
+      toast.success("Campanha excluida com sucesso")
     } catch {
-      // Error handled silently; toast notification could be added
+      toast.error("Erro ao excluir campanha")
     }
   }
 

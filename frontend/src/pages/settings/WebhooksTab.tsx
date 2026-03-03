@@ -8,6 +8,7 @@ import {
   Copy,
   Check
 } from "lucide-react"
+import { toast } from "sonner"
 import {
   Card,
   CardContent,
@@ -142,8 +143,10 @@ export function WebhooksTab() {
 
       if (editingId) {
         await api.put(`/webhook-configs/${editingId}`, payload)
+        toast.success("Webhook atualizado com sucesso")
       } else {
         await api.post("/webhook-configs", payload)
+        toast.success("Webhook criado com sucesso")
       }
 
       setDialogOpen(false)
@@ -152,6 +155,7 @@ export function WebhooksTab() {
       const message =
         err instanceof Error ? err.message : "Erro ao salvar webhook"
       setError(message)
+      toast.error(message)
     } finally {
       setIsSaving(false)
     }
@@ -165,10 +169,12 @@ export function WebhooksTab() {
       await api.delete(`/webhook-configs/${deleteTarget.id}`)
       setDeleteTarget(null)
       await fetchWebhooks()
+      toast.success("Webhook excluido com sucesso")
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro ao excluir webhook"
       setError(message)
+      toast.error(message)
     }
   }
 
@@ -179,10 +185,12 @@ export function WebhooksTab() {
         isActive: !webhook.isActive
       })
       await fetchWebhooks()
+      toast.success(webhook.isActive ? "Webhook desativado" : "Webhook ativado")
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro ao atualizar webhook"
       setError(message)
+      toast.error(message)
     }
   }
 

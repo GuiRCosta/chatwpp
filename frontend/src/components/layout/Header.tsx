@@ -24,9 +24,18 @@ const routeTitles: Record<string, string> = {
   "/profile": "Perfil",
 }
 
+function resolveTitle(pathname: string): string {
+  if (routeTitles[pathname]) return routeTitles[pathname]
+
+  if (pathname.startsWith("/contacts/")) return "Contatos"
+  if (pathname.startsWith("/campaigns/")) return "Campanhas"
+
+  return "Dashboard"
+}
+
 export function Header() {
   const { pathname } = useLocation()
-  const title = routeTitles[pathname] ?? "Dashboard"
+  const title = resolveTitle(pathname)
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
   const { unreadCount } = useNotificationStore()

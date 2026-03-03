@@ -5,7 +5,7 @@ import { AppLayout } from "@/components/layout/AppLayout"
 import { Login } from "@/pages/Login"
 import { Dashboard } from "@/pages/Dashboard"
 import TicketList from "@/pages/tickets/TicketList"
-import { ContactList } from "@/pages/contacts/ContactList"
+import { ContactList, ContactForm } from "@/pages/contacts"
 import { PipelineView } from "@/pages/crm/PipelineView"
 import { CampaignList } from "@/pages/campaigns/CampaignList"
 import { Settings } from "@/pages/settings/Settings"
@@ -53,6 +53,8 @@ export default function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="tickets" element={<TicketList />} />
         <Route path="contacts" element={<ContactList />} />
+        <Route path="contacts/new" element={<ContactForm />} />
+        <Route path="contacts/:id/edit" element={<ContactForm />} />
         <Route path="crm" element={<PipelineView />} />
         <Route path="campaigns" element={<CampaignList />} />
         <Route path="settings" element={<SuperAdminRoute><Settings /></SuperAdminRoute>} />

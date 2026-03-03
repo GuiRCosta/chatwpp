@@ -7,6 +7,7 @@ import {
   Link2,
   Loader2
 } from "lucide-react"
+import { toast } from "sonner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs"
 import api from "@/lib/api"
 import { useAuthStore } from "@/stores/authStore"
@@ -147,10 +148,12 @@ export function Settings() {
           api.put("/settings", { key, value: generalSettings[field] })
         )
       )
+      toast.success("Configuracoes salvas com sucesso")
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro ao salvar configuracoes"
       setError(message)
+      toast.error(message)
     } finally {
       setIsSaving(false)
     }
@@ -162,10 +165,12 @@ export function Settings() {
         setError(null)
         await api.post("/queues", { name: form.name, color: form.color })
         await fetchQueues()
+        toast.success("Fila criada com sucesso")
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Erro ao criar fila"
         setError(message)
+        toast.error(message)
       }
     },
     [fetchQueues]
@@ -177,10 +182,12 @@ export function Settings() {
         setError(null)
         await api.delete(`/queues/${id}`)
         await fetchQueues()
+        toast.success("Fila excluida com sucesso")
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Erro ao excluir fila"
         setError(message)
+        toast.error(message)
       }
     },
     [fetchQueues]
@@ -198,10 +205,12 @@ export function Settings() {
         setError(null)
         await api.post("/whatsapp/onboard", data)
         await fetchConnections()
+        toast.success("WhatsApp conectado com sucesso")
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Erro ao conectar WhatsApp"
         setError(message)
+        toast.error(message)
         throw err
       }
     },
@@ -214,10 +223,12 @@ export function Settings() {
         setError(null)
         await api.put(`/whatsapp/${id}`, data)
         await fetchConnections()
+        toast.success("Conexao atualizada com sucesso")
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Erro ao atualizar conexao"
         setError(message)
+        toast.error(message)
       }
     },
     [fetchConnections]
@@ -229,10 +240,12 @@ export function Settings() {
         setError(null)
         await api.delete(`/whatsapp/${id}`)
         await fetchConnections()
+        toast.success("Conexao excluida com sucesso")
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Erro ao excluir conexao"
         setError(message)
+        toast.error(message)
       }
     },
     [fetchConnections]
