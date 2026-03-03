@@ -5,7 +5,7 @@ import { getSocket } from "@/lib/socket"
 import { useNotificationStore } from "@/stores/notificationStore"
 import { useTicketStore } from "@/stores/ticketStore"
 import { useChatStore } from "@/stores/chatStore"
-import type { Contact, Notification, Ticket, Message } from "@/types"
+import type { Campaign, Contact, Notification, Ticket, Message } from "@/types"
 
 export function useSocket() {
   const { isAuthenticated } = useAuth()
@@ -87,6 +87,30 @@ export function useSocket() {
       toast.info(`Contato atualizado: ${contact.name}`)
     })
 
+    // ── Campaigns ──
+    socket.on("campaign:created", (campaign: Campaign) => {
+      toast.info(`Nova campanha: ${campaign.name}`)
+    })
+
+    socket.on("campaign:updated", (campaign: Campaign) => {
+      const statusMap: Record<string, string> = {
+        completed: "concluida",
+        running: "em andamento",
+        processing: "processando",
+        cancelled: "cancelada"
+      }
+      const statusLabel = statusMap[campaign.status] || campaign.status
+      toast.info(`Campanha "${campaign.name}" ${statusLabel}`)
+    })
+
+    socket.on("campaign:started", (data: { id: number }) => {
+      toast.success(`Campanha #${data.id} iniciada`)
+    })
+
+    socket.on("campaign:cancelled", (campaign: Campaign) => {
+      toast.info(`Campanha "${campaign.name}" cancelada`)
+    })
+
     // Cleanup listeners on unmount
     return () => {
       socket.off("notification:created")
@@ -97,6 +121,10 @@ export function useSocket() {
       socket.off("message:updated")
       socket.off("contact:created")
       socket.off("contact:updated")
+      socket.off("campaign:created")
+      socket.off("campaign:updated")
+      socket.off("campaign:started")
+      socket.off("campaign:cancelled")
       registeredRef.current = false
     }
   }, [

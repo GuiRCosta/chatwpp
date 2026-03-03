@@ -57,6 +57,9 @@ export default function App() {
         <Route path="contacts/:id/edit" element={<ContactForm />} />
         <Route path="crm" element={<PipelineView />} />
         <Route path="campaigns" element={<CampaignList />} />
+        <Route path="campaigns/new" element={<CampaignList />} />
+        <Route path="campaigns/:id" element={<CampaignList />} />
+        <Route path="campaigns/:id/edit" element={<CampaignList />} />
         <Route path="settings" element={<SuperAdminRoute><Settings /></SuperAdminRoute>} />
         <Route path="notifications" element={<PlaceholderPage title="Notificacoes" />} />
         <Route path="profile" element={<PlaceholderPage title="Perfil" />} />

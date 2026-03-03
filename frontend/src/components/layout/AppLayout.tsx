@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom"
 import { Sidebar } from "./Sidebar"
 import { Header } from "./Header"
+import { NavigationProgress } from "@/components/shared/NavigationProgress"
 import { useSocket } from "@/hooks/useSocket"
 import { useSidebarStore } from "@/stores/sidebarStore"
 import { cn } from "@/lib/utils"
@@ -13,6 +14,8 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen bg-[#F3F3F1]">
+      <NavigationProgress />
+
       {/* Sidebar */}
       <Sidebar />
 

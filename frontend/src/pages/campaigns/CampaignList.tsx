@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useParams, useLocation } from "react-router-dom"
 import {
   Megaphone,
   Plus,
@@ -47,7 +47,8 @@ const canCancel = (status: CampaignStatus): boolean =>
 const ITEMS_PER_PAGE = 20
 
 export function CampaignList() {
-  const navigate = useNavigate()
+  const params = useParams<{ id: string }>()
+  const location = useLocation()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
@@ -63,23 +64,24 @@ export function CampaignList() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [campaignToEdit, setCampaignToEdit] = useState<Campaign | undefined>(undefined)
+  const [routeHandled, setRouteHandled] = useState(false)
 
   const fetchCampaigns = useCallback(async () => {
     try {
       setIsLoading(true)
-      const params: Record<string, unknown> = {
+      const queryParams: Record<string, unknown> = {
         searchParam: searchTerm,
         pageNumber: page,
         limit: ITEMS_PER_PAGE
       }
 
       if (statusFilter !== "all") {
-        params.status = statusFilter
+        queryParams.status = statusFilter
       }
 
       const response = await api.get<PaginatedResponse<Campaign>>(
         "/campaigns",
-        { params }
+        { params: queryParams }
       )
 
       if (response.data.success) {
@@ -99,6 +101,27 @@ export function CampaignList() {
   useEffect(() => {
     fetchCampaigns()
   }, [fetchCampaigns])
+
+  // Handle route-based actions: /campaigns/new, /campaigns/:id/edit
+  useEffect(() => {
+    if (routeHandled) return
+
+    const isNewRoute = location.pathname === "/campaigns/new"
+    const isEditRoute = location.pathname.endsWith("/edit") && params.id
+
+    if (isNewRoute) {
+      setCampaignToEdit(undefined)
+      setFormOpen(true)
+      setRouteHandled(true)
+    } else if (isEditRoute && campaigns.length > 0) {
+      const campaign = campaigns.find((c) => c.id === Number(params.id))
+      if (campaign) {
+        setCampaignToEdit(campaign)
+        setFormOpen(true)
+        setRouteHandled(true)
+      }
+    }
+  }, [location.pathname, params.id, campaigns, routeHandled])
 
   const handleSearch = useCallback((value: string) => {
     setSearchTerm(value)
@@ -161,7 +184,8 @@ export function CampaignList() {
   }
 
   const handleRowClick = (campaign: Campaign) => {
-    navigate(`/campaigns/${campaign.id}`)
+    setCampaignToEdit(campaign)
+    setFormOpen(true)
   }
 
   const handlePreviousPage = () => {
@@ -231,7 +255,8 @@ export function CampaignList() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/campaigns/${campaign.id}`)
+              setCampaignToEdit(campaign)
+              setFormOpen(true)
             }}
             className="rounded-full p-2 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
             title="Visualizar"
