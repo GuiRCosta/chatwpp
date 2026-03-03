@@ -16,6 +16,7 @@ import { DataTable, DataTableColumn } from "@/components/shared/DataTable"
 import { SearchInput } from "@/components/shared/SearchInput"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog"
+import { CampaignForm } from "./CampaignForm"
 import api from "@/lib/api"
 import type { Campaign, PaginatedResponse } from "@/types"
 
@@ -58,6 +59,9 @@ export function CampaignList() {
   const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [campaignToCancel, setCampaignToCancel] = useState<Campaign | null>(null)
+
+  const [formOpen, setFormOpen] = useState(false)
+  const [campaignToEdit, setCampaignToEdit] = useState<Campaign | undefined>(undefined)
 
   const fetchCampaigns = useCallback(async () => {
     try {
@@ -234,7 +238,8 @@ export function CampaignList() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              navigate(`/campaigns/${campaign.id}/edit`)
+              setCampaignToEdit(campaign)
+              setFormOpen(true)
             }}
             className="rounded-full p-2 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
             title="Editar"
@@ -278,7 +283,7 @@ export function CampaignList() {
     <div className="space-y-6 p-8 font-[Inter]">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-[#0A0A0A]">Campanhas</h1>
-        <Button onClick={() => navigate("/campaigns/new")}>
+        <Button onClick={() => { setCampaignToEdit(undefined); setFormOpen(true) }}>
           <Plus className="h-4 w-4" />
           Nova Campanha
         </Button>
@@ -321,7 +326,7 @@ export function CampaignList() {
               : "Crie sua primeira campanha para enviar mensagens em massa."}
           </p>
           {!searchTerm && statusFilter === "all" && (
-            <Button onClick={() => navigate("/campaigns/new")}>
+            <Button onClick={() => { setCampaignToEdit(undefined); setFormOpen(true) }}>
               <Plus className="h-4 w-4" />
               Nova Campanha
             </Button>
@@ -384,6 +389,13 @@ export function CampaignList() {
         onConfirm={handleCancelConfirm}
         confirmLabel="Cancelar campanha"
         variant="destructive"
+      />
+
+      <CampaignForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        campaign={campaignToEdit}
+        onSuccess={fetchCampaigns}
       />
     </div>
   )

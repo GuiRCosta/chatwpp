@@ -18,6 +18,11 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+function SuperAdminRoute({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore((s) => s.user)
+  return user?.profile === "superadmin" ? <>{children}</> : <Navigate to="/dashboard" replace />
+}
+
 function PlaceholderPage({ title }: { title: string }) {
   return (
     <div className="flex items-center justify-center h-full">
@@ -50,7 +55,7 @@ export default function App() {
         <Route path="contacts" element={<ContactList />} />
         <Route path="crm" element={<PipelineView />} />
         <Route path="campaigns" element={<CampaignList />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="settings" element={<SuperAdminRoute><Settings /></SuperAdminRoute>} />
         <Route path="notifications" element={<PlaceholderPage title="Notificacoes" />} />
         <Route path="profile" element={<PlaceholderPage title="Perfil" />} />
       </Route>

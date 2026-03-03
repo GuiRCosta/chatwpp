@@ -310,7 +310,7 @@ export function Settings() {
 
         {canViewUsers && (
           <TabsContent value="users" className="mt-6">
-            <UsersTab users={users} isLoading={isLoadingUsers} />
+            <UsersTab users={users} isLoading={isLoadingUsers} onRefresh={fetchUsers} />
           </TabsContent>
         )}
       </Tabs>

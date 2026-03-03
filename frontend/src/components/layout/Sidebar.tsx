@@ -25,6 +25,7 @@ const navItems = [
 export function Sidebar() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
+  const isSuperAdmin = user?.profile === "superadmin"
 
   const handleLogout = async () => {
     await logout()
@@ -79,26 +80,30 @@ export function Sidebar() {
             </li>
           ))}
 
-          <li>
-            <Separator className="my-4 bg-white/10" />
-          </li>
+          {isSuperAdmin && (
+            <>
+              <li>
+                <Separator className="my-4 bg-white/10" />
+              </li>
 
-          <li>
-            <NavLink
-              to="/settings"
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
-                  isActive
-                    ? "bg-white/10 text-white"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                )
-              }
-            >
-              <Settings2 className="w-5 h-5" />
-              <span className="text-sm font-medium">Configuracoes</span>
-            </NavLink>
-          </li>
+              <li>
+                <NavLink
+                  to="/settings"
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                      isActive
+                        ? "bg-white/10 text-white"
+                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                    )
+                  }
+                >
+                  <Settings2 className="w-5 h-5" />
+                  <span className="text-sm font-medium">Configuracoes</span>
+                </NavLink>
+              </li>
+            </>
+          )}
         </ul>
       </nav>
 
