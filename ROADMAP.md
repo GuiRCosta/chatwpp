@@ -120,6 +120,12 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] DTOs: campos sensiveis removidos das respostas (passwordHash, tokenVersion, loginAttempts, lockedUntil no User; wabaToken, wabaWebhookSecret no WhatsApp)
 - [x] XSS sanitization: DOMPurify no backend (isomorphic-dompurify) e frontend (dompurify) para inputs de nome, email em User e Contact services
 
+### Fase 12: Estabilidade Quick Wins (CONCLUIDA)
+
+- [x] Campaign socket events: campaign:created, campaign:updated, campaign:started, campaign:cancelled no useSocket com toasts
+- [x] Campaign routes: /campaigns/new, /campaigns/:id, /campaigns/:id/edit no App.tsx (reusam CampaignList com dialog)
+- [x] Navigation progress bar: barra azul animada no topo durante transicoes de rota (NavigationProgress component)
+
 ### Fase 6: Testes (CONCLUIDA)
 
 - [x] Backend: 66 arquivos, 670 testes, cobertura 93.62% statements
@@ -188,7 +194,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 | B.1.2 | ~~**`message:created`** - conectar ao chatStore~~ | ~~Mensagens novas nao aparecem sem refresh~~ | ~~1h~~ | **CONCLUIDO** |
 | B.1.3 | ~~**`ticket:created`** - escutar no frontend~~ | ~~Novos tickets invisiveis~~ | ~~30min~~ | **CONCLUIDO** |
 | B.1.4 | ~~**`contact:created`** - Nao escutado no frontend~~ | ~~Contatos criados via webhook nao aparecem~~ | ~~30min~~ | **CONCLUIDO** |
-| B.1.5 | **Eventos de campanha** - started/updated/cancelled nao escutados | Status de campanha nao atualiza live | 30min |
+| B.1.5 | ~~**Eventos de campanha** - started/updated/cancelled nao escutados~~ | ~~Status de campanha nao atualiza live~~ | ~~30min~~ | **CONCLUIDO** |
 
 #### B.2 Health Check e Resiliencia
 
@@ -202,7 +208,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 | # | Item | Impacto | Esforco |
 |---|------|---------|---------|
 | B.3.1 | ~~**`/contacts/new`** e **`/contacts/:id/edit`** no App.tsx~~ | ~~Navegacao quebrada~~ | ~~30min~~ | **CONCLUIDO** |
-| B.3.2 | **`/campaigns/new`** e **`/campaigns/:id/edit`** no App.tsx | Navegacao quebrada | 30min |
+| B.3.2 | ~~**`/campaigns/new`** e **`/campaigns/:id/edit`** no App.tsx~~ | ~~Navegacao quebrada~~ | ~~30min~~ | **CONCLUIDO** |
 | B.3.3 | **`/campaigns/:id`** - pagina de detalhe (referenciada mas nao existe) | Nao da pra ver detalhes | 4h |
 
 #### B.4 Feedback ao Usuario
@@ -210,7 +216,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 | # | Item | Impacto | Esforco |
 |---|------|---------|---------|
 | B.4.1 | ~~**Sistema de toast/snackbar** - Nenhum feedback visual para acoes (sucesso/erro)~~ | ~~UX confusa~~ | ~~2h~~ | **CONCLUIDO** |
-| B.4.2 | **Loading em transicoes de rota** | Sensacao de travamento | 1h |
+| B.4.2 | ~~**Loading em transicoes de rota**~~ | ~~Sensacao de travamento~~ | ~~1h~~ | **CONCLUIDO** |
 | B.4.3 | **Forgot password** - link existe no login mas nao implementado | Usuarios trancados fora | 6h |
 
 ---
@@ -1208,4 +1214,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time + UX essencial + seguranca fase 2 concluidos)*
+*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time + UX essencial + seguranca fase 2 + estabilidade quick wins concluidos)*
