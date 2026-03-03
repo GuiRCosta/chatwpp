@@ -11,13 +11,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/DropdownMenu"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 
-interface HeaderProps {
-  title?: string
+const routeTitles: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/tickets": "Tickets",
+  "/contacts": "Contatos",
+  "/crm": "CRM",
+  "/campaigns": "Campanhas",
+  "/settings": "Configuracoes",
+  "/notifications": "Notificacoes",
+  "/profile": "Perfil",
 }
 
-export function Header({ title = "Dashboard" }: HeaderProps) {
+export function Header() {
+  const { pathname } = useLocation()
+  const title = routeTitles[pathname] ?? "Dashboard"
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
   const { unreadCount } = useNotificationStore()
