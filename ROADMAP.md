@@ -1,4 +1,4 @@
-# ZFlow CRM - Roadmap
+# Nuvio - Roadmap
 
 ## Visao Geral
 
@@ -125,6 +125,18 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Campaign socket events: campaign:created, campaign:updated, campaign:started, campaign:cancelled no useSocket com toasts
 - [x] Campaign routes: /campaigns/new, /campaigns/:id, /campaigns/:id/edit no App.tsx (reusam CampaignList com dialog)
 - [x] Navigation progress bar: barra azul animada no topo durante transicoes de rota (NavigationProgress component)
+
+### Fase 13: Rebrand - ZFlow para Nuvio (CONCLUIDA)
+
+- [x] Renomear UI: Sidebar (NUVIO + "CRM & Atendimento inteligente"), Login, Dashboard
+- [x] Renomear paginas legais: PrivacyPolicy, TermsOfService, DataDeletion
+- [x] Renomear localStorage keys: `zflow:` → `nuvio:` em authStore, sidebarStore, api, Dashboard
+- [x] Renomear webhook headers: X-ZFlow-Signature → X-Nuvio-Signature, X-ZFlow-Event → X-Nuvio-Event
+- [x] Renomear backend: server.ts, WebhookDispatchJob.ts, seeds (tenant name, admin email)
+- [x] Renomear config: package.json (frontend, backend, e2e), index.html title, database default name
+- [x] Atualizar todos os testes unitarios e e2e para refletir novo nome
+- [x] Verificar Meta Graph API v25.0 (confirmado em wabaClient.ts)
+- [x] Infraestrutura Docker/CI mantida como `zflow` (servicos, imagens, networks)
 
 ### Fase 6: Testes (CONCLUIDA)
 
@@ -362,6 +374,8 @@ IMPACTO BAIXO
 | ~~Account lockout (5 tentativas → 30min)~~ | ~~3h~~ | ~~Anti brute-force~~ | **CONCLUIDO** |
 | ~~DTOs (strip sensitive fields)~~ | ~~4h~~ | ~~Data leak prevention~~ | **CONCLUIDO** |
 | ~~XSS sanitization (DOMPurify)~~ | ~~3h~~ | ~~XSS prevention~~ | **CONCLUIDO** |
+| ~~Rebrand ZFlow → Nuvio (UI, stores, backend, tests)~~ | ~~3h~~ | ~~Identidade do produto~~ | **CONCLUIDO** |
+| ~~Verificar Meta Graph API v25.0~~ | ~~10min~~ | ~~API atualizada~~ | **CONCLUIDO** |
 
 ---
 
@@ -381,7 +395,7 @@ IMPACTO BAIXO
 
 ## Guia Completo: Criar e Configurar Meta App (2026 - Graph API v25.0)
 
-> O ZFlow usa a API oficial do WhatsApp (WABA) via Facebook Business Login (Embedded Signup).
+> O Nuvio usa a API oficial do WhatsApp (WABA) via Facebook Business Login (Embedded Signup).
 > Este guia cobre TODOS os passos para criar o app do zero ate a producao.
 
 ### Pre-requisitos
@@ -392,7 +406,7 @@ Antes de comecar, voce precisa ter:
 - [ ] Uma **conta de desenvolvedor Meta** (developers.facebook.com) - gratuita
 - [ ] Um **numero de telefone dedicado** que NAO esteja registrado em nenhum WhatsApp (pessoal ou Business App)
 - [ ] Acesso ao numero para receber SMS ou ligacao de verificacao (OTP)
-- [ ] Dominio com HTTPS configurado (o ZFlow ja tem: `crm.ideva.ai`)
+- [ ] Dominio com HTTPS configurado (o Nuvio ja tem: `crm.ideva.ai`)
 
 ---
 
@@ -414,7 +428,7 @@ Antes de comecar, voce precisa ter:
 3. Na tela "Select an app type":
    - Selecione **"Business"** → clique **"Next"**
 4. Preencha os dados:
-   - **App name:** `ZFlow CRM` (ou o nome que preferir)
+   - **App name:** `Nuvio` (ou o nome que preferir)
    - **App contact email:** seu email
    - **Business portfolio:** selecione sua Meta Business Account (ou crie uma nova)
 5. Clique em **"Create App"**
@@ -449,7 +463,7 @@ Antes de comecar, voce precisa ter:
 
 ### Etapa 5: Configurar o Webhook
 
-O webhook e como o Meta envia mensagens recebidas para o ZFlow.
+O webhook e como o Meta envia mensagens recebidas para o Nuvio.
 
 1. No menu lateral: **WhatsApp** → **Configuration**
 2. Na secao **"Webhook"**, clique em **"Edit"**
@@ -461,7 +475,7 @@ O webhook e como o Meta envia mensagens recebidas para o ZFlow.
 4. Clique em **"Verify and Save"**
 
 > **IMPORTANTE:** O backend precisa estar rodando e acessivel em `crm.ideva.ai` para o Meta
-> verificar o webhook. O endpoint GET `/webhook` ja esta implementado no ZFlow.
+> verificar o webhook. O endpoint GET `/webhook` ja esta implementado no Nuvio.
 > O Meta vai fazer um GET com `hub.mode=subscribe&hub.verify_token=SEU_TOKEN&hub.challenge=XXXX`
 > e o backend retorna o `hub.challenge` se o token bater.
 
@@ -494,7 +508,7 @@ Esta e a parte mais importante - gera o `config_id` que o frontend usa para abri
 
 1. No menu lateral: **Facebook Login for Business** → **Configurations**
 2. Clique em **"+ Create Configuration"**
-3. **Configuration name:** `ZFlow WhatsApp Signup` (ou similar)
+3. **Configuration name:** `Nuvio WhatsApp Signup` (ou similar)
 4. **Login variation:** selecione **"Embedded Signup"** → clique **"Next"**
 5. **Products:** selecione:
    - [x] **WhatsApp Cloud API**
@@ -543,7 +557,7 @@ Em modo Development, apenas usuarios adicionados como testers podem usar o Embed
 3. Adicione o email/Facebook de quem vai testar a conexao
 4. O usuario convidado precisa aceitar em: **developers.facebook.com** → **Requests**
 
-> Cada tester pode conectar seu numero de WhatsApp via Embedded Signup no ZFlow.
+> Cada tester pode conectar seu numero de WhatsApp via Embedded Signup no Nuvio.
 
 ---
 
@@ -603,7 +617,7 @@ git push origin main
 ### Etapa 12: Testar a conexao
 
 1. Acesse `https://crm.ideva.ai`
-2. Faca login como admin (`admin@zflow.com`)
+2. Faca login como admin (`admin@nuvio.com`)
 3. Va em **Configuracoes** → aba **WhatsApp**
 4. Clique em **"Conectar WhatsApp"**
 5. O popup do Facebook Embedded Signup deve abrir
@@ -649,8 +663,8 @@ Para ir para Live mode:
 ### Etapa 14: Testar webhook (mensagem real)
 
 1. De outro celular, envie uma mensagem para o numero conectado via WhatsApp
-2. No ZFlow, va em **Tickets** → a mensagem deve aparecer como um novo ticket
-3. Responda pelo ZFlow → a resposta deve chegar no WhatsApp do celular
+2. No Nuvio, va em **Tickets** → a mensagem deve aparecer como um novo ticket
+3. Responda pelo Nuvio → a resposta deve chegar no WhatsApp do celular
 4. Verifique os ACKs (checks de entregue/lido) no chat
 
 ---
@@ -747,7 +761,7 @@ Para ir para Live mode:
 | 0.2 | Ter uma conta de desenvolvedor Meta (developers.facebook.com) | [ ] | Gratuita |
 | 0.3 | Ter um numero de telefone dedicado (nao registrado em outro WhatsApp) | [ ] | Nao pode ser numero pessoal |
 | 0.4 | Ter acesso ao numero para receber SMS/ligacao (OTP) | [ ] | Para verificacao |
-| 0.5 | Dominio com HTTPS configurado (`crm.ideva.ai`) | [ ] | Ja configurado no ZFlow |
+| 0.5 | Dominio com HTTPS configurado (`crm.ideva.ai`) | [ ] | Ja configurado no Nuvio |
 
 #### Etapa 1: Conta de Desenvolvedor
 
@@ -765,7 +779,7 @@ Para ir para Live mode:
 | 2.1 | Clicar em "My Apps" → "Create App" | [ ] | Menu superior |
 | 2.2 | Selecionar "Other" → Next | [ ] | Tela "What do you want your app to do?" |
 | 2.3 | Selecionar "Business" → Next | [ ] | Tela "Select an app type" |
-| 2.4 | Preencher App name: `ZFlow CRM` | [ ] | Campo de texto |
+| 2.4 | Preencher App name: `Nuvio` | [ ] | Campo de texto |
 | 2.5 | Preencher email de contato | [ ] | Campo de texto |
 | 2.6 | Selecionar Business portfolio (Meta Business Account) | [ ] | Dropdown |
 | 2.7 | Clicar em "Create App" e confirmar com senha | [ ] | Botao final |
@@ -823,7 +837,7 @@ Para ir para Live mode:
 |---|------|:------:|------|
 | 7.1 | Ir em Facebook Login for Business → Configurations | [ ] | Menu lateral |
 | 7.2 | Clicar em "+ Create Configuration" | [ ] | Botao no topo |
-| 7.3 | Preencher nome: `ZFlow WhatsApp Signup` | [ ] | Campo de texto |
+| 7.3 | Preencher nome: `Nuvio WhatsApp Signup` | [ ] | Campo de texto |
 | 7.4 | Login variation: selecionar "Embedded Signup" → Next | [ ] | Radio button |
 | 7.5 | Products: marcar "WhatsApp Cloud API" | [ ] | Checkbox |
 | 7.6 | Products: marcar "Marketing Messages API for WhatsApp" → Next | [ ] | Checkbox |
@@ -906,11 +920,11 @@ Para ir para Live mode:
 | # | Item | Status | Onde |
 |---|------|:------:|------|
 | 14.1 | De outro celular, enviar mensagem para o numero conectado | [ ] | WhatsApp pessoal |
-| 14.2 | Mensagem aparece como novo ticket no ZFlow (pagina Tickets) | [ ] | `crm.ideva.ai/tickets` |
-| 14.3 | Responder pelo ZFlow → resposta chega no WhatsApp do celular | [ ] | Chat do ZFlow |
-| 14.4 | ACKs funcionam (1 check = enviado, 2 = entregue, azul = lido) | [ ] | Chat do ZFlow |
-| 14.5 | Enviar imagem do celular → aparece como midia no ZFlow | [ ] | Chat do ZFlow |
-| 14.6 | Enviar audio do celular → aparece com player no ZFlow | [ ] | Chat do ZFlow |
+| 14.2 | Mensagem aparece como novo ticket no Nuvio (pagina Tickets) | [ ] | `crm.ideva.ai/tickets` |
+| 14.3 | Responder pelo Nuvio → resposta chega no WhatsApp do celular | [ ] | Chat do Nuvio |
+| 14.4 | ACKs funcionam (1 check = enviado, 2 = entregue, azul = lido) | [ ] | Chat do Nuvio |
+| 14.5 | Enviar imagem do celular → aparece como midia no Nuvio | [ ] | Chat do Nuvio |
+| 14.6 | Enviar audio do celular → aparece com player no Nuvio | [ ] | Chat do Nuvio |
 | 14.7 | Testar campanha: criar campanha com template → iniciar → mensagem chega | [ ] | Campanhas |
 | 14.8 | Testar sync de templates: POST /templates/sync retorna templates aprovados | [ ] | API ou CampaignForm |
 
@@ -965,7 +979,7 @@ Para ir para Live mode:
 
 | # | Teste | Status |
 |---|-------|--------|
-| 2.1 | Logo ZFlow visivel no topo | [ ] |
+| 2.1 | Logo Nuvio visivel no topo | [ ] |
 | 2.2 | Link "Dashboard" → navega para `/dashboard` | [ ] |
 | 2.3 | Link "Tickets" → navega para `/tickets` | [ ] |
 | 2.4 | Link "Contatos" → navega para `/contacts` | [ ] |
@@ -1214,4 +1228,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time + UX essencial + seguranca fase 2 + estabilidade quick wins concluidos)*
+*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time + UX essencial + seguranca fase 2 + estabilidade quick wins + rebrand Nuvio concluidos)*

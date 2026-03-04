@@ -310,13 +310,13 @@ curl -s -o /dev/null -w "Webhook:      %{http_code}\n" https://DOMINIO/webhook
 # Testar login
 curl -s -X POST https://DOMINIO/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@zflow.com","password":"admin123"}'
+  -d '{"email":"admin@nuvio.com","password":"admin123"}'
 # Deve retornar: {"success":true,"data":{"token":"...","user":{...}}}
 ```
 
 ### Credenciais padrao (criadas pelo seed)
 
-- **Email**: `admin@zflow.com`
+- **Email**: `admin@nuvio.com`
 - **Senha**: `admin123`
 
 > Troque a senha apos o primeiro login.
