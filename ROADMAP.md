@@ -150,6 +150,20 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Stack renomeada de `zflow` para `nuvio` na VPS (volumes preservados como external)
 - [x] Responsividade mobile/tablet na sidebar, chat, DataTables
 
+### Fase 15: Seguranca A.1.3 + Estabilidade B.2.2 (CONCLUIDA)
+
+- [x] Refresh token migrado de localStorage para httpOnly cookie (`nuvio_refresh`, Secure, SameSite=strict, path=/auth/refresh)
+- [x] Access token armazenado em memoria (Zustand state) em vez de localStorage
+- [x] Novo endpoint GET `/auth/me` para restaurar sessao apos page refresh
+- [x] API interceptor: 401 → refresh via cookie automatico → retry request original
+- [x] Backward compat: `initialize()` limpa tokens legados do localStorage
+- [x] Graceful shutdown com timeout forçado de 30s (`process.exit(1)` apos timeout)
+- [x] Socket.IO close explicito no shutdown via `closeSocket()`
+- [x] Health check retorna 503 durante shutdown (flag `isShuttingDown`)
+- [x] Protecao contra SIGTERM duplo (flag `shutdownInProgress`)
+- [x] Dashboard atualizado: user name lido do Zustand store em vez de localStorage
+- [x] Testes atualizados: authStore, api, useAuth, handlers MSW
+
 ### Fase 6: Testes (CONCLUIDA)
 
 - [x] Backend: 66 arquivos, 670 testes, cobertura 93.62% statements
@@ -180,7 +194,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 |---|------|-------|---------|
 | A.1.1 | ~~**Validar que JWT secrets foram configurados** no startup~~ | ~~Token forgery~~ | ~~1h~~ | **CONCLUIDO** |
 | A.1.2 | ~~**Encriptar wabaToken** no banco - armazenado em texto plano no model WhatsApp~~ | ~~Token leak via SQL injection ou backup~~ | ~~4h~~ | **CONCLUIDO** |
-| A.1.3 | **Mover tokens para httpOnly cookies** - localStorage vulneravel a XSS (qualquer script injetado rouba o token) | Session hijacking | 6h |
+| A.1.3 | ~~**Mover tokens para httpOnly cookies** - localStorage vulneravel a XSS (qualquer script injetado rouba o token)~~ | ~~Session hijacking~~ | ~~6h~~ | **CONCLUIDO** |
 | A.1.4 | ~~**Criar `.env.example`** com todas variaveis obrigatorias documentadas~~ | ~~Misconfiguracao em deploy~~ | ~~1h~~ | **CONCLUIDO** |
 
 #### A.2 Autenticacao
@@ -202,7 +216,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 | A.3.3 | ~~**Sanitizar HTML/XSS no frontend e backend** - DOMPurify para sanitizacao de inputs~~ | ~~XSS persistente~~ | ~~3h~~ | **CONCLUIDO** |
 | A.3.4 | ~~**Reduzir limite de payload JSON** de 50MB para 10MB~~ | ~~DoS via payload~~ | ~~30min~~ | **CONCLUIDO** |
 | A.3.5 | **Validar conteudo de uploads** alem do MIME type (magic bytes) | Upload de malware | 3h |
-| A.3.6 | **Adicionar CSRF protection** - cookie-parser habilitado mas sem tokens CSRF | CSRF attack | 3h |
+| A.3.6 | ~~**Adicionar CSRF protection** - nao necessario: API usa Authorization header (nao cookie) para autenticacao~~ | ~~CSRF attack~~ | ~~N/A~~ | **N/A (mitigado por design)** |
 
 ---
 
@@ -225,7 +239,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 | # | Item | Impacto | Esforco |
 |---|------|---------|---------|
 | B.2.1 | ~~**Health check verificar PostgreSQL, Redis e Bull** - endpoint retorna 200 sem checar nada~~ | ~~Falha silenciosa de dependencias~~ | ~~2h~~ | **CONCLUIDO** |
-| B.2.2 | **Graceful shutdown** para conexoes DB/Redis/Bull/Socket | Requests perdidos em deploy | 3h |
+| B.2.2 | ~~**Graceful shutdown** para conexoes DB/Redis/Bull/Socket~~ | ~~Requests perdidos em deploy~~ | ~~3h~~ | **CONCLUIDO** |
 
 #### B.3 Rotas Faltando no Frontend
 
@@ -393,6 +407,8 @@ IMPACTO BAIXO
 | ~~Forgot password (email + token + reset)~~ | ~~6h~~ | ~~Usuarios trancados fora~~ | **CONCLUIDO** |
 | ~~Self-hosted Inter font~~ | ~~1h~~ | ~~CDN timeout prevention~~ | **CONCLUIDO** |
 | ~~Stack rename zflow → nuvio~~ | ~~1h~~ | ~~Identidade infra~~ | **CONCLUIDO** |
+| ~~httpOnly cookies (refresh token)~~ | ~~6h~~ | ~~XSS session hijacking prevention~~ | **CONCLUIDO** |
+| ~~Graceful shutdown (timeout + socket close + 503)~~ | ~~3h~~ | ~~Zero-downtime deploys~~ | **CONCLUIDO** |
 
 ---
 
@@ -400,7 +416,7 @@ IMPACTO BAIXO
 
 | Decisao | Opcoes | Recomendacao |
 |---------|--------|--------------|
-| Token storage | localStorage vs httpOnly cookie | httpOnly cookie |
+| ~~Token storage~~ | ~~localStorage vs httpOnly cookie~~ | ~~httpOnly cookie~~ | **DECIDIDO: httpOnly cookie (hybrid)** |
 | Form library | Manual vs React Hook Form | React Hook Form |
 | ~~Toast library~~ | ~~sonner vs react-hot-toast~~ | ~~sonner (shadcn compat)~~ | **DECIDIDO: sonner** |
 | API docs | Swagger vs Redoc | Swagger |
