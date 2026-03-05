@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom"
 
 import { Toaster } from "sonner"
 
+import "@fontsource-variable/inter"
 import App from "./App"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import { TooltipProvider } from "./components/ui/Tooltip"
