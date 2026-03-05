@@ -1,6 +1,6 @@
-import Tenant from "@/models/Tenant"
-import { getRedisClient } from "@/config/redis"
-import { getAllQueues } from "@/libs/queues"
+import Tenant from "../models/Tenant"
+import { getRedisClient } from "../config/redis"
+import { getAllQueues } from "../libs/queues"
 
 interface CheckResult {
   status: "up" | "down" | "degraded"
