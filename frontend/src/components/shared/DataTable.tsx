@@ -1,9 +1,11 @@
 import { cn } from "@/lib/utils"
+import { useIsMobile } from "@/hooks/useIsMobile"
 
 export interface DataTableColumn<T> {
   key: string
   label: string
   render?: (item: T) => React.ReactNode
+  hiddenOnMobile?: boolean
 }
 
 export interface DataTableProps<T> {
@@ -37,6 +39,12 @@ export function DataTable<T extends object>({
   emptyMessage = "Nenhum registro encontrado",
   className
 }: DataTableProps<T>) {
+  const isMobile = useIsMobile()
+
+  const visibleColumns = isMobile
+    ? columns.filter((col) => !col.hiddenOnMobile)
+    : columns
+
   return (
     <div
       className={cn(
@@ -48,8 +56,8 @@ export function DataTable<T extends object>({
         <table className="w-full">
           <thead className="bg-gray-50 text-left text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-gray-500">
             <tr>
-              {columns.map((column) => (
-                <th key={column.key} className="px-4 py-3 font-medium">
+              {visibleColumns.map((column) => (
+                <th key={column.key} className="px-3 py-3 font-medium md:px-4">
                   {column.label}
                 </th>
               ))}
@@ -61,7 +69,7 @@ export function DataTable<T extends object>({
             ) : data.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length}
+                  colSpan={visibleColumns.length}
                   className="p-8 text-center text-gray-500"
                 >
                   {emptyMessage}
@@ -78,8 +86,8 @@ export function DataTable<T extends object>({
                   )}
                   onClick={() => onRowClick?.(item)}
                 >
-                  {columns.map((column) => (
-                    <td key={column.key} className="px-4 py-3 text-[#0A0A0A]">
+                  {visibleColumns.map((column) => (
+                    <td key={column.key} className="px-3 py-3 text-[#0A0A0A] md:px-4">
                       {column.render
                         ? column.render(item)
                         : ((item as Record<string, unknown>)[column.key] as React.ReactNode)}

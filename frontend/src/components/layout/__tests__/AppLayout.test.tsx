@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { AppLayout } from "@/components/layout/AppLayout"
 import { useAuthStore } from "@/stores/authStore"
+import { TooltipProvider } from "@/components/ui/Tooltip"
 
 vi.mock("@/lib/socket", () => ({
   connectSocket: vi.fn(),
@@ -35,14 +36,16 @@ describe("AppLayout", () => {
   function renderWithRouter() {
     return render(
       <MemoryRouter initialEntries={["/dashboard"]}>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route
-              path="/dashboard"
-              element={<div>Dashboard Content</div>}
-            />
-          </Route>
-        </Routes>
+        <TooltipProvider>
+          <Routes>
+            <Route element={<AppLayout />}>
+              <Route
+                path="/dashboard"
+                element={<div>Dashboard Content</div>}
+              />
+            </Route>
+          </Routes>
+        </TooltipProvider>
       </MemoryRouter>
     )
   }

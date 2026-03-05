@@ -107,6 +107,7 @@ export function ContactList() {
     {
       key: "email",
       label: "Email",
+      hiddenOnMobile: true,
       render: (contact) => (
         <div className="text-gray-500">{contact.email || "-"}</div>
       )
@@ -114,6 +115,7 @@ export function ContactList() {
     {
       key: "tags",
       label: "Tags",
+      hiddenOnMobile: true,
       render: (contact) => (
         <div className="flex flex-wrap gap-1">
           {contact.tags && contact.tags.length > 0 ? (
@@ -136,6 +138,7 @@ export function ContactList() {
     {
       key: "createdAt",
       label: "Criado em",
+      hiddenOnMobile: true,
       render: (contact) => (
         <div className="text-gray-500">
           {format(new Date(contact.createdAt), "dd/MM/yyyy", { locale: ptBR })}
@@ -157,12 +160,13 @@ export function ContactList() {
   ]
 
   return (
-    <div className="space-y-6 p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0A]">Contatos</h1>
+    <div className="space-y-4 p-4 md:space-y-6 md:p-8">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold tracking-tight text-[#0A0A0A] md:text-2xl">Contatos</h1>
         <Button onClick={() => navigate("/contacts/new")}>
           <Plus className="h-4 w-4" />
-          Novo Contato
+          <span className="hidden sm:inline">Novo Contato</span>
+          <span className="sm:hidden">Novo</span>
         </Button>
       </div>
 

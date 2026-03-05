@@ -227,6 +227,7 @@ export function CampaignList() {
     {
       key: "scheduledAt",
       label: "Início",
+      hiddenOnMobile: true,
       render: (campaign) => (
         <span className="text-gray-500">
           {campaign.scheduledAt ? formatDate(campaign.scheduledAt) : "-"}
@@ -236,6 +237,7 @@ export function CampaignList() {
     {
       key: "contacts",
       label: "Contatos",
+      hiddenOnMobile: true,
       render: (campaign) => (
         <span className="text-gray-500">{getContactsCount(campaign)}</span>
       )
@@ -243,6 +245,7 @@ export function CampaignList() {
     {
       key: "createdAt",
       label: "Criado em",
+      hiddenOnMobile: true,
       render: (campaign) => (
         <span className="text-gray-500">{formatDate(campaign.createdAt)}</span>
       )
@@ -309,12 +312,13 @@ export function CampaignList() {
   ]
 
   return (
-    <div className="space-y-6 p-8 font-[Inter]">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0A]">Campanhas</h1>
+    <div className="space-y-4 p-4 font-[Inter] md:space-y-6 md:p-8">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold tracking-tight text-[#0A0A0A] md:text-2xl">Campanhas</h1>
         <Button onClick={() => { setCampaignToEdit(undefined); setFormOpen(true) }}>
           <Plus className="h-4 w-4" />
-          Nova Campanha
+          <span className="hidden sm:inline">Nova Campanha</span>
+          <span className="sm:hidden">Nova</span>
         </Button>
       </div>
 

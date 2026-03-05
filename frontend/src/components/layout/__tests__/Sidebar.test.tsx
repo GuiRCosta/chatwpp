@@ -35,6 +35,26 @@ describe("Sidebar", () => {
     expect(screen.getByText("Contatos")).toBeInTheDocument()
     expect(screen.getByText("CRM")).toBeInTheDocument()
     expect(screen.getByText("Campanhas")).toBeInTheDocument()
+  })
+
+  it("renders settings link for superadmin", () => {
+    useAuthStore.setState({
+      user: {
+        id: 1,
+        name: "Super Admin",
+        email: "admin@example.com",
+        profile: "superadmin",
+        tenantId: 1,
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z"
+      },
+      token: "test-token",
+      isAuthenticated: true,
+      isLoading: false
+    })
+
+    render(<Sidebar />)
+
     expect(screen.getByText("Configuracoes")).toBeInTheDocument()
   })
 

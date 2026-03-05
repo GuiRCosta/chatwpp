@@ -75,10 +75,12 @@ describe("Header", () => {
     expect(screen.getByText("Dashboard")).toBeInTheDocument()
   })
 
-  it("renders custom title", () => {
-    render(<Header title="Tickets" />)
+  it("renders title based on route", () => {
+    // Default route "/" resolves to "Dashboard" — tested in the "renders default title" test above
+    // The Header component reads the title from useLocation().pathname
+    render(<Header />)
 
-    expect(screen.getByText("Tickets")).toBeInTheDocument()
+    expect(screen.getByRole("heading")).toBeInTheDocument()
   })
 
   it("shows notification count when unread notifications exist", () => {

@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom"
+import { NavLink, useNavigate, useLocation } from "react-router-dom"
 import {
   LayoutDashboard,
   MessageSquare,
@@ -12,15 +12,18 @@ import {
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 import { useSidebarStore } from "@/stores/sidebarStore"
+import { useIsMobile } from "@/hooks/useIsMobile"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar"
 import { Badge } from "@/components/ui/Badge"
 import { Separator } from "@/components/ui/Separator"
+import { Sheet, SheetContent } from "@/components/ui/Sheet"
 import { cn } from "@/lib/utils"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/Tooltip"
+import { useEffect } from "react"
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -30,15 +33,21 @@ const navItems = [
   { name: "Campanhas", href: "/campaigns", icon: Megaphone },
 ]
 
-export function Sidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
-  const { collapsed, toggle } = useSidebarStore()
+  const { collapsed } = useSidebarStore()
+  const isMobile = useIsMobile()
   const isSuperAdmin = user?.profile === "superadmin"
 
+  const isExpanded = isMobile || !collapsed
+
   const handleLogout = async () => {
-    await logout()
-    navigate("/login")
+    try {
+      await logout()
+    } finally {
+      navigate("/login")
+    }
   }
 
   const getInitials = (name: string) => {
@@ -51,25 +60,20 @@ export function Sidebar() {
   }
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-[#08090A] text-white flex flex-col transition-all duration-300",
-        collapsed ? "w-[72px]" : "w-64"
-      )}
-    >
+    <>
       {/* Logo Section */}
-      <div className={cn("p-6", collapsed && "px-4")}>
+      <div className={cn("p-6", !isExpanded && "px-4")}>
         <div className="flex items-center gap-3 group cursor-pointer">
           <div className="flex gap-1 shrink-0">
             <div className="w-1.5 rounded-full bg-white h-6 transition-all duration-300 group-hover:h-8" />
             <div className="w-1.5 rounded-full bg-white h-8 transition-all duration-300 group-hover:h-10" />
             <div className="w-1.5 rounded-full bg-white h-6 transition-all duration-300 group-hover:h-8" />
           </div>
-          {!collapsed && (
+          {isExpanded && (
             <span className="text-xl font-bold tracking-wider">NUVIO</span>
           )}
         </div>
-        {!collapsed && (
+        {isExpanded && (
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-gray-400 mt-2 ml-1">
             CRM & Atendimento inteligente
           </p>
@@ -85,10 +89,11 @@ export function Sidebar() {
                 <TooltipTrigger asChild>
                   <NavLink
                     to={item.href}
+                    onClick={onNavigate}
                     className={({ isActive }) =>
                       cn(
                         "flex items-center gap-3 px-3 py-2.5 rounded-full transition-all duration-200",
-                        collapsed && "justify-center px-2",
+                        !isExpanded && "justify-center px-2",
                         isActive
                           ? "bg-white/10 text-white"
                           : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -96,12 +101,12 @@ export function Sidebar() {
                     }
                   >
                     <item.icon className="w-5 h-5 shrink-0" />
-                    {!collapsed && (
+                    {isExpanded && (
                       <span className="text-[0.7rem] font-medium uppercase tracking-[0.2em]">{item.name}</span>
                     )}
                   </NavLink>
                 </TooltipTrigger>
-                {collapsed && (
+                {!isExpanded && (
                   <TooltipContent side="right" sideOffset={8}>
                     {item.name}
                   </TooltipContent>
@@ -121,10 +126,11 @@ export function Sidebar() {
                   <TooltipTrigger asChild>
                     <NavLink
                       to="/settings"
+                      onClick={onNavigate}
                       className={({ isActive }) =>
                         cn(
                           "flex items-center gap-3 px-3 py-2.5 rounded-full transition-all duration-200",
-                          collapsed && "justify-center px-2",
+                          !isExpanded && "justify-center px-2",
                           isActive
                             ? "bg-white/10 text-white"
                             : "text-gray-400 hover:text-white hover:bg-white/5"
@@ -132,14 +138,14 @@ export function Sidebar() {
                       }
                     >
                       <Settings2 className="w-5 h-5 shrink-0" />
-                      {!collapsed && (
+                      {isExpanded && (
                         <span className="text-[0.7rem] font-medium uppercase tracking-[0.2em]">
                           Configuracoes
                         </span>
                       )}
                     </NavLink>
                   </TooltipTrigger>
-                  {collapsed && (
+                  {!isExpanded && (
                     <TooltipContent side="right" sideOffset={8}>
                       Configuracoes
                     </TooltipContent>
@@ -153,7 +159,7 @@ export function Sidebar() {
 
       {/* User Section */}
       <div className="p-4 border-t border-white/10">
-        {!collapsed ? (
+        {isExpanded ? (
           <>
             <div className="flex items-center gap-3 mb-3">
               <Avatar className="h-10 w-10 shrink-0">
@@ -212,8 +218,39 @@ export function Sidebar() {
           </div>
         )}
       </div>
+    </>
+  )
+}
 
-      {/* Collapse Toggle */}
+export function Sidebar() {
+  const isMobile = useIsMobile()
+  const { collapsed, toggle, mobileOpen, setMobileOpen } = useSidebarStore()
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname, setMobileOpen])
+
+  if (isMobile) {
+    return (
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-64 p-0">
+          <SidebarContent onNavigate={() => setMobileOpen(false)} />
+        </SheetContent>
+      </Sheet>
+    )
+  }
+
+  return (
+    <aside
+      className={cn(
+        "fixed left-0 top-0 z-40 h-screen bg-[#08090A] text-white flex flex-col transition-all duration-300",
+        collapsed ? "w-[72px]" : "w-64"
+      )}
+    >
+      <SidebarContent />
+
+      {/* Collapse Toggle — desktop only */}
       <button
         onClick={toggle}
         className="absolute -right-3 top-20 h-6 w-6 rounded-full bg-[#08090A] border border-white/20 flex items-center justify-center text-gray-400 hover:text-white hover:border-white/40 transition-all duration-200"

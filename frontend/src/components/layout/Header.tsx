@@ -1,6 +1,8 @@
-import { Bell } from "lucide-react"
+import { Bell, Menu } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 import { useNotificationStore } from "@/stores/notificationStore"
+import { useSidebarStore } from "@/stores/sidebarStore"
+import { useIsMobile } from "@/hooks/useIsMobile"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/Avatar"
 import { Badge } from "@/components/ui/Badge"
 import {
@@ -39,10 +41,15 @@ export function Header() {
   const navigate = useNavigate()
   const { user, logout } = useAuthStore()
   const { unreadCount } = useNotificationStore()
+  const isMobile = useIsMobile()
+  const toggleMobile = useSidebarStore((s) => s.toggleMobile)
 
   const handleLogout = async () => {
-    await logout()
-    navigate("/login")
+    try {
+      await logout()
+    } finally {
+      navigate("/login")
+    }
   }
 
   const getInitials = (name: string) => {
@@ -55,12 +62,21 @@ export function Header() {
   }
 
   return (
-    <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6">
-      <div>
-        <h1 className="text-xl font-medium tracking-tight text-gray-900">{title}</h1>
+    <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-4 md:px-6">
+      <div className="flex items-center gap-3">
+        {isMobile && (
+          <button
+            onClick={toggleMobile}
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Abrir menu"
+          >
+            <Menu className="w-5 h-5 text-gray-600" />
+          </button>
+        )}
+        <h1 className="text-lg md:text-xl font-medium tracking-tight text-gray-900">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Notifications */}
         <button
           className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"

@@ -29,6 +29,18 @@ const localStorageMock = (() => {
 
 Object.defineProperty(window, "localStorage", { value: localStorageMock })
 
+// Mock window.matchMedia (plain function to survive mockReset/restoreMocks)
+window.matchMedia = ((query: string) => ({
+  matches: false,
+  media: query,
+  onchange: null,
+  addListener: () => {},
+  removeListener: () => {},
+  addEventListener: () => {},
+  removeEventListener: () => {},
+  dispatchEvent: () => false
+})) as typeof window.matchMedia
+
 // Mock window.location
 delete (window as { location?: Location }).location
 window.location = { href: "http://localhost:7564", pathname: "/", origin: "http://localhost:7564" } as Location
