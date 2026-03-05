@@ -6,15 +6,17 @@ import { Sequelize } from "sequelize-typescript"
 import { createServer } from "http"
 
 import app from "./app"
-import { initSocket } from "./libs/socket"
+import { initSocket, closeSocket } from "./libs/socket"
 import dbConfig from "./config/database"
 import models from "./models"
 import { closeRedis } from "./config/redis"
 import { initQueues, closeQueues } from "./libs/queues"
 import { initScheduledJobs, stopScheduledJobs } from "./jobs/ScheduledJobs"
 import { logger } from "./helpers/logger"
+import { setShuttingDown } from "./helpers/shutdownState"
 
 const PORT = Number(process.env.PORT) || 7563
+const SHUTDOWN_TIMEOUT_MS = 30_000
 
 async function bootstrap(): Promise<void> {
   const sequelize = new Sequelize({
@@ -42,10 +44,23 @@ async function bootstrap(): Promise<void> {
     logger.info(`Environment: ${process.env.NODE_ENV || "development"}`)
   })
 
+  let shutdownInProgress = false
+
   const gracefulShutdown = async (signal: string): Promise<void> => {
+    if (shutdownInProgress) return
+    shutdownInProgress = true
+    setShuttingDown()
+
     logger.info(`${signal} received. Shutting down gracefully...`)
 
+    const forceExit = setTimeout(() => {
+      logger.error("Shutdown timed out after %dms. Forcing exit.", SHUTDOWN_TIMEOUT_MS)
+      process.exit(1)
+    }, SHUTDOWN_TIMEOUT_MS)
+    forceExit.unref()
+
     stopScheduledJobs()
+    closeSocket()
 
     httpServer.close(async () => {
       try {

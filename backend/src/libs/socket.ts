@@ -90,3 +90,10 @@ export function emitToUser(userId: number, event: string, data: unknown): void {
 export function emitToTicket(ticketId: number, event: string, data: unknown): void {
   getIO().to(`ticket:${ticketId}`).emit(event, data)
 }
+
+export function closeSocket(): void {
+  if (io) {
+    io.close()
+    logger.info("Socket.IO closed")
+  }
+}

@@ -1,16 +1,18 @@
 import axios from "axios"
+import { useAuthStore } from "@/stores/authStore"
 
 const api = axios.create({
   baseURL: "/api",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json"
   }
 })
 
-// Request interceptor: add Bearer token from localStorage
+// Request interceptor: add Bearer token from Zustand store (memory)
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("nuvio:token")
+    const token = useAuthStore.getState().token
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -21,45 +23,39 @@ api.interceptors.request.use(
   }
 )
 
-// Response interceptor: on 401, try refresh token, if fails redirect to /login
+// Response interceptor: on 401, try refresh via httpOnly cookie
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
 
-    // If 401 and not already retrying
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
       try {
-        const refreshToken = localStorage.getItem("nuvio:refreshToken")
-
-        if (!refreshToken) {
-          throw new Error("No refresh token available")
-        }
-
-        const response = await axios.post("/api/auth/refresh", {
-          refreshToken
-        })
+        const response = await axios.post(
+          "/api/auth/refresh",
+          {},
+          { withCredentials: true }
+        )
 
         if (response.data.success) {
-          const { token, refreshToken: newRefreshToken } = response.data.data
+          const { token } = response.data.data
 
-          localStorage.setItem("nuvio:token", token)
-          localStorage.setItem("nuvio:refreshToken", newRefreshToken)
+          useAuthStore.getState().setToken(token)
 
-          // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${token}`
           return api(originalRequest)
         }
-      } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
-        localStorage.removeItem("nuvio:token")
-        localStorage.removeItem("nuvio:refreshToken")
-        localStorage.removeItem("nuvio:user")
+      } catch {
+        useAuthStore.setState({
+          user: null,
+          token: null,
+          isAuthenticated: false
+        })
 
         window.location.href = "/login"
-        return Promise.reject(refreshError)
+        return Promise.reject(error)
       }
     }
 

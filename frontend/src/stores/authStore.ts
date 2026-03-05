@@ -8,16 +8,23 @@ interface AuthState {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  isInitialized: boolean
+  setToken: (token: string) => void
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
-  initialize: () => void
+  initialize: () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>()((set) => ({
+export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
   token: null,
   isAuthenticated: false,
   isLoading: false,
+  isInitialized: false,
+
+  setToken: (token: string) => {
+    set({ token })
+  },
 
   login: async (email: string, password: string) => {
     try {
@@ -26,7 +33,6 @@ export const useAuthStore = create<AuthState>()((set) => ({
       const response = await api.post<
         ApiResponse<{
           token: string
-          refreshToken: string
           user: User
         }>
       >("/auth/login", { email, password })
@@ -35,14 +41,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
         throw new Error(response.data.error || "Login failed")
       }
 
-      const { token, refreshToken, user } = response.data.data
+      const { token, user } = response.data.data
 
-      // Store in localStorage
-      localStorage.setItem("nuvio:token", token)
-      localStorage.setItem("nuvio:refreshToken", refreshToken)
-      localStorage.setItem("nuvio:user", JSON.stringify(user))
-
-      // Update state
       set({
         user,
         token,
@@ -50,7 +50,6 @@ export const useAuthStore = create<AuthState>()((set) => ({
         isLoading: false
       })
 
-      // Connect socket
       connectSocket(token)
     } catch (error) {
       set({ isLoading: false })
@@ -61,18 +60,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
   logout: async () => {
     try {
       await api.post("/auth/logout")
-    } catch (error) {
-      console.error("Logout error:", error)
+    } catch {
+      // Logout request may fail if token expired
     } finally {
-      // Clear localStorage
-      localStorage.removeItem("nuvio:token")
-      localStorage.removeItem("nuvio:refreshToken")
-      localStorage.removeItem("nuvio:user")
-
-      // Disconnect socket
       disconnectSocket()
 
-      // Clear state
       set({
         user: null,
         token: null,
@@ -81,29 +73,51 @@ export const useAuthStore = create<AuthState>()((set) => ({
     }
   },
 
-  initialize: () => {
-    const token = localStorage.getItem("nuvio:token")
-    const userStr = localStorage.getItem("nuvio:user")
+  initialize: async () => {
+    // Cleanup legacy localStorage tokens
+    localStorage.removeItem("nuvio:token")
+    localStorage.removeItem("nuvio:refreshToken")
+    localStorage.removeItem("nuvio:user")
 
-    if (token && userStr) {
-      try {
-        const user = JSON.parse(userStr) as User
+    try {
+      // Try to refresh using httpOnly cookie
+      const refreshRes = await api.post<ApiResponse<{ token: string }>>(
+        "/auth/refresh"
+      )
 
-        set({
-          user,
-          token,
-          isAuthenticated: true
-        })
-
-        // Reconnect socket
-        connectSocket(token)
-      } catch (error) {
-        console.error("Failed to initialize auth state:", error)
-        // Clear invalid data
-        localStorage.removeItem("nuvio:token")
-        localStorage.removeItem("nuvio:refreshToken")
-        localStorage.removeItem("nuvio:user")
+      if (!refreshRes.data.success || !refreshRes.data.data) {
+        set({ isInitialized: true })
+        return
       }
+
+      const { token } = refreshRes.data.data
+      set({ token })
+
+      // Fetch user data with the new token
+      const meRes = await api.get<ApiResponse<{ user: User }>>("/auth/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (!meRes.data.success || !meRes.data.data) {
+        set({ token: null, isInitialized: true })
+        return
+      }
+
+      set({
+        user: meRes.data.data.user,
+        token,
+        isAuthenticated: true,
+        isInitialized: true
+      })
+
+      connectSocket(token)
+    } catch {
+      set({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isInitialized: true
+      })
     }
   }
 }))

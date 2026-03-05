@@ -33,7 +33,8 @@ describe("useAuth", () => {
       },
       token: "test-token",
       isAuthenticated: true,
-      isLoading: false
+      isLoading: false,
+      isInitialized: true
     })
 
     const { result } = renderHook(() => useAuth())
@@ -42,6 +43,7 @@ describe("useAuth", () => {
     expect(result.current.token).toBe("test-token")
     expect(result.current.isAuthenticated).toBe(true)
     expect(result.current.isLoading).toBe(false)
+    expect(result.current.isInitialized).toBe(true)
     expect(result.current.login).toBeDefined()
     expect(result.current.logout).toBeDefined()
   })
@@ -67,5 +69,6 @@ describe("useAuth", () => {
     expect(result.current.token).toBeNull()
     expect(result.current.isAuthenticated).toBe(false)
     expect(result.current.isLoading).toBe(false)
+    expect(result.current.isInitialized).toBe(false)
   })
 })

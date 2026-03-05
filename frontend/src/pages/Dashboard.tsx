@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { MessageSquare, Users, Megaphone, TrendingUp } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/Card"
+import { useAuthStore } from "@/stores/authStore"
 import api from "@/lib/api"
 import { cn } from "@/lib/utils"
 
@@ -114,19 +115,11 @@ export function Dashboard() {
       }
     }
 
-    const loadUserName = () => {
-      const userStr = localStorage.getItem("nuvio:user")
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr)
-          setUserName(user.name || user.email || "Usuário")
-        } catch {
-          // Ignore invalid JSON in localStorage
-        }
-      }
+    const user = useAuthStore.getState().user
+    if (user) {
+      setUserName(user.name || user.email || "Usuário")
     }
 
-    loadUserName()
     fetchStats()
   }, [])
 

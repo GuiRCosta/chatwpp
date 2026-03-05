@@ -8,7 +8,8 @@ export function resetAllStores() {
     user: null,
     token: null,
     isAuthenticated: false,
-    isLoading: false
+    isLoading: false,
+    isInitialized: false
   })
 
   useTicketStore.setState({

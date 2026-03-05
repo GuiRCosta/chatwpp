@@ -32,6 +32,7 @@ const authRoutes = Router()
 
 authRoutes.post("/login", loginLimiter, AuthController.login)
 authRoutes.post("/refresh", AuthController.refresh)
+authRoutes.get("/me", isAuth, AuthController.me)
 authRoutes.post("/logout", isAuth, AuthController.logout)
 authRoutes.post("/forgot-password", forgotPasswordLimiter, AuthController.forgotPassword)
 authRoutes.post("/reset-password", resetPasswordLimiter, AuthController.resetPassword)

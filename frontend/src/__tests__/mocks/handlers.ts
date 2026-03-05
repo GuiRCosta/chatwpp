@@ -29,8 +29,24 @@ export const handlers = [
     return HttpResponse.json({
       success: true,
       data: {
-        token: "new-test-jwt-token",
-        refreshToken: "new-test-refresh-token"
+        token: "new-test-jwt-token"
+      }
+    })
+  }),
+
+  http.get("/api/auth/me", () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        user: {
+          id: 1,
+          tenantId: 1,
+          name: "Test User",
+          email: "test@example.com",
+          profile: "admin",
+          createdAt: "2024-01-01T00:00:00.000Z",
+          updatedAt: "2024-01-01T00:00:00.000Z"
+        }
       }
     })
   }),

@@ -138,6 +138,18 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Verificar Meta Graph API v25.0 (confirmado em wabaClient.ts)
 - [x] Infraestrutura Docker/CI mantida como `zflow` (servicos, imagens, networks)
 
+### Fase 14: Seguranca A.1.2 + Estabilidade B.2.1 (CONCLUIDA)
+
+- [x] Encriptacao de wabaToken em repouso (AES-256-GCM) via hooks Sequelize `@BeforeSave` / `@AfterFind`
+- [x] Migration automatica para encriptar tokens existentes no banco
+- [x] ENCRYPTION_KEY configurada no docker-compose.yml e .env.example
+- [x] Health check real: `/health` verifica PostgreSQL, Redis e Bull queues com latencia e status
+- [x] Docker healthcheck no backend service (wget /health com retries)
+- [x] Forgot password: fluxo completo (email + token + reset)
+- [x] Self-hosted Inter font (substituiu Google Fonts CDN por @fontsource-variable/inter)
+- [x] Stack renomeada de `zflow` para `nuvio` na VPS (volumes preservados como external)
+- [x] Responsividade mobile/tablet na sidebar, chat, DataTables
+
 ### Fase 6: Testes (CONCLUIDA)
 
 - [x] Backend: 66 arquivos, 670 testes, cobertura 93.62% statements
@@ -167,7 +179,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 | # | Item | Risco | Esforco |
 |---|------|-------|---------|
 | A.1.1 | ~~**Validar que JWT secrets foram configurados** no startup~~ | ~~Token forgery~~ | ~~1h~~ | **CONCLUIDO** |
-| A.1.2 | **Encriptar wabaToken** no banco - armazenado em texto plano no model WhatsApp | Token leak via SQL injection ou backup | 4h |
+| A.1.2 | ~~**Encriptar wabaToken** no banco - armazenado em texto plano no model WhatsApp~~ | ~~Token leak via SQL injection ou backup~~ | ~~4h~~ | **CONCLUIDO** |
 | A.1.3 | **Mover tokens para httpOnly cookies** - localStorage vulneravel a XSS (qualquer script injetado rouba o token) | Session hijacking | 6h |
 | A.1.4 | ~~**Criar `.env.example`** com todas variaveis obrigatorias documentadas~~ | ~~Misconfiguracao em deploy~~ | ~~1h~~ | **CONCLUIDO** |
 
@@ -212,7 +224,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 | # | Item | Impacto | Esforco |
 |---|------|---------|---------|
-| B.2.1 | **Health check verificar PostgreSQL, Redis e Bull** - endpoint retorna 200 sem checar nada | Falha silenciosa de dependencias | 2h |
+| B.2.1 | ~~**Health check verificar PostgreSQL, Redis e Bull** - endpoint retorna 200 sem checar nada~~ | ~~Falha silenciosa de dependencias~~ | ~~2h~~ | **CONCLUIDO** |
 | B.2.2 | **Graceful shutdown** para conexoes DB/Redis/Bull/Socket | Requests perdidos em deploy | 3h |
 
 #### B.3 Rotas Faltando no Frontend
@@ -229,7 +241,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 |---|------|---------|---------|
 | B.4.1 | ~~**Sistema de toast/snackbar** - Nenhum feedback visual para acoes (sucesso/erro)~~ | ~~UX confusa~~ | ~~2h~~ | **CONCLUIDO** |
 | B.4.2 | ~~**Loading em transicoes de rota**~~ | ~~Sensacao de travamento~~ | ~~1h~~ | **CONCLUIDO** |
-| B.4.3 | **Forgot password** - link existe no login mas nao implementado | Usuarios trancados fora | 6h |
+| B.4.3 | ~~**Forgot password** - link existe no login mas nao implementado~~ | ~~Usuarios trancados fora~~ | ~~6h~~ | **CONCLUIDO** |
 
 ---
 
@@ -254,10 +266,10 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 | # | Item | Beneficio | Esforco |
 |---|------|-----------|---------|
-| C.2.1 | **Sidebar responsiva** com drawer mobile (collapse desktop ja implementado) | Usabilidade mobile | 2h |
+| C.2.1 | ~~**Sidebar responsiva** com drawer mobile (collapse desktop ja implementado)~~ | ~~Usabilidade mobile~~ | ~~2h~~ | **CONCLUIDO** |
 | C.2.2 | **React Hook Form** para formularios | DX, performance, validacao consistente | 8h |
-| C.2.3 | **DataTable scroll horizontal** em mobile | Tabelas visiveis em tela pequena | 2h |
-| C.2.4 | **Chat panel adaptavel** para mobile (fullscreen) | Conversas legiveis em mobile | 4h |
+| C.2.3 | ~~**DataTable scroll horizontal** em mobile~~ | ~~Tabelas visiveis em tela pequena~~ | ~~2h~~ | **CONCLUIDO** |
+| C.2.4 | ~~**Chat panel adaptavel** para mobile (fullscreen)~~ | ~~Conversas legiveis em mobile~~ | ~~4h~~ | **CONCLUIDO** |
 | C.2.5 | **Dark mode** - CSS variables existem mas sem toggle | Preferencia do usuario | 4h |
 | C.2.6 | **Dirty state warning** ao navegar com formulario nao salvo | Evitar perda de dados | 2h |
 
@@ -376,6 +388,11 @@ IMPACTO BAIXO
 | ~~XSS sanitization (DOMPurify)~~ | ~~3h~~ | ~~XSS prevention~~ | **CONCLUIDO** |
 | ~~Rebrand ZFlow → Nuvio (UI, stores, backend, tests)~~ | ~~3h~~ | ~~Identidade do produto~~ | **CONCLUIDO** |
 | ~~Verificar Meta Graph API v25.0~~ | ~~10min~~ | ~~API atualizada~~ | **CONCLUIDO** |
+| ~~Encriptar wabaToken (AES-256-GCM)~~ | ~~4h~~ | ~~Token leak prevention~~ | **CONCLUIDO** |
+| ~~Health check real (PG + Redis + Bull)~~ | ~~2h~~ | ~~Falha silenciosa detectada~~ | **CONCLUIDO** |
+| ~~Forgot password (email + token + reset)~~ | ~~6h~~ | ~~Usuarios trancados fora~~ | **CONCLUIDO** |
+| ~~Self-hosted Inter font~~ | ~~1h~~ | ~~CDN timeout prevention~~ | **CONCLUIDO** |
+| ~~Stack rename zflow → nuvio~~ | ~~1h~~ | ~~Identidade infra~~ | **CONCLUIDO** |
 
 ---
 
@@ -594,7 +611,7 @@ META_CONFIG_ID=798225723298929
 
 ```bash
 # Na VPS (SSH)
-cd /opt/zflow
+cd /opt/nuvio
 
 # Atualizar .env com os novos valores
 nano .env
@@ -872,7 +889,7 @@ Para ir para Live mode:
 | # | Item | Status | Onde |
 |---|------|:------:|------|
 | 10.1 | Conectar na VPS via SSH | [ ] | `ssh root@72.61.25.109` |
-| 10.2 | Editar `/opt/zflow/.env` | [ ] | `nano /opt/zflow/.env` |
+| 10.2 | Editar `/opt/nuvio/.env` | [ ] | `nano /opt/nuvio/.env` |
 | 10.3 | Preencher/atualizar `META_APP_ID` (Etapa 2.8) | [ ] | Valor do App ID |
 | 10.4 | Preencher/atualizar `META_APP_SECRET` (Etapa 3.3) | [ ] | Valor do App Secret |
 | 10.5 | Preencher/atualizar `META_VERIFY_TOKEN` (Etapa 5.4) | [ ] | Valor do Verify Token |
@@ -1228,4 +1245,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 3 de marco de 2026 (seguranca quick wins + socket.IO real-time + UX essencial + seguranca fase 2 + estabilidade quick wins + rebrand Nuvio concluidos)*
+*Ultima atualizacao: 5 de marco de 2026 (encriptacao wabaToken + health check real + forgot password + responsividade mobile + self-hosted font + stack rename nuvio concluidos)*

@@ -27,10 +27,14 @@ import { uploadRoutes } from "./uploadRoutes"
 import { webhookConfigRoutes } from "./webhookConfigRoutes"
 import { isAuth } from "../middleware/isAuth"
 import { getHealth } from "../services/HealthService"
+import { isShuttingDown } from "../helpers/shutdownState"
 
 const appRoutes = Router()
 
 appRoutes.get("/health", async (_req, res) => {
+  if (isShuttingDown()) {
+    return res.status(503).json({ status: "shutting_down" })
+  }
   const result = await getHealth()
   const httpStatus = result.status === "unhealthy" ? 503 : 200
   return res.status(httpStatus).json(result)

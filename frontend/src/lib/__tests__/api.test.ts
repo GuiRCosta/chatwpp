@@ -1,27 +1,29 @@
 import { describe, it, expect, vi, beforeAll, afterAll, afterEach } from "vitest"
 import { http, HttpResponse } from "msw"
 import { server } from "@/__tests__/mocks/server"
+import { useAuthStore } from "@/stores/authStore"
 import api from "@/lib/api"
 
 beforeAll(() => server.listen({ onUnhandledRequest: "bypass" }))
 afterEach(() => {
   server.resetHandlers()
-  vi.mocked(localStorage.getItem).mockReset()
-  vi.mocked(localStorage.setItem).mockReset()
-  vi.mocked(localStorage.removeItem).mockReset()
+  useAuthStore.setState({
+    user: null,
+    token: null,
+    isAuthenticated: false,
+    isLoading: false,
+    isInitialized: false
+  })
   window.location.href = "http://localhost:7564"
 })
 afterAll(() => server.close())
 
 describe("api", () => {
   describe("request interceptor", () => {
-    it("adds Bearer token from localStorage when token exists", async () => {
+    it("adds Bearer token from Zustand store when token exists", async () => {
       let capturedAuth = ""
 
-      vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
-        if (key === "nuvio:token") return "my-jwt-token"
-        return null
-      })
+      useAuthStore.setState({ token: "my-jwt-token" })
 
       server.use(
         http.get("/api/test-auth", ({ request }) => {
@@ -35,10 +37,8 @@ describe("api", () => {
       expect(capturedAuth).toBe("Bearer my-jwt-token")
     })
 
-    it("does not add Authorization header when no token exists", async () => {
+    it("does not add Authorization header when no token in store", async () => {
       let capturedAuth: string | null = ""
-
-      vi.mocked(localStorage.getItem).mockReturnValue(null)
 
       server.use(
         http.get("/api/test-no-auth", ({ request }) => {
@@ -54,14 +54,10 @@ describe("api", () => {
   })
 
   describe("response interceptor", () => {
-    it("on 401, attempts refresh and retries original request", async () => {
+    it("on 401, attempts refresh via cookie and retries original request", async () => {
       let attempt = 0
 
-      vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
-        if (key === "nuvio:token") return "expired-token"
-        if (key === "nuvio:refreshToken") return "valid-refresh-token"
-        return null
-      })
+      useAuthStore.setState({ token: "expired-token" })
 
       server.use(
         http.get("/api/protected-resource", () => {
@@ -81,8 +77,7 @@ describe("api", () => {
           return HttpResponse.json({
             success: true,
             data: {
-              token: "new-jwt-token",
-              refreshToken: "new-refresh-token"
+              token: "new-jwt-token"
             }
           })
         })
@@ -92,19 +87,11 @@ describe("api", () => {
 
       expect(response.data.success).toBe(true)
       expect(response.data.data.value).toBe("protected-data")
-      expect(localStorage.setItem).toHaveBeenCalledWith("nuvio:token", "new-jwt-token")
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        "nuvio:refreshToken",
-        "new-refresh-token"
-      )
+      expect(useAuthStore.getState().token).toBe("new-jwt-token")
     })
 
-    it("on refresh failure, clears tokens and redirects to /login", async () => {
-      vi.mocked(localStorage.getItem).mockImplementation((key: string) => {
-        if (key === "nuvio:token") return "expired-token"
-        if (key === "nuvio:refreshToken") return "invalid-refresh-token"
-        return null
-      })
+    it("on refresh failure, clears store state and redirects to /login", async () => {
+      useAuthStore.setState({ token: "expired-token", isAuthenticated: true })
 
       server.use(
         http.get("/api/secure-endpoint", () => {
@@ -123,29 +110,10 @@ describe("api", () => {
 
       await expect(api.get("/secure-endpoint")).rejects.toThrow()
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:token")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:refreshToken")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:user")
-      expect(window.location.href).toBe("/login")
-    })
-
-    it("on 401 without refresh token, clears tokens and redirects to /login", async () => {
-      vi.mocked(localStorage.getItem).mockReturnValue(null)
-
-      server.use(
-        http.get("/api/no-refresh", () => {
-          return HttpResponse.json(
-            { success: false, error: "Unauthorized" },
-            { status: 401 }
-          )
-        })
-      )
-
-      await expect(api.get("/no-refresh")).rejects.toThrow()
-
-      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:token")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:refreshToken")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:user")
+      const state = useAuthStore.getState()
+      expect(state.user).toBeNull()
+      expect(state.token).toBeNull()
+      expect(state.isAuthenticated).toBe(false)
       expect(window.location.href).toBe("/login")
     })
 
@@ -161,7 +129,7 @@ describe("api", () => {
 
       await expect(api.get("/server-error")).rejects.toThrow()
 
-      expect(localStorage.removeItem).not.toHaveBeenCalled()
+      expect(useAuthStore.getState().token).toBeNull()
     })
   })
 })

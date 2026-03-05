@@ -45,6 +45,11 @@ describe("authStore", () => {
       const state = useAuthStore.getState()
       expect(state.isLoading).toBe(false)
     })
+
+    it("has isInitialized set to false", () => {
+      const state = useAuthStore.getState()
+      expect(state.isInitialized).toBe(false)
+    })
   })
 
   describe("login", () => {
@@ -66,14 +71,16 @@ describe("authStore", () => {
       expect(state.isLoading).toBe(false)
     })
 
-    it("stores token, refreshToken, and user in localStorage", async () => {
+    it("does not store tokens in localStorage", async () => {
       await useAuthStore.getState().login("test@example.com", "password123")
 
-      expect(localStorage.setItem).toHaveBeenCalledWith("nuvio:token", "test-jwt-token")
-      expect(localStorage.setItem).toHaveBeenCalledWith("nuvio:refreshToken", "test-refresh-token")
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        "nuvio:user",
-        expect.stringContaining('"name":"Test User"')
+      expect(localStorage.setItem).not.toHaveBeenCalledWith(
+        "nuvio:token",
+        expect.any(String)
+      )
+      expect(localStorage.setItem).not.toHaveBeenCalledWith(
+        "nuvio:refreshToken",
+        expect.any(String)
       )
     })
 
@@ -123,7 +130,6 @@ describe("authStore", () => {
         isAuthenticated: true,
         isLoading: false
       })
-      localStorage.setItem("nuvio:token", "test-jwt-token")
 
       await useAuthStore.getState().logout()
 
@@ -131,22 +137,6 @@ describe("authStore", () => {
       expect(state.user).toBeNull()
       expect(state.token).toBeNull()
       expect(state.isAuthenticated).toBe(false)
-    })
-
-    it("removes from localStorage", async () => {
-      useAuthStore.setState({
-        user: authenticatedUser,
-        token: "test-jwt-token",
-        isAuthenticated: true,
-        isLoading: false
-      })
-      localStorage.setItem("nuvio:token", "test-jwt-token")
-
-      await useAuthStore.getState().logout()
-
-      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:token")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:refreshToken")
-      expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:user")
     })
 
     it("calls disconnectSocket", async () => {
@@ -158,7 +148,6 @@ describe("authStore", () => {
         isAuthenticated: true,
         isLoading: false
       })
-      localStorage.setItem("nuvio:token", "test-jwt-token")
 
       await useAuthStore.getState().logout()
 
@@ -167,8 +156,12 @@ describe("authStore", () => {
   })
 
   describe("initialize", () => {
-    it("hydrates state from localStorage", () => {
-      const user = {
+    it("restores session via refresh cookie and /auth/me", async () => {
+      await useAuthStore.getState().initialize()
+
+      const state = useAuthStore.getState()
+      expect(state.token).toBe("new-test-jwt-token")
+      expect(state.user).toEqual({
         id: 1,
         tenantId: 1,
         name: "Test User",
@@ -176,51 +169,87 @@ describe("authStore", () => {
         profile: "admin",
         createdAt: "2024-01-01T00:00:00.000Z",
         updatedAt: "2024-01-01T00:00:00.000Z"
-      }
-
-      localStorage.setItem("nuvio:token", "stored-token")
-      localStorage.setItem("nuvio:user", JSON.stringify(user))
-
-      useAuthStore.getState().initialize()
-
-      const state = useAuthStore.getState()
-      expect(state.user).toEqual(user)
-      expect(state.token).toBe("stored-token")
+      })
       expect(state.isAuthenticated).toBe(true)
+      expect(state.isInitialized).toBe(true)
     })
 
-    it("calls connectSocket with stored token", async () => {
+    it("calls connectSocket with new token", async () => {
       const { connectSocket } = await import("@/lib/socket")
 
-      localStorage.setItem("nuvio:token", "stored-token")
-      localStorage.setItem("nuvio:user", JSON.stringify({ id: 1, name: "Test" }))
+      await useAuthStore.getState().initialize()
 
-      useAuthStore.getState().initialize()
-
-      expect(connectSocket).toHaveBeenCalledWith("stored-token")
+      expect(connectSocket).toHaveBeenCalledWith("new-test-jwt-token")
     })
 
-    it("clears localStorage on invalid JSON", () => {
-      localStorage.setItem("nuvio:token", "stored-token")
-      localStorage.setItem("nuvio:user", "invalid-json{{{")
+    it("sets isInitialized true when refresh fails", async () => {
+      server.use(
+        http.post("/api/auth/refresh", () => {
+          return HttpResponse.json(
+            { success: false, error: "No refresh token" },
+            { status: 401 }
+          )
+        })
+      )
 
-      useAuthStore.getState().initialize()
+      await useAuthStore.getState().initialize()
+
+      const state = useAuthStore.getState()
+      expect(state.isAuthenticated).toBe(false)
+      expect(state.isInitialized).toBe(true)
+      expect(state.user).toBeNull()
+    })
+
+    it("sets isInitialized true when refresh returns no data", async () => {
+      server.use(
+        http.post("/api/auth/refresh", () => {
+          return HttpResponse.json({ success: false })
+        })
+      )
+
+      await useAuthStore.getState().initialize()
+
+      const state = useAuthStore.getState()
+      expect(state.isAuthenticated).toBe(false)
+      expect(state.isInitialized).toBe(true)
+    })
+
+    it("clears token when /auth/me fails after refresh", async () => {
+      server.use(
+        http.get("/api/auth/me", () => {
+          return HttpResponse.json(
+            { success: false, error: "Unauthorized" },
+            { status: 401 }
+          )
+        })
+      )
+
+      await useAuthStore.getState().initialize()
+
+      const state = useAuthStore.getState()
+      expect(state.token).toBeNull()
+      expect(state.isAuthenticated).toBe(false)
+      expect(state.isInitialized).toBe(true)
+    })
+
+    it("cleans up legacy localStorage tokens", async () => {
+      localStorage.setItem("nuvio:token", "old-token")
+      localStorage.setItem("nuvio:refreshToken", "old-refresh")
+      localStorage.setItem("nuvio:user", '{"id":1}')
+
+      await useAuthStore.getState().initialize()
 
       expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:token")
       expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:refreshToken")
       expect(localStorage.removeItem).toHaveBeenCalledWith("nuvio:user")
-
-      const state = useAuthStore.getState()
-      expect(state.isAuthenticated).toBe(false)
     })
+  })
 
-    it("does nothing when no token in localStorage", () => {
-      useAuthStore.getState().initialize()
+  describe("setToken", () => {
+    it("updates token in state", () => {
+      useAuthStore.getState().setToken("new-token")
 
-      const state = useAuthStore.getState()
-      expect(state.user).toBeNull()
-      expect(state.token).toBeNull()
-      expect(state.isAuthenticated).toBe(false)
+      expect(useAuthStore.getState().token).toBe("new-token")
     })
   })
 })
