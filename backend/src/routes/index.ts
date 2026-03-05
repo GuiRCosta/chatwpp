@@ -26,11 +26,14 @@ import { chatflowRoutes } from "./chatflowRoutes"
 import { uploadRoutes } from "./uploadRoutes"
 import { webhookConfigRoutes } from "./webhookConfigRoutes"
 import { isAuth } from "../middleware/isAuth"
+import { getHealth } from "../services/HealthService"
 
 const appRoutes = Router()
 
-appRoutes.get("/health", (_req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() })
+appRoutes.get("/health", async (_req, res) => {
+  const result = await getHealth()
+  const httpStatus = result.status === "unhealthy" ? 503 : 200
+  return res.status(httpStatus).json(result)
 })
 
 appRoutes.use("/webhook", webhookRoutes)

@@ -10,12 +10,15 @@ import {
   ForeignKey,
   BelongsTo,
   HasMany,
-  Default
+  Default,
+  BeforeSave,
+  AfterFind
 } from "sequelize-typescript"
 
 import Tenant from "./Tenant"
 import Ticket from "./Ticket"
 import UserWhatsApp from "./UserWhatsApp"
+import { encrypt, decrypt, isEncrypted } from "../helpers/encryption"
 
 @Table({ tableName: "WhatsApps", timestamps: true })
 export default class WhatsApp extends Model {
@@ -78,4 +81,29 @@ export default class WhatsApp extends Model {
 
   @HasMany(() => UserWhatsApp)
   userWhatsApps!: UserWhatsApp[]
+
+  @BeforeSave
+  static encryptToken(instance: WhatsApp): void {
+    if (
+      process.env.ENCRYPTION_KEY &&
+      instance.wabaToken &&
+      !isEncrypted(instance.wabaToken)
+    ) {
+      instance.wabaToken = encrypt(instance.wabaToken)
+    }
+  }
+
+  @AfterFind
+  static decryptTokens(
+    result: WhatsApp | WhatsApp[] | null
+  ): void {
+    if (!result || !process.env.ENCRYPTION_KEY) return
+
+    const instances = Array.isArray(result) ? result : [result]
+    for (const instance of instances) {
+      if (instance.wabaToken && isEncrypted(instance.wabaToken)) {
+        instance.wabaToken = decrypt(instance.wabaToken)
+      }
+    }
+  }
 }

@@ -92,6 +92,7 @@ services:
       CONNECTIONS_LIMIT: ${CONNECTIONS_LIMIT:-5}
       MIN_SLEEP_BUSINESS_HOURS: ${MIN_SLEEP_BUSINESS_HOURS:-1000}
       MAX_SLEEP_BUSINESS_HOURS: ${MAX_SLEEP_BUSINESS_HOURS:-3000}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       META_APP_ID: ${META_APP_ID:-}
       META_APP_SECRET: ${META_APP_SECRET:-}
       META_VERIFY_TOKEN: ${META_VERIFY_TOKEN:-}
@@ -105,6 +106,12 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:7563/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - IdevaNet
       - zflow-internal
