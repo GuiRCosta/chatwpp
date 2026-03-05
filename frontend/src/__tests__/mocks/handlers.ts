@@ -35,6 +35,20 @@ export const handlers = [
     })
   }),
 
+  http.post("/api/auth/forgot-password", () => {
+    return HttpResponse.json({
+      success: true,
+      data: { message: "If this email exists, a reset link has been sent" }
+    })
+  }),
+
+  http.post("/api/auth/reset-password", () => {
+    return HttpResponse.json({
+      success: true,
+      data: { message: "Password reset successfully" }
+    })
+  }),
+
   // Tickets
   http.get("/api/tickets", () => {
     return HttpResponse.json({

@@ -1,5 +1,5 @@
 import { useState, FormEvent } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom"
 import { useAuthStore } from "@/stores/authStore"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
@@ -107,12 +107,12 @@ export function Login() {
           <div className="text-center">
             <p className="text-sm text-gray-500">
               Esqueceu sua senha?{" "}
-              <a
-                href="/forgot-password"
+              <Link
+                to="/forgot-password"
                 className="text-blue-600 hover:underline font-medium"
               >
                 Recuperar
-              </a>
+              </Link>
             </p>
           </div>
         </CardContent>

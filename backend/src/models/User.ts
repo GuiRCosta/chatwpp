@@ -66,6 +66,12 @@ export default class User extends Model {
   @Column(DataType.DATE)
   lockedUntil!: Date | null
 
+  @Column(DataType.STRING)
+  passwordResetToken!: string | null
+
+  @Column(DataType.DATE)
+  passwordResetExpires!: Date | null
+
   @CreatedAt
   createdAt!: Date
 

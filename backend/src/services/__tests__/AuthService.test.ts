@@ -28,12 +28,25 @@ vi.mock("@/config/auth", () => ({
   }
 }))
 
-import { login, hashPassword, refreshTokens, logout } from "../AuthService"
+vi.mock("@/helpers/sendEmail", () => ({
+  sendPasswordResetEmail: vi.fn().mockResolvedValue(undefined)
+}))
+
+import {
+  login,
+  hashPassword,
+  refreshTokens,
+  logout,
+  forgotPassword,
+  resetPassword
+} from "../AuthService"
 import User from "@/models/User"
 import { compare, hash } from "bcryptjs"
 import { verify } from "jsonwebtoken"
 import { buildUser } from "@/__tests__/factories"
 import { AppError } from "@/helpers/AppError"
+import { sendPasswordResetEmail } from "@/helpers/sendEmail"
+import { createHash } from "crypto"
 
 describe("AuthService", () => {
   beforeEach(() => {
@@ -161,6 +174,139 @@ describe("AuthService", () => {
       vi.mocked(User.findByPk).mockResolvedValue(null)
 
       await expect(logout(999)).resolves.toBeUndefined()
+    })
+  })
+
+  describe("forgotPassword", () => {
+    it("sends reset email when user exists", async () => {
+      const mockUser = buildUser({ email: "user@test.com", name: "João" })
+      vi.mocked(User.findOne).mockResolvedValue(mockUser as unknown as User)
+
+      await forgotPassword("user@test.com")
+
+      expect(User.findOne).toHaveBeenCalled()
+      expect(mockUser.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          passwordResetToken: expect.any(String),
+          passwordResetExpires: expect.any(Date)
+        })
+      )
+      expect(sendPasswordResetEmail).toHaveBeenCalledWith(
+        "user@test.com",
+        expect.any(String),
+        "João"
+      )
+    })
+
+    it("stores hashed token (not raw) in database", async () => {
+      const mockUser = buildUser({ email: "user@test.com", name: "João" })
+      vi.mocked(User.findOne).mockResolvedValue(mockUser as unknown as User)
+
+      await forgotPassword("user@test.com")
+
+      const updateCall = mockUser.update.mock.calls[0][0] as Record<string, unknown>
+      const storedToken = updateCall.passwordResetToken as string
+
+      const emailCall = vi.mocked(sendPasswordResetEmail).mock.calls[0]
+      const rawToken = emailCall[1]
+
+      // Stored token should be a SHA-256 hash of the raw token
+      const expectedHash = createHash("sha256").update(rawToken).digest("hex")
+      expect(storedToken).toBe(expectedHash)
+
+      // Stored token should NOT equal the raw token
+      expect(storedToken).not.toBe(rawToken)
+    })
+
+    it("does not throw when user does not exist (prevents email enumeration)", async () => {
+      vi.mocked(User.findOne).mockResolvedValue(null)
+
+      await expect(forgotPassword("nobody@test.com")).resolves.toBeUndefined()
+
+      expect(sendPasswordResetEmail).not.toHaveBeenCalled()
+    })
+
+    it("sets token expiry to 1 hour from now", async () => {
+      const mockUser = buildUser({ email: "user@test.com" })
+      vi.mocked(User.findOne).mockResolvedValue(mockUser as unknown as User)
+
+      const before = Date.now()
+      await forgotPassword("user@test.com")
+      const after = Date.now()
+
+      const updateCall = mockUser.update.mock.calls[0][0] as Record<string, unknown>
+      const expires = updateCall.passwordResetExpires as Date
+      const expiresMs = expires.getTime()
+      const oneHourMs = 60 * 60 * 1000
+
+      expect(expiresMs).toBeGreaterThanOrEqual(before + oneHourMs - 100)
+      expect(expiresMs).toBeLessThanOrEqual(after + oneHourMs + 100)
+    })
+  })
+
+  describe("resetPassword", () => {
+    it("resets password with valid token", async () => {
+      const mockUser = buildUser({
+        passwordResetExpires: new Date(Date.now() + 3600000)
+      })
+      vi.mocked(User.findOne).mockResolvedValue(mockUser as unknown as User)
+      vi.mocked(hash).mockResolvedValue("new-hashed-password" as never)
+
+      await resetPassword("some-valid-token", "newpassword123")
+
+      expect(hash).toHaveBeenCalledWith("newpassword123", 10)
+      expect(mockUser.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          passwordHash: "new-hashed-password",
+          passwordResetToken: null,
+          passwordResetExpires: null,
+          tokenVersion: 1
+        })
+      )
+    })
+
+    it("queries with hashed token", async () => {
+      vi.mocked(User.findOne).mockResolvedValue(null)
+
+      const rawToken = "my-raw-token"
+      const expectedHash = createHash("sha256").update(rawToken).digest("hex")
+
+      try {
+        await resetPassword(rawToken, "newpassword123")
+      } catch {
+        // expected to throw
+      }
+
+      expect(User.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            passwordResetToken: expectedHash
+          })
+        })
+      )
+    })
+
+    it("throws error when token is invalid or expired", async () => {
+      vi.mocked(User.findOne).mockResolvedValue(null)
+
+      await expect(
+        resetPassword("invalid-token", "newpassword123")
+      ).rejects.toThrow("Invalid or expired reset token")
+    })
+
+    it("increments tokenVersion to revoke existing sessions", async () => {
+      const mockUser = buildUser({
+        passwordResetExpires: new Date(Date.now() + 3600000),
+        tokenVersion: 5
+      })
+      vi.mocked(User.findOne).mockResolvedValue(mockUser as unknown as User)
+      vi.mocked(hash).mockResolvedValue("hashed" as never)
+
+      await resetPassword("some-token", "newpassword123")
+
+      expect(mockUser.update).toHaveBeenCalledWith(
+        expect.objectContaining({ tokenVersion: 6 })
+      )
     })
   })
 })

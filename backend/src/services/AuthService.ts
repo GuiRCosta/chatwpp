@@ -1,10 +1,12 @@
 import { sign, verify } from "jsonwebtoken"
 import { compare, hash } from "bcryptjs"
+import { randomBytes, createHash } from "crypto"
 import { Op } from "sequelize"
 
 import User from "../models/User"
 import authConfig from "../config/auth"
 import { AppError } from "../helpers/AppError"
+import { sendPasswordResetEmail } from "../helpers/sendEmail"
 
 interface LoginPayload {
   email: string
@@ -158,4 +160,62 @@ export const logout = async (userId: number): Promise<void> => {
       tokenVersion: user.tokenVersion + 1
     })
   }
+}
+
+const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000 // 1 hour
+
+const hashToken = (token: string): string => {
+  return createHash("sha256").update(token).digest("hex")
+}
+
+export const forgotPassword = async (email: string): Promise<void> => {
+  const user = await User.findOne({
+    where: { email: { [Op.iLike]: email } }
+  })
+
+  if (!user) {
+    return
+  }
+
+  const rawToken = randomBytes(32).toString("hex")
+  const hashedToken = hashToken(rawToken)
+
+  await user.update({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: new Date(Date.now() + RESET_TOKEN_EXPIRY_MS)
+  })
+
+  try {
+    await sendPasswordResetEmail(user.email, rawToken, user.name)
+  } catch {
+    await user.update({
+      passwordResetToken: null,
+      passwordResetExpires: null
+    })
+    throw new AppError("Failed to send reset email. Please try again later.", 500)
+  }
+}
+
+export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+  const hashedToken = hashToken(token)
+
+  const user = await User.findOne({
+    where: {
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { [Op.gt]: new Date() }
+    }
+  })
+
+  if (!user) {
+    throw new AppError("Invalid or expired reset token", 400)
+  }
+
+  const passwordHash = await hash(newPassword, 10)
+
+  await user.update({
+    passwordHash,
+    passwordResetToken: null,
+    passwordResetExpires: null,
+    tokenVersion: user.tokenVersion + 1
+  })
 }

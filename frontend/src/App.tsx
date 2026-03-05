@@ -9,6 +9,8 @@ import { ContactList, ContactForm } from "@/pages/contacts"
 import { PipelineView } from "@/pages/crm/PipelineView"
 import { CampaignList } from "@/pages/campaigns/CampaignList"
 import { Settings } from "@/pages/settings/Settings"
+import { ForgotPassword } from "@/pages/ForgotPassword"
+import { ResetPassword } from "@/pages/ResetPassword"
 import { PrivacyPolicy } from "@/pages/legal/PrivacyPolicy"
 import { TermsOfService } from "@/pages/legal/TermsOfService"
 import { DataDeletion } from "@/pages/legal/DataDeletion"
@@ -38,6 +40,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/data-deletion" element={<DataDeletion />} />
