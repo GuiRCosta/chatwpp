@@ -210,7 +210,17 @@ networks:
 
 volumes:
   postgres_data:
+    external: true
+    name: zflow_postgres_data
   redis_data:
+    external: true
+    name: zflow_redis_data
   backend_uploads:
+    external: true
+    name: zflow_backend_uploads
   backend_public:
+    external: true
+    name: zflow_backend_public
   backend_logs:
+    external: true
+    name: zflow_backend_logs
