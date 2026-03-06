@@ -160,6 +160,18 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Testes: 11 testes para validateFileContent (text skip, valid binary, mismatch, unrecognizable, undeclared MIME)
 - [x] **FASE A (Seguranca) 100% CONCLUIDA** — todos os itens A.1 a A.3 fechados
 
+### Fase 17: B.3.3 Campaign Detail + D.3.2 Change Password (CONCLUIDA)
+
+- [x] Pagina de detalhe de campanha (`/campaigns/:id`) com metricas de status (pendentes/enviados/entregues/lidos/erros)
+- [x] Tabela de contatos da campanha com status individual e data de envio
+- [x] Acoes no detalhe: Iniciar, Editar, Cancelar, Excluir (com ConfirmDialog)
+- [x] Backend: `DELETE /campaigns/:id` endpoint + contatos incluidos no `findCampaignById`
+- [x] Botao "Ver" na lista de campanhas navega para detalhe (nao abre modal)
+- [x] Endpoint `PUT /auth/change-password` com validacao (min 8 chars, confirmacao) + rate limiting
+- [x] Pagina de perfil (`/profile`) com info do usuario e formulario de alterar senha
+- [x] Testes: 4 testes para changePassword (sucesso, senha errada, user nao encontrado, tokenVersion)
+- [x] **FASE B (Estabilidade) 100% CONCLUIDA** — todos os itens B.1 a B.4 fechados
+
 ### Fase 15: Seguranca A.1.3 + Estabilidade B.2.2 (CONCLUIDA)
 
 - [x] Refresh token migrado de localStorage para httpOnly cookie (`nuvio_refresh`, Secure, SameSite=strict, path=/auth/refresh)
@@ -231,9 +243,10 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 ---
 
-### FASE B - Estabilidade e Real-Time (ALTO)
+### FASE B - Estabilidade e Real-Time (ALTO) ✅ CONCLUIDA
 
-> O sistema tem infraestrutura de socket mas NAO esta conectado aos stores do frontend.
+> ~~O sistema tem infraestrutura de socket mas NAO esta conectado aos stores do frontend.~~
+> **STATUS: 100% CONCLUIDA** — Todos os itens B.1 a B.4 implementados e em producao.
 
 #### B.1 Socket.IO - Conectar ao Frontend
 
@@ -258,7 +271,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 |---|------|---------|---------|
 | B.3.1 | ~~**`/contacts/new`** e **`/contacts/:id/edit`** no App.tsx~~ | ~~Navegacao quebrada~~ | ~~30min~~ | **CONCLUIDO** |
 | B.3.2 | ~~**`/campaigns/new`** e **`/campaigns/:id/edit`** no App.tsx~~ | ~~Navegacao quebrada~~ | ~~30min~~ | **CONCLUIDO** |
-| B.3.3 | **`/campaigns/:id`** - pagina de detalhe (referenciada mas nao existe) | Nao da pra ver detalhes | 4h |
+| B.3.3 | ~~**`/campaigns/:id`** - pagina de detalhe com metricas, contatos, acoes (start/cancel/delete)~~ | ~~Nao da pra ver detalhes~~ | ~~4h~~ | **CONCLUIDO** |
 
 #### B.4 Feedback ao Usuario
 
@@ -322,8 +335,8 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 #### D.3 Produtividade
 
-- [ ] **Perfil do usuario** - Pagina placeholder "Em breve..."
-- [ ] **Alterar senha** - Nao implementado
+- [x] **Perfil do usuario** - Pagina com info do usuario e formulario de alterar senha
+- [x] **Alterar senha** - PUT /auth/change-password com validacao e rate limiting
 - [ ] **Import de contatos** - CSV, vCard
 - [ ] **Export** - Contatos, tickets, relatorios em CSV/Excel
 - [ ] **Operacoes em massa** - Deletar, tagear, mover multiplos registros
@@ -422,6 +435,9 @@ IMPACTO BAIXO
 | ~~Graceful shutdown (timeout + socket close + 503)~~ | ~~3h~~ | ~~Zero-downtime deploys~~ | **CONCLUIDO** |
 | ~~Validators completos (TemplateController)~~ | ~~1h~~ | ~~Input validation 100%~~ | **CONCLUIDO** |
 | ~~Upload magic bytes (file-type v16)~~ | ~~2h~~ | ~~Malware upload prevention~~ | **CONCLUIDO** |
+| ~~Campaign detail page (/campaigns/:id)~~ | ~~4h~~ | ~~Visualizar detalhes/metricas~~ | **CONCLUIDO** |
+| ~~Change password (PUT /auth/change-password)~~ | ~~3h~~ | ~~Alterar senha do usuario~~ | **CONCLUIDO** |
+| ~~Profile page (/profile)~~ | ~~2h~~ | ~~Perfil do usuario funcional~~ | **CONCLUIDO** |
 
 ---
 
@@ -1236,7 +1252,7 @@ Para ir para Live mode:
 | # | Teste | Status |
 |---|-------|--------|
 | 10.1 | `/notifications` → exibe "Notificacoes - Em breve..." | [ ] |
-| 10.2 | `/profile` → exibe "Perfil - Em breve..." | [ ] |
+| 10.2 | `/profile` → exibe info do usuario + formulario de alterar senha | [ ] |
 
 ### 11. Funcionalidades Transversais
 
@@ -1274,4 +1290,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 5 de marco de 2026 (encriptacao wabaToken + health check real + forgot password + responsividade mobile + self-hosted font + stack rename nuvio concluidos)*
+*Ultima atualizacao: 5 de marco de 2026 (campaign detail page + change password + profile page — Fase A e B 100% concluidas)*
