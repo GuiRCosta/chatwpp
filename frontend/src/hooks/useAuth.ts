@@ -1,14 +1,8 @@
-import { useEffect } from "react"
 import { useAuthStore } from "@/stores/authStore"
 
 export function useAuth() {
-  const { user, token, isAuthenticated, isLoading, isInitialized, login, logout, initialize } =
+  const { user, token, isAuthenticated, isLoading, isInitialized, login, logout } =
     useAuthStore()
-
-  // Initialize auth state on mount
-  useEffect(() => {
-    initialize()
-  }, [initialize])
 
   return {
     user,

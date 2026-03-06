@@ -48,7 +48,7 @@ describe("useAuth", () => {
     expect(result.current.logout).toBeDefined()
   })
 
-  it("calls initialize on mount", () => {
+  it("does not call initialize on mount (PrivateRoute handles initialization)", () => {
     const initializeSpy = vi.fn()
     const originalState = useAuthStore.getState()
 
@@ -59,7 +59,7 @@ describe("useAuth", () => {
 
     renderHook(() => useAuth())
 
-    expect(initializeSpy).toHaveBeenCalledTimes(1)
+    expect(initializeSpy).not.toHaveBeenCalled()
   })
 
   it("returns default unauthenticated state", () => {

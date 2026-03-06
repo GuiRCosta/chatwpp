@@ -53,10 +53,10 @@ api.interceptors.response.use(
         useAuthStore.setState({
           user: null,
           token: null,
-          isAuthenticated: false
+          isAuthenticated: false,
+          isInitialized: true
         })
 
-        window.location.href = "/login"
         return Promise.reject(error)
       }
     }

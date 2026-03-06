@@ -90,7 +90,7 @@ describe("api", () => {
       expect(useAuthStore.getState().token).toBe("new-jwt-token")
     })
 
-    it("on refresh failure, clears store state and redirects to /login", async () => {
+    it("on refresh failure, clears store state (PrivateRoute handles redirect)", async () => {
       useAuthStore.setState({ token: "expired-token", isAuthenticated: true })
 
       server.use(
@@ -114,7 +114,7 @@ describe("api", () => {
       expect(state.user).toBeNull()
       expect(state.token).toBeNull()
       expect(state.isAuthenticated).toBe(false)
-      expect(window.location.href).toBe("/login")
+      expect(state.isInitialized).toBe(true)
     })
 
     it("passes through non-401 errors without refresh attempt", async () => {
