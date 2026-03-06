@@ -1,14 +1,21 @@
 import { Request, Response } from "express"
 
 import * as TemplateService from "../services/TemplateService"
+import {
+  listTemplatesSchema,
+  syncTemplatesSchema
+} from "../validators/TemplateValidator"
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req
-  const { whatsappId } = req.query
+  const validated = await listTemplatesSchema.validate(req.query, {
+    abortEarly: false,
+    stripUnknown: true
+  })
 
   const templates = await TemplateService.listTemplates(
     tenantId,
-    whatsappId ? Number(whatsappId) : undefined
+    validated.whatsappId ?? undefined
   )
 
   return res.json({
@@ -19,11 +26,14 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
 export const sync = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req
-  const { whatsappId } = req.body
+  const validated = await syncTemplatesSchema.validate(req.body, {
+    abortEarly: false,
+    stripUnknown: true
+  })
 
   const results = await TemplateService.syncTemplates(
     tenantId,
-    whatsappId ? Number(whatsappId) : undefined
+    validated.whatsappId ?? undefined
   )
 
   return res.json({

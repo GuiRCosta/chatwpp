@@ -3,6 +3,7 @@ import path from "path"
 import fs from "fs"
 
 import { AppError } from "../helpers/AppError"
+import { validateFileContent } from "../helpers/validateFileContent"
 import { publicFolder } from "../config/upload"
 
 function getMediaType(mimeType: string): string {
@@ -16,6 +17,8 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   if (!req.file) {
     throw new AppError("No file uploaded", 400)
   }
+
+  await validateFileContent(req.file.path, req.file.mimetype)
 
   const { tenantId } = req
   const tenantDir = path.join(publicFolder, String(tenantId))
