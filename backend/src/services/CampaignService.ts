@@ -144,7 +144,7 @@ export const createCampaign = async (
     whatsappId: data.whatsappId,
     mediaUrl: data.mediaUrl || "",
     scheduledAt: data.scheduledAt || null,
-    status: "pending"
+    status: data.scheduledAt ? "scheduled" : "pending"
   })
 
   const createdCampaign = await findCampaignById(campaign.id, tenantId)
@@ -174,8 +174,8 @@ export const updateCampaign = async (
     throw new AppError("Campaign not found", 404)
   }
 
-  if (campaign.status !== "pending") {
-    throw new AppError("Only pending campaigns can be updated", 400)
+  if (campaign.status !== "pending" && campaign.status !== "scheduled") {
+    throw new AppError("Only pending or scheduled campaigns can be updated", 400)
   }
 
   if (data.whatsappId) {
@@ -188,7 +188,12 @@ export const updateCampaign = async (
     }
   }
 
-  await campaign.update(data)
+  const updateData = { ...data } as Record<string, unknown>
+  if (data.scheduledAt !== undefined) {
+    updateData.status = data.scheduledAt ? "scheduled" : "pending"
+  }
+
+  await campaign.update(updateData)
 
   const updatedCampaign = await findCampaignById(id, tenantId)
 
@@ -204,8 +209,8 @@ export const startCampaign = async (id: number, tenantId: number): Promise<Campa
     throw new AppError("Campaign not found", 404)
   }
 
-  if (campaign.status !== "pending") {
-    throw new AppError("Only pending campaigns can be started", 400)
+  if (campaign.status !== "pending" && campaign.status !== "scheduled") {
+    throw new AppError("Only pending or scheduled campaigns can be started", 400)
   }
 
   const contactCount = await CampaignContact.count({

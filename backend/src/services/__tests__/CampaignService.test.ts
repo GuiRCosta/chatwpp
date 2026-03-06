@@ -176,7 +176,7 @@ describe("CampaignService", () => {
 
       await expect(
         updateCampaign(1, 1, { name: "Updated" })
-      ).rejects.toThrow("Only pending campaigns can be updated")
+      ).rejects.toThrow("Only pending or scheduled campaigns can be updated")
     })
   })
 
@@ -213,7 +213,7 @@ describe("CampaignService", () => {
       vi.mocked(Campaign.findOne).mockResolvedValue(mockCampaign as unknown as Campaign)
 
       await expect(startCampaign(1, 1)).rejects.toThrow(
-        "Only pending campaigns can be started"
+        "Only pending or scheduled campaigns can be started"
       )
     })
   })

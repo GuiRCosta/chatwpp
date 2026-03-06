@@ -12,6 +12,7 @@ import { CampaignList } from "@/pages/campaigns/CampaignList"
 import { CampaignDetail } from "@/pages/campaigns/CampaignDetail"
 import { Settings } from "@/pages/settings/Settings"
 import { Profile } from "@/pages/Profile"
+import { Notifications } from "@/pages/Notifications"
 import { ForgotPassword } from "@/pages/ForgotPassword"
 import { ResetPassword } from "@/pages/ResetPassword"
 import { PrivacyPolicy } from "@/pages/legal/PrivacyPolicy"
@@ -45,17 +46,6 @@ function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   return user?.profile === "superadmin" ? <>{children}</> : <Navigate to="/dashboard" replace />
 }
 
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-[#0A0A0A] mb-2">{title}</h2>
-        <p className="text-gray-500">Em breve...</p>
-      </div>
-    </div>
-  )
-}
-
 export default function App() {
   return (
     <Routes>
@@ -85,7 +75,7 @@ export default function App() {
         <Route path="campaigns/:id" element={<CampaignDetail />} />
         <Route path="campaigns/:id/edit" element={<CampaignList />} />
         <Route path="settings" element={<SuperAdminRoute><Settings /></SuperAdminRoute>} />
-        <Route path="notifications" element={<PlaceholderPage title="Notificacoes" />} />
+        <Route path="notifications" element={<Notifications />} />
         <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

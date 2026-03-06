@@ -124,9 +124,9 @@ export function CampaignDetail() {
     }
   }
 
-  const canStart = campaign?.status === "pending"
-  const canCancel = campaign?.status === "pending" || campaign?.status === "running"
-  const canEdit = campaign?.status === "pending"
+  const canStart = campaign?.status === "pending" || campaign?.status === "scheduled"
+  const canCancel = campaign?.status === "pending" || campaign?.status === "scheduled" || campaign?.status === "running"
+  const canEdit = campaign?.status === "pending" || campaign?.status === "scheduled"
   const canDelete = campaign?.status !== "running" && campaign?.status !== "processing"
 
   if (isLoading) {

@@ -1,9 +1,11 @@
+import { useEffect } from "react"
 import { Outlet } from "react-router-dom"
 import { Sidebar } from "./Sidebar"
 import { Header } from "./Header"
 import { NavigationProgress } from "@/components/shared/NavigationProgress"
 import { useSocket } from "@/hooks/useSocket"
 import { useSidebarStore } from "@/stores/sidebarStore"
+import { useNotificationStore } from "@/stores/notificationStore"
 import { useIsMobile } from "@/hooks/useIsMobile"
 import { cn } from "@/lib/utils"
 
@@ -13,6 +15,11 @@ export function AppLayout() {
 
   const collapsed = useSidebarStore((s) => s.collapsed)
   const isMobile = useIsMobile()
+  const fetchNotifications = useNotificationStore((s) => s.fetchNotifications)
+
+  useEffect(() => {
+    fetchNotifications()
+  }, [fetchNotifications])
 
   return (
     <div className="flex h-screen bg-[#F3F3F1]">

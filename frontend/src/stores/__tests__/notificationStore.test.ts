@@ -47,8 +47,7 @@ describe("notificationStore", () => {
         http.get("/api/notifications", () => {
           return HttpResponse.json({
             success: true,
-            data: notifications,
-            meta: { total: 3, page: 1, limit: 20, hasMore: false }
+            data: { notifications, count: 3, hasMore: false }
           })
         })
       )
@@ -70,8 +69,7 @@ describe("notificationStore", () => {
         http.get("/api/notifications", () => {
           return HttpResponse.json({
             success: true,
-            data: notifications,
-            meta: { total: 2, page: 1, limit: 20, hasMore: false }
+            data: { notifications, count: 2, hasMore: false }
           })
         })
       )
@@ -84,13 +82,22 @@ describe("notificationStore", () => {
 
   describe("markAsRead", () => {
     it("updates notification and decrements unread count", async () => {
+      const n1 = createNotification({ id: 1, isRead: false })
+      const n2 = createNotification({ id: 2, isRead: false })
+
       useNotificationStore.setState({
-        notifications: [
-          createNotification({ id: 1, isRead: false }),
-          createNotification({ id: 2, isRead: false })
-        ],
+        notifications: [n1, n2],
         unreadCount: 2
       })
+
+      server.use(
+        http.put("/api/notifications/1/read", () => {
+          return HttpResponse.json({
+            success: true,
+            data: { ...n1, isRead: true }
+          })
+        })
+      )
 
       await useNotificationStore.getState().markAsRead(1)
 
@@ -101,13 +108,22 @@ describe("notificationStore", () => {
     })
 
     it("does not affect other notifications", async () => {
+      const n1 = createNotification({ id: 1, isRead: false })
+      const n2 = createNotification({ id: 2, isRead: false })
+
       useNotificationStore.setState({
-        notifications: [
-          createNotification({ id: 1, isRead: false }),
-          createNotification({ id: 2, isRead: false })
-        ],
+        notifications: [n1, n2],
         unreadCount: 2
       })
+
+      server.use(
+        http.put("/api/notifications/1/read", () => {
+          return HttpResponse.json({
+            success: true,
+            data: { ...n1, isRead: true }
+          })
+        })
+      )
 
       await useNotificationStore.getState().markAsRead(1)
 
@@ -128,6 +144,15 @@ describe("notificationStore", () => {
         ],
         unreadCount: 2
       })
+
+      server.use(
+        http.put("/api/notifications/read-all", () => {
+          return HttpResponse.json({
+            success: true,
+            data: { message: "All notifications marked as read" }
+          })
+        })
+      )
 
       await useNotificationStore.getState().markAllAsRead()
 

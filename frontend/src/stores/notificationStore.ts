@@ -1,6 +1,12 @@
 import { create } from "zustand"
 import api from "@/lib/api"
-import type { Notification, ApiResponse, PaginatedResponse } from "@/types"
+import type { Notification, ApiResponse } from "@/types"
+
+interface NotificationListResponse {
+  notifications: Notification[]
+  count: number
+  hasMore: boolean
+}
 
 interface NotificationState {
   notifications: Notification[]
@@ -9,6 +15,7 @@ interface NotificationState {
   markAsRead: (id: number) => Promise<void>
   markAllAsRead: () => Promise<void>
   addNotification: (notification: Notification) => void
+  deleteNotification: (id: number) => Promise<void>
 }
 
 export const useNotificationStore = create<NotificationState>()((set) => ({
@@ -17,14 +24,12 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
 
   fetchNotifications: async () => {
     try {
-      const response = await api.get<PaginatedResponse<Notification>>(
+      const response = await api.get<ApiResponse<NotificationListResponse>>(
         "/notifications"
       )
 
-      if (response.data.success) {
-        const notifications = Array.isArray(response.data.data)
-          ? response.data.data
-          : []
+      if (response.data.success && response.data.data) {
+        const notifications = response.data.data.notifications || []
         const unreadCount = notifications.filter((n) => !n.isRead).length
 
         set({
@@ -39,7 +44,7 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
 
   markAsRead: async (id: number) => {
     try {
-      const response = await api.patch<ApiResponse<Notification>>(
+      const response = await api.put<ApiResponse<Notification>>(
         `/notifications/${id}/read`
       )
 
@@ -66,7 +71,7 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
 
   markAllAsRead: async () => {
     try {
-      const response = await api.patch<ApiResponse<{ count: number }>>(
+      const response = await api.put<ApiResponse<{ message: string }>>(
         "/notifications/read-all"
       )
 
@@ -100,5 +105,31 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
         unreadCount
       }
     })
+  },
+
+  deleteNotification: async (id: number) => {
+    try {
+      const response = await api.delete<ApiResponse<{ message: string }>>(
+        `/notifications/${id}`
+      )
+
+      if (response.data.success) {
+        set((state) => {
+          const target = state.notifications.find((n) => n.id === id)
+          const notifications = state.notifications.filter((n) => n.id !== id)
+          const unreadCount =
+            target && !target.isRead
+              ? state.unreadCount - 1
+              : state.unreadCount
+
+          return {
+            notifications,
+            unreadCount
+          }
+        })
+      }
+    } catch {
+      // Silently handle
+    }
   }
 }))

@@ -48,6 +48,7 @@ interface FormErrors {
   whatsappId?: string
   template?: string
   contacts?: string
+  scheduledAt?: string
 }
 
 const INITIAL_FORM: FormData = {
@@ -372,6 +373,13 @@ export function CampaignForm({
     if (!formData.templateName) formErrors.template = "Selecione um template"
     if (selectedContactIds.size === 0) formErrors.contacts = "Selecione pelo menos um contato"
 
+    if (formData.scheduledAt) {
+      const scheduledDate = new Date(formData.scheduledAt)
+      if (scheduledDate <= new Date()) {
+        formErrors.scheduledAt = "A data de agendamento deve ser no futuro"
+      }
+    }
+
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors)
       return
@@ -563,12 +571,33 @@ export function CampaignForm({
 
           <div className="space-y-2">
             <Label htmlFor="campaign-scheduled">Agendar envio</Label>
-            <Input
-              id="campaign-scheduled"
-              type="datetime-local"
-              value={formData.scheduledAt}
-              onChange={(e) => handleFieldChange("scheduledAt", e.target.value)}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                id="campaign-scheduled"
+                type="datetime-local"
+                value={formData.scheduledAt}
+                onChange={(e) => handleFieldChange("scheduledAt", e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+                className="flex-1"
+              />
+              {formData.scheduledAt && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleFieldChange("scheduledAt", "")}
+                  className="text-gray-500 shrink-0"
+                >
+                  Limpar
+                </Button>
+              )}
+            </div>
+            {errors.scheduledAt && (
+              <p className="text-sm text-red-500">{errors.scheduledAt}</p>
+            )}
+            <p className="text-xs text-gray-500">
+              Deixe vazio para enviar manualmente.
+            </p>
           </div>
 
           <div className="space-y-3">

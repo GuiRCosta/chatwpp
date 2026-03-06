@@ -33,16 +33,17 @@ interface StatusTab {
 const STATUS_TABS: readonly StatusTab[] = [
   { label: "Todas", value: "all" },
   { label: "Pendentes", value: "pending" },
+  { label: "Agendadas", value: "scheduled" },
   { label: "Em Andamento", value: "running" },
   { label: "Concluidas", value: "completed" },
   { label: "Canceladas", value: "cancelled" }
 ] as const
 
 const canStart = (status: CampaignStatus): boolean =>
-  status === "pending"
+  status === "pending" || status === "scheduled"
 
 const canCancel = (status: CampaignStatus): boolean =>
-  status === "pending" || status === "running"
+  status === "pending" || status === "scheduled" || status === "running"
 
 const ITEMS_PER_PAGE = 20
 
