@@ -16,7 +16,7 @@ interface AuthState {
   initialize: () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>()((set) => ({
+export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
   token: null,
   isAuthenticated: false,
@@ -76,6 +76,8 @@ export const useAuthStore = create<AuthState>()((set) => ({
   },
 
   initialize: async () => {
+    if (get().isInitialized) return
+
     // Cleanup legacy localStorage tokens
     localStorage.removeItem("nuvio:token")
     localStorage.removeItem("nuvio:refreshToken")

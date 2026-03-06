@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { toast } from "sonner"
-import { useAuth } from "./useAuth"
+import { useAuthStore } from "@/stores/authStore"
 import { getSocket } from "@/lib/socket"
 import { useNotificationStore } from "@/stores/notificationStore"
 import { useTicketStore } from "@/stores/ticketStore"
@@ -8,7 +8,7 @@ import { useChatStore } from "@/stores/chatStore"
 import type { Campaign, Contact, Notification, Ticket, Message } from "@/types"
 
 export function useSocket() {
-  const { isAuthenticated } = useAuth()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const addNotification = useNotificationStore((s) => s.addNotification)
   const addTicket = useTicketStore((s) => s.addTicket)
   const updateTicket = useTicketStore((s) => s.updateTicket)
