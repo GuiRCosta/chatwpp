@@ -150,6 +150,16 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Stack renomeada de `zflow` para `nuvio` na VPS (volumes preservados como external)
 - [x] Responsividade mobile/tablet na sidebar, chat, DataTables
 
+### Fase 16: Seguranca A.3.2 + A.3.5 — Fechar Fase A (CONCLUIDA)
+
+- [x] TemplateController conectado ao TemplateValidator (unico controller faltando)
+- [x] Upload magic bytes validation com file-type v16 (validateFileContent helper)
+- [x] Arquivos com MIME spoofado sao rejeitados e deletados do disco
+- [x] Text/CSV skip (sem magic bytes)
+- [x] OOXML (docx/xlsx) mapeados como ZIP para compatibilidade com file-type
+- [x] Testes: 11 testes para validateFileContent (text skip, valid binary, mismatch, unrecognizable, undeclared MIME)
+- [x] **FASE A (Seguranca) 100% CONCLUIDA** — todos os itens A.1 a A.3 fechados
+
 ### Fase 15: Seguranca A.1.3 + Estabilidade B.2.2 (CONCLUIDA)
 
 - [x] Refresh token migrado de localStorage para httpOnly cookie (`nuvio_refresh`, Secure, SameSite=strict, path=/auth/refresh)
@@ -184,9 +194,10 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 ## O Que Precisa Ser Implementado
 
-### FASE A - Seguranca (CRITICO)
+### FASE A - Seguranca (CRITICO) ✅ CONCLUIDA
 
-> Corrigir antes de qualquer feature nova. Vulnerabilidades que podem ser exploradas em producao.
+> ~~Corrigir antes de qualquer feature nova. Vulnerabilidades que podem ser exploradas em producao.~~
+> **STATUS: 100% CONCLUIDA** — Todos os itens A.1, A.2 e A.3 implementados e em producao.
 
 #### A.1 Secrets e Tokens
 
@@ -212,10 +223,10 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 | # | Item | Risco | Esforco |
 |---|------|-------|---------|
 | A.3.1 | ~~**Tornar verificacao de assinatura do webhook obrigatoria**~~ | ~~Webhook spoofing~~ | ~~1h~~ | **CONCLUIDO** |
-| A.3.2 | **Completar validators faltando** - Sem validacao: templates, galleries, todolists, calllogs, notifications, settings, chatflows, auto-replies | Injection/invalid data | 6h |
+| A.3.2 | ~~**Completar validators faltando** - Todos controllers validados (TemplateController era o unico faltando)~~ | ~~Injection/invalid data~~ | ~~1h~~ | **CONCLUIDO** |
 | A.3.3 | ~~**Sanitizar HTML/XSS no frontend e backend** - DOMPurify para sanitizacao de inputs~~ | ~~XSS persistente~~ | ~~3h~~ | **CONCLUIDO** |
 | A.3.4 | ~~**Reduzir limite de payload JSON** de 50MB para 10MB~~ | ~~DoS via payload~~ | ~~30min~~ | **CONCLUIDO** |
-| A.3.5 | **Validar conteudo de uploads** alem do MIME type (magic bytes) | Upload de malware | 3h |
+| A.3.5 | ~~**Validar conteudo de uploads** alem do MIME type (magic bytes) - file-type v16 valida magic bytes, rejeita e deleta arquivos spoofados~~ | ~~Upload de malware~~ | ~~2h~~ | **CONCLUIDO** |
 | A.3.6 | ~~**Adicionar CSRF protection** - nao necessario: API usa Authorization header (nao cookie) para autenticacao~~ | ~~CSRF attack~~ | ~~N/A~~ | **N/A (mitigado por design)** |
 
 ---
@@ -409,6 +420,8 @@ IMPACTO BAIXO
 | ~~Stack rename zflow → nuvio~~ | ~~1h~~ | ~~Identidade infra~~ | **CONCLUIDO** |
 | ~~httpOnly cookies (refresh token)~~ | ~~6h~~ | ~~XSS session hijacking prevention~~ | **CONCLUIDO** |
 | ~~Graceful shutdown (timeout + socket close + 503)~~ | ~~3h~~ | ~~Zero-downtime deploys~~ | **CONCLUIDO** |
+| ~~Validators completos (TemplateController)~~ | ~~1h~~ | ~~Input validation 100%~~ | **CONCLUIDO** |
+| ~~Upload magic bytes (file-type v16)~~ | ~~2h~~ | ~~Malware upload prevention~~ | **CONCLUIDO** |
 
 ---
 
