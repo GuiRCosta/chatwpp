@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { Routes, Route, Navigate } from "react-router-dom"
 
 import { useAuthStore } from "@/stores/authStore"
@@ -20,6 +21,13 @@ import { DataDeletion } from "@/pages/legal/DataDeletion"
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const isInitialized = useAuthStore((s) => s.isInitialized)
+  const initialize = useAuthStore((s) => s.initialize)
+
+  useEffect(() => {
+    if (!isInitialized) {
+      initialize()
+    }
+  }, [isInitialized, initialize])
 
   if (!isInitialized) {
     return (
