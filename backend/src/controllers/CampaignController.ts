@@ -140,3 +140,15 @@ export const removeContact = async (req: Request, res: Response): Promise<Respon
     data: { message: "Contact removed from campaign successfully" }
   })
 }
+
+export const destroy = async (req: Request, res: Response): Promise<Response> => {
+  const { tenantId } = req
+  const { id } = req.params
+
+  await CampaignService.deleteCampaign(Number(id), tenantId)
+
+  return res.json({
+    success: true,
+    data: { message: "Campaign deleted successfully" }
+  })
+}

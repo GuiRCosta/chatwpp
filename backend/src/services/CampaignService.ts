@@ -64,6 +64,17 @@ export const findCampaignById = async (id: number, tenantId: number): Promise<Ca
         model: WhatsApp,
         as: "whatsapp",
         attributes: ["id", "name"]
+      },
+      {
+        model: CampaignContact,
+        as: "campaignContacts",
+        include: [
+          {
+            model: Contact,
+            as: "contact",
+            attributes: ["id", "name", "number"]
+          }
+        ]
       }
     ]
   })
@@ -312,4 +323,21 @@ export const removeContactFromCampaign = async (
   await campaignContact.destroy()
 
   emitToTenant(tenantId, "campaign:contact-removed", { campaignId: id, contactId })
+}
+
+export const deleteCampaign = async (id: number, tenantId: number): Promise<void> => {
+  const campaign = await Campaign.findOne({ where: { id, tenantId } })
+
+  if (!campaign) {
+    throw new AppError("Campaign not found", 404)
+  }
+
+  if (campaign.status === "running" || campaign.status === "processing") {
+    throw new AppError("Cannot delete a running campaign", 400)
+  }
+
+  await CampaignContact.destroy({ where: { campaignId: id } })
+  await campaign.destroy()
+
+  emitToTenant(tenantId, "campaign:deleted", { id })
 }

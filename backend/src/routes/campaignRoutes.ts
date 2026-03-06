@@ -11,6 +11,7 @@ campaignRoutes.put("/:id", CampaignController.update)
 campaignRoutes.post("/:id/start", CampaignController.start)
 campaignRoutes.post("/:id/cancel", CampaignController.cancel)
 campaignRoutes.post("/:id/contacts", CampaignController.addContacts)
+campaignRoutes.delete("/:id", CampaignController.destroy)
 campaignRoutes.delete("/:id/contacts/:contactId", CampaignController.removeContact)
 
 export { campaignRoutes }

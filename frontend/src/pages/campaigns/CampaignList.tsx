@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { useParams, useLocation } from "react-router-dom"
+import { useParams, useLocation, useNavigate } from "react-router-dom"
 import {
   Megaphone,
   Plus,
@@ -49,6 +49,7 @@ const ITEMS_PER_PAGE = 20
 export function CampaignList() {
   const params = useParams<{ id: string }>()
   const location = useLocation()
+  const navigate = useNavigate()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
@@ -184,8 +185,7 @@ export function CampaignList() {
   }
 
   const handleRowClick = (campaign: Campaign) => {
-    setCampaignToEdit(campaign)
-    setFormOpen(true)
+    navigate(`/campaigns/${campaign.id}`)
   }
 
   const handlePreviousPage = () => {
@@ -258,8 +258,7 @@ export function CampaignList() {
           <button
             onClick={(e) => {
               e.stopPropagation()
-              setCampaignToEdit(campaign)
-              setFormOpen(true)
+              navigate(`/campaigns/${campaign.id}`)
             }}
             className="rounded-full p-2 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600"
             title="Visualizar"

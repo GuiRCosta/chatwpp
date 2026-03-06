@@ -6,7 +6,8 @@ import { AppError } from "../helpers/AppError"
 import {
   loginSchema,
   forgotPasswordSchema,
-  resetPasswordSchema
+  resetPasswordSchema,
+  changePasswordSchema
 } from "../validators/AuthValidator"
 
 const REFRESH_COOKIE_NAME = "nuvio_refresh"
@@ -113,5 +114,19 @@ export const resetPassword = async (req: Request, res: Response): Promise<Respon
   return res.json({
     success: true,
     data: { message: "Password reset successfully" }
+  })
+}
+
+export const changePassword = async (req: Request, res: Response): Promise<Response> => {
+  const { currentPassword, newPassword } = await changePasswordSchema.validate(req.body, {
+    abortEarly: false,
+    stripUnknown: true
+  })
+
+  await AuthService.changePassword(req.userId, currentPassword, newPassword)
+
+  return res.json({
+    success: true,
+    data: { message: "Password changed successfully" }
   })
 }

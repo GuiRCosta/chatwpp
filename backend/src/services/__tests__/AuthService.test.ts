@@ -38,7 +38,8 @@ import {
   refreshTokens,
   logout,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  changePassword
 } from "../AuthService"
 import User from "@/models/User"
 import { compare, hash } from "bcryptjs"
@@ -306,6 +307,59 @@ describe("AuthService", () => {
 
       expect(mockUser.update).toHaveBeenCalledWith(
         expect.objectContaining({ tokenVersion: 6 })
+      )
+    })
+  })
+
+  describe("changePassword", () => {
+    it("changes password when current password is correct", async () => {
+      const mockUser = buildUser({ tokenVersion: 2 })
+      vi.mocked(User.findByPk).mockResolvedValue(mockUser as unknown as User)
+      vi.mocked(compare).mockResolvedValue(true as never)
+      vi.mocked(hash).mockResolvedValue("new-hashed-pw" as never)
+
+      await changePassword(1, "oldpass123", "newpass456")
+
+      expect(compare).toHaveBeenCalledWith("oldpass123", mockUser.passwordHash)
+      expect(hash).toHaveBeenCalledWith("newpass456", 10)
+      expect(mockUser.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          passwordHash: "new-hashed-pw",
+          tokenVersion: 3
+        })
+      )
+    })
+
+    it("throws when current password is incorrect", async () => {
+      const mockUser = buildUser()
+      vi.mocked(User.findByPk).mockResolvedValue(mockUser as unknown as User)
+      vi.mocked(compare).mockResolvedValue(false as never)
+
+      await expect(
+        changePassword(1, "wrongpass", "newpass456")
+      ).rejects.toThrow("Current password is incorrect")
+
+      expect(mockUser.update).not.toHaveBeenCalled()
+    })
+
+    it("throws when user not found", async () => {
+      vi.mocked(User.findByPk).mockResolvedValue(null)
+
+      await expect(
+        changePassword(999, "oldpass", "newpass456")
+      ).rejects.toThrow("User not found")
+    })
+
+    it("increments tokenVersion to invalidate other sessions", async () => {
+      const mockUser = buildUser({ tokenVersion: 7 })
+      vi.mocked(User.findByPk).mockResolvedValue(mockUser as unknown as User)
+      vi.mocked(compare).mockResolvedValue(true as never)
+      vi.mocked(hash).mockResolvedValue("hashed" as never)
+
+      await changePassword(1, "oldpass", "newpass456")
+
+      expect(mockUser.update).toHaveBeenCalledWith(
+        expect.objectContaining({ tokenVersion: 8 })
       )
     })
   })

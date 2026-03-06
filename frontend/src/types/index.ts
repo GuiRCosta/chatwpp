@@ -207,6 +207,14 @@ export interface Campaign {
   whatsapp?: WhatsApp
   tenantId: number
   contacts?: CampaignContact[]
+  campaignContacts?: CampaignContact[]
+  contactCounts?: {
+    pending: number
+    sent: number
+    delivered: number
+    read: number
+    error: number
+  }
   createdAt: string
   updatedAt: string
 }

@@ -219,3 +219,28 @@ export const resetPassword = async (token: string, newPassword: string): Promise
     tokenVersion: user.tokenVersion + 1
   })
 }
+
+export const changePassword = async (
+  userId: number,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> => {
+  const user = await User.findByPk(userId)
+
+  if (!user) {
+    throw new AppError("User not found", 404)
+  }
+
+  const isValid = await compare(currentPassword, user.passwordHash)
+
+  if (!isValid) {
+    throw new AppError("Current password is incorrect", 401)
+  }
+
+  const passwordHash = await hash(newPassword, 10)
+
+  await user.update({
+    passwordHash,
+    tokenVersion: user.tokenVersion + 1
+  })
+}

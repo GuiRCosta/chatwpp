@@ -34,6 +34,7 @@ authRoutes.post("/login", loginLimiter, AuthController.login)
 authRoutes.post("/refresh", AuthController.refresh)
 authRoutes.get("/me", isAuth, AuthController.me)
 authRoutes.post("/logout", isAuth, AuthController.logout)
+authRoutes.put("/change-password", isAuth, loginLimiter, AuthController.changePassword)
 authRoutes.post("/forgot-password", forgotPasswordLimiter, AuthController.forgotPassword)
 authRoutes.post("/reset-password", resetPasswordLimiter, AuthController.resetPassword)
 

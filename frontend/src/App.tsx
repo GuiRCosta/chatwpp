@@ -8,7 +8,9 @@ import TicketList from "@/pages/tickets/TicketList"
 import { ContactList, ContactForm } from "@/pages/contacts"
 import { PipelineView } from "@/pages/crm/PipelineView"
 import { CampaignList } from "@/pages/campaigns/CampaignList"
+import { CampaignDetail } from "@/pages/campaigns/CampaignDetail"
 import { Settings } from "@/pages/settings/Settings"
+import { Profile } from "@/pages/Profile"
 import { ForgotPassword } from "@/pages/ForgotPassword"
 import { ResetPassword } from "@/pages/ResetPassword"
 import { PrivacyPolicy } from "@/pages/legal/PrivacyPolicy"
@@ -72,11 +74,11 @@ export default function App() {
         <Route path="crm" element={<PipelineView />} />
         <Route path="campaigns" element={<CampaignList />} />
         <Route path="campaigns/new" element={<CampaignList />} />
-        <Route path="campaigns/:id" element={<CampaignList />} />
+        <Route path="campaigns/:id" element={<CampaignDetail />} />
         <Route path="campaigns/:id/edit" element={<CampaignList />} />
         <Route path="settings" element={<SuperAdminRoute><Settings /></SuperAdminRoute>} />
         <Route path="notifications" element={<PlaceholderPage title="Notificacoes" />} />
-        <Route path="profile" element={<PlaceholderPage title="Perfil" />} />
+        <Route path="profile" element={<Profile />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
