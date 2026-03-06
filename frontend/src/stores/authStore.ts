@@ -1,3 +1,4 @@
+import axios from "axios"
 import { create } from "zustand"
 import api from "@/lib/api"
 import { connectSocket, disconnectSocket } from "@/lib/socket"
@@ -81,9 +82,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
     localStorage.removeItem("nuvio:user")
 
     try {
-      // Try to refresh using httpOnly cookie
-      const refreshRes = await api.post<ApiResponse<{ token: string }>>(
-        "/auth/refresh"
+      // Use raw axios (no interceptors) to avoid refresh-retry loop
+      const refreshRes = await axios.post<ApiResponse<{ token: string }>>(
+        "/api/auth/refresh",
+        {},
+        { withCredentials: true }
       )
 
       if (!refreshRes.data.success || !refreshRes.data.data) {
@@ -95,7 +98,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
       set({ token })
 
       // Fetch user data with the new token
-      const meRes = await api.get<ApiResponse<{ user: User }>>("/auth/me", {
+      const meRes = await axios.get<ApiResponse<{ user: User }>>("/api/auth/me", {
         headers: { Authorization: `Bearer ${token}` }
       })
 
