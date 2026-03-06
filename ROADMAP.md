@@ -186,6 +186,17 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Dashboard atualizado: user name lido do Zustand store em vez de localStorage
 - [x] Testes atualizados: authStore, api, useAuth, handlers MSW
 
+### Fase 18: D.1.1 Notificacoes + C.1.3 Rate Limiting + D.1.4 Agendamento (CONCLUIDA)
+
+- [x] Rate limiting per-route: upload (10/min), template/sync (2/min), campaign/start (5/15min), whatsapp/onboard (3/15min)
+- [x] Fix notificationStore bugs: PATCH→PUT, response parsing, add deleteNotification
+- [x] Notification dropdown no Header (bell icon → dropdown com ultimas 8 notificacoes, marcar como lida, "Ver todas")
+- [x] Fetch notifications on mount (AppLayout)
+- [x] Pagina completa de notificacoes (/notifications) com filtros, paginacao, delete, marcar como lida
+- [x] Fix campaign scheduling: createCampaign seta status "scheduled" quando scheduledAt definido
+- [x] Backend permite update/start de campanhas "scheduled"
+- [x] Frontend: tab "Agendadas" na CampaignList, validacao de data no CampaignForm, canEdit/canStart incluem "scheduled"
+
 ### Fase 6: Testes (CONCLUIDA)
 
 - [x] Backend: 66 arquivos, 670 testes, cobertura 93.62% statements
@@ -293,7 +304,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 |---|------|-----------|---------|
 | C.1.1 | **API versioning** (`/api/v1/`) | Breaking changes sem impacto | 3h |
 | C.1.2 | **Documentacao Swagger/OpenAPI** | Onboarding de devs, integradores | 8h |
-| C.1.3 | **Rate limiting por rota** - `/auth/login` (5/15min), `/upload` (10/min), `/templates/sync` (2/min) | Protecao granular | 3h |
+| C.1.3 | ~~**Rate limiting por rota** - `/upload` (10/min), `/templates/sync` (2/min), `/campaigns/:id/start` (5/15min), `/whatsapp/onboard` (3/15min)~~ | ~~Protecao granular~~ | ~~3h~~ | **CONCLUIDO** |
 | C.1.4 | **Redis caching** para users, settings, queues, templates | Menos queries ao banco | 8h |
 | C.1.5 | **Redis adapter para Socket.IO** | Horizontal scaling | 2h |
 | C.1.6 | **Event emitter** para desacoplar services de socket emissions | Testabilidade | 6h |
@@ -319,10 +330,10 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 #### D.1 Comunicacao e Notificacoes
 
-- [ ] **Painel de notificacoes** - Dropdown no header com lista, marcar lido (pagina e placeholder)
+- [x] **Painel de notificacoes** - Dropdown no header + pagina completa com filtros, paginacao, delete
 - [ ] **Notificacoes por email** - Alertas para tickets novos, atribuicoes
 - [ ] **Chat interno** - Comunicacao entre atendentes
-- [ ] **Agendamento de campanhas no frontend** - Backend suporta `scheduledAt` mas UI nao expoe
+- [x] **Agendamento de campanhas** - Status "scheduled" no backend + tab "Agendadas" + validacao de data no frontend
 
 #### D.2 CRM Avancado
 
@@ -438,6 +449,9 @@ IMPACTO BAIXO
 | ~~Campaign detail page (/campaigns/:id)~~ | ~~4h~~ | ~~Visualizar detalhes/metricas~~ | **CONCLUIDO** |
 | ~~Change password (PUT /auth/change-password)~~ | ~~3h~~ | ~~Alterar senha do usuario~~ | **CONCLUIDO** |
 | ~~Profile page (/profile)~~ | ~~2h~~ | ~~Perfil do usuario funcional~~ | **CONCLUIDO** |
+| ~~Rate limiting per-route (upload, sync, start, onboard)~~ | ~~3h~~ | ~~Protecao granular~~ | **CONCLUIDO** |
+| ~~Painel de notificacoes (dropdown + pagina completa)~~ | ~~6h~~ | ~~Notificacoes funcionais~~ | **CONCLUIDO** |
+| ~~Fix agendamento de campanhas (status scheduled)~~ | ~~3h~~ | ~~Agendamento funcional~~ | **CONCLUIDO** |
 
 ---
 
@@ -1061,7 +1075,9 @@ Para ir para Live mode:
 |---|-------|--------|
 | 3.1 | Titulo da pagina atual exibido | [ ] |
 | 3.2 | Icone de sino (notificacoes) com badge de contagem | [ ] |
-| 3.3 | Clique no sino → navega para `/notifications` | [ ] |
+| 3.3 | Clique no sino → abre dropdown com ultimas 8 notificacoes | [ ] |
+| 3.3b | Dropdown: botao "Marcar todas como lidas" funciona | [ ] |
+| 3.3c | Dropdown: "Ver todas" navega para `/notifications` | [ ] |
 | 3.4 | Dropdown do usuario (avatar/nome) | [ ] |
 | 3.5 | Item "Perfil" no dropdown → navega para `/profile` | [ ] |
 | 3.6 | Item "Sair" no dropdown → logout e redireciona para `/login` | [ ] |
@@ -1170,7 +1186,7 @@ Para ir para Live mode:
 | # | Teste | Status |
 |---|-------|--------|
 | 8.1.1 | Botao "Nova Campanha" → navega para formulario | [ ] |
-| 8.1.2 | Tabs de filtro: Todas, Pendentes, Em Andamento, Concluidas, Canceladas | [ ] |
+| 8.1.2 | Tabs de filtro: Todas, Pendentes, Agendadas, Em Andamento, Concluidas, Canceladas | [ ] |
 | 8.1.3 | Clique em tab filtra campanhas corretamente | [ ] |
 | 8.1.4 | Campo de busca filtra por nome da campanha | [ ] |
 | 8.1.5 | Cada campanha mostra: nome, status badge, contagem de contatos, data | [ ] |
@@ -1251,7 +1267,7 @@ Para ir para Live mode:
 
 | # | Teste | Status |
 |---|-------|--------|
-| 10.1 | `/notifications` → exibe "Notificacoes - Em breve..." | [ ] |
+| 10.1 | `/notifications` → pagina completa com filtros (Todas/Nao lidas), paginacao, marcar como lida, excluir | [ ] |
 | 10.2 | `/profile` → exibe info do usuario + formulario de alterar senha | [ ] |
 
 ### 11. Funcionalidades Transversais
@@ -1290,4 +1306,4 @@ Para ir para Live mode:
 
 ---
 
-*Ultima atualizacao: 5 de marco de 2026 (campaign detail page + change password + profile page — Fase A e B 100% concluidas)*
+*Ultima atualizacao: 6 de marco de 2026 (notificacoes dropdown + pagina, rate limiting per-route, fix agendamento campanhas — Fase C.1.3, D.1.1, D.1.4 concluidas)*
