@@ -5,7 +5,8 @@ import { getSocket } from "@/lib/socket"
 import { useNotificationStore } from "@/stores/notificationStore"
 import { useTicketStore } from "@/stores/ticketStore"
 import { useChatStore } from "@/stores/chatStore"
-import type { Campaign, Contact, Notification, Ticket, Message } from "@/types"
+import { useWhatsAppStore } from "@/stores/whatsappStore"
+import type { Campaign, Contact, Notification, Ticket, Message, WhatsApp } from "@/types"
 
 export function useSocket() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -15,6 +16,9 @@ export function useSocket() {
   const removeTicket = useTicketStore((s) => s.removeTicket)
   const addMessage = useChatStore((s) => s.addMessage)
   const updateMessage = useChatStore((s) => s.updateMessage)
+  const addConnection = useWhatsAppStore((s) => s.addConnection)
+  const updateConnection = useWhatsAppStore((s) => s.updateConnection)
+  const removeConnection = useWhatsAppStore((s) => s.removeConnection)
   const registeredRef = useRef(false)
 
   useEffect(() => {
@@ -111,6 +115,19 @@ export function useSocket() {
       toast.info(`Campanha "${campaign.name}" cancelada`)
     })
 
+    // ── WhatsApp Connections ──
+    socket.on("whatsapp:created", (connection: WhatsApp) => {
+      addConnection(connection)
+    })
+
+    socket.on("whatsapp:updated", (connection: WhatsApp) => {
+      updateConnection(connection)
+    })
+
+    socket.on("whatsapp:deleted", (data: { id: number }) => {
+      removeConnection(data.id)
+    })
+
     // Cleanup listeners on unmount
     return () => {
       socket.off("notification:created")
@@ -125,6 +142,9 @@ export function useSocket() {
       socket.off("campaign:updated")
       socket.off("campaign:started")
       socket.off("campaign:cancelled")
+      socket.off("whatsapp:created")
+      socket.off("whatsapp:updated")
+      socket.off("whatsapp:deleted")
       registeredRef.current = false
     }
   }, [
@@ -134,7 +154,10 @@ export function useSocket() {
     updateTicket,
     removeTicket,
     addMessage,
-    updateMessage
+    updateMessage,
+    addConnection,
+    updateConnection,
+    removeConnection
   ])
 
   return { socket: getSocket() }

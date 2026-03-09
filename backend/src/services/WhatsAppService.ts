@@ -3,6 +3,7 @@ import { Op } from "sequelize"
 import WhatsApp from "../models/WhatsApp"
 import UserWhatsApp from "../models/UserWhatsApp"
 import User from "../models/User"
+import Tenant from "../models/Tenant"
 import { AppError } from "../helpers/AppError"
 import { emitToTenant } from "../libs/socket"
 import {
@@ -17,19 +18,36 @@ interface ListParams {
   tenantId: number
 }
 
+interface ListWhatsAppsResult {
+  whatsapps: WhatsApp[]
+  meta: {
+    connectionCount: number
+    maxConnections: number
+  }
+}
+
 const WHATSAPP_SAFE_EXCLUDE = ["wabaToken", "wabaWebhookSecret"]
 
-export const listWhatsApps = async ({ tenantId }: ListParams): Promise<WhatsApp[]> => {
-  const whatsapps = await WhatsApp.findAll({
-    where: { tenantId },
-    attributes: { exclude: WHATSAPP_SAFE_EXCLUDE },
-    include: [
-      { model: UserWhatsApp, as: "userWhatsApps", include: [{ model: User, as: "user", attributes: ["id", "name", "email"] }] }
-    ],
-    order: [["name", "ASC"]]
-  })
+export const listWhatsApps = async ({ tenantId }: ListParams): Promise<ListWhatsAppsResult> => {
+  const [whatsapps, tenant] = await Promise.all([
+    WhatsApp.findAll({
+      where: { tenantId },
+      attributes: { exclude: WHATSAPP_SAFE_EXCLUDE },
+      include: [
+        { model: UserWhatsApp, as: "userWhatsApps", include: [{ model: User, as: "user", attributes: ["id", "name", "email"] }] }
+      ],
+      order: [["name", "ASC"]]
+    }),
+    Tenant.findByPk(tenantId, { attributes: ["id", "maxConnections"] })
+  ])
 
-  return whatsapps
+  return {
+    whatsapps,
+    meta: {
+      connectionCount: whatsapps.length,
+      maxConnections: tenant?.maxConnections ?? 99
+    }
+  }
 }
 
 export const findWhatsAppById = async (id: number, tenantId: number): Promise<WhatsApp> => {
@@ -72,7 +90,7 @@ export const createWhatsApp = async (tenantId: number, data: {
   isDefault?: boolean
   userIds?: number[]
 }): Promise<WhatsApp> => {
-  const tenant = await (await import("../models/Tenant")).default.findByPk(tenantId)
+  const tenant = await Tenant.findByPk(tenantId)
 
   if (tenant) {
     const connectionCount = await WhatsApp.count({ where: { tenantId } })
@@ -179,7 +197,7 @@ export const onboardFromFBL = async (tenantId: number, data: {
     throw new AppError("This phone number is already connected", 409)
   }
 
-  const tenant = await (await import("../models/Tenant")).default.findByPk(tenantId)
+  const tenant = await Tenant.findByPk(tenantId)
   const connectionCount = await WhatsApp.count({ where: { tenantId } })
 
   if (tenant && connectionCount >= tenant.maxConnections) {

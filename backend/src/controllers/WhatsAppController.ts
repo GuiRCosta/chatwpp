@@ -6,11 +6,12 @@ import { createWhatsAppSchema, updateWhatsAppSchema, onboardFBLSchema } from "..
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { tenantId } = req
 
-  const whatsapps = await WhatsAppService.listWhatsApps({ tenantId })
+  const { whatsapps, meta } = await WhatsAppService.listWhatsApps({ tenantId })
 
   return res.json({
     success: true,
-    data: whatsapps
+    data: whatsapps,
+    meta
   })
 }
 

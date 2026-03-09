@@ -50,6 +50,8 @@ interface OnboardData {
 
 interface WhatsAppTabProps {
   connections: WhatsApp[]
+  maxConnections: number
+  connectionCount: number
   users: User[]
   isLoading: boolean
   onOnboard: (data: OnboardData) => Promise<void>
@@ -98,12 +100,15 @@ function UserCheckboxList({
 
 export function WhatsAppTab({
   connections,
+  maxConnections,
+  connectionCount,
   users,
   isLoading,
   onOnboard,
   onUpdateWhatsApp,
   onDeleteWhatsApp
 }: WhatsAppTabProps) {
+  const isAtLimit = connectionCount >= maxConnections
   const [dialogOpen, setDialogOpen] = useState(false)
   const [newName, setNewName] = useState("")
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set())
@@ -262,10 +267,34 @@ export function WhatsAppTab({
             <CardDescription>
               Conecte numeros do WhatsApp via Facebook Business Login
             </CardDescription>
+            <div className="mt-2 flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-600">
+                {connectionCount}/{maxConnections} conexoes
+              </span>
+              <div className="h-2 w-24 overflow-hidden rounded-full bg-gray-200">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    isAtLimit
+                      ? "bg-red-500"
+                      : connectionCount >= maxConnections * 0.8
+                        ? "bg-yellow-500"
+                        : "bg-blue-500"
+                  }`}
+                  style={{
+                    width: `${Math.min((connectionCount / Math.max(maxConnections, 1)) * 100, 100)}%`
+                  }}
+                />
+              </div>
+            </div>
           </div>
           <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
-              <Button size="sm" rounded="lg">
+              <Button
+                size="sm"
+                rounded="lg"
+                disabled={isAtLimit}
+                title={isAtLimit ? "Limite de conexoes atingido" : undefined}
+              >
                 <Plus className="h-4 w-4" />
                 Conectar WhatsApp
               </Button>

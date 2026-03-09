@@ -11,7 +11,8 @@ import { toast } from "sonner"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs"
 import api from "@/lib/api"
 import { useAuthStore } from "@/stores/authStore"
-import type { Setting, Queue, WhatsApp, User } from "@/types"
+import { useWhatsAppStore } from "@/stores/whatsappStore"
+import type { Setting, Queue, User } from "@/types"
 import {
   DEFAULT_GENERAL_SETTINGS,
   SETTINGS_KEY_MAP,
@@ -50,12 +51,15 @@ export function Settings() {
     ...DEFAULT_GENERAL_SETTINGS
   })
   const [queues, setQueues] = useState<Queue[]>([])
-  const [connections, setConnections] = useState<WhatsApp[]>([])
+  const connections = useWhatsAppStore((s) => s.connections)
+  const maxConnections = useWhatsAppStore((s) => s.maxConnections)
+  const connectionCount = useWhatsAppStore((s) => s.connectionCount)
+  const isLoadingWhatsApp = useWhatsAppStore((s) => s.isLoading)
+  const fetchConnections = useWhatsAppStore((s) => s.fetchConnections)
   const [users, setUsers] = useState<User[]>([])
 
   const [isLoadingSettings, setIsLoadingSettings] = useState(true)
   const [isLoadingQueues, setIsLoadingQueues] = useState(true)
-  const [isLoadingWhatsApp, setIsLoadingWhatsApp] = useState(true)
   const [isLoadingUsers, setIsLoadingUsers] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -87,20 +91,6 @@ export function Settings() {
       setError(message)
     } finally {
       setIsLoadingQueues(false)
-    }
-  }, [])
-
-  const fetchConnections = useCallback(async () => {
-    try {
-      setIsLoadingWhatsApp(true)
-      const response = await api.get<{ data: WhatsApp[] }>("/whatsapp")
-      setConnections(Array.isArray(response.data.data) ? response.data.data : [])
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Erro ao carregar conexoes"
-      setError(message)
-    } finally {
-      setIsLoadingWhatsApp(false)
     }
   }, [])
 
@@ -319,6 +309,8 @@ export function Settings() {
         <TabsContent value="whatsapp" className="mt-6">
           <WhatsAppTab
             connections={connections}
+            maxConnections={maxConnections}
+            connectionCount={connectionCount}
             users={users}
             isLoading={isLoadingWhatsApp}
             onOnboard={handleOnboard}
