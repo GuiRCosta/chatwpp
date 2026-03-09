@@ -347,11 +347,19 @@ sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
 
 ### Atualizar apenas o frontend
 
+> **IMPORTANTE**: O frontend usa `docker build` com `--build-arg` explicito (nao `docker compose build`).
+> O `docker compose build` tem um bug com BuildKit que nao passa os build args de env vars corretamente,
+> resultando em `VITE_META_APP_ID` vazio no bundle.
+
 ```bash
 sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
   'cd /opt/nuvio && git pull origin main && \
+   source .env && \
    docker builder prune -af && \
-   docker compose build --no-cache frontend && \
+   docker build --no-cache \
+     --build-arg VITE_META_APP_ID=$META_APP_ID \
+     --build-arg VITE_META_CONFIG_ID=$META_CONFIG_ID \
+     -t ghcr.io/guircosta/zflow-frontend:main ./frontend && \
    docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-frontend:main --force nuvio_frontend'
 ```
 
@@ -362,8 +370,13 @@ Quando ambos precisam ser atualizados, use `git reset --hard` para evitar confli
 ```bash
 sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
   'cd /opt/nuvio && git reset --hard origin/main && git pull origin main && \
+   source .env && \
    docker builder prune -af && \
-   docker compose build --no-cache backend frontend && \
+   docker compose build --no-cache backend && \
+   docker build --no-cache \
+     --build-arg VITE_META_APP_ID=$META_APP_ID \
+     --build-arg VITE_META_CONFIG_ID=$META_CONFIG_ID \
+     -t ghcr.io/guircosta/zflow-frontend:main ./frontend && \
    docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-backend:main --force nuvio_backend && \
    docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-frontend:main --force nuvio_frontend'
 ```
@@ -396,6 +409,8 @@ Procurar nos logs:
 | Service nao atualiza | Swarm puxou imagem antiga do GHCR | Verificar se usou `--no-resolve-image` |
 | 504 Gateway Timeout | `express-rate-limit` crashando | Verificar `app.set("trust proxy", 1)` no app.ts |
 | `Refresh token not provided` | Sessao expirou | Normal — usuario precisa fazer login novamente |
+| `VITE_META_APP_ID` vazio no bundle | `docker compose build` nao passa build args | Usar `docker build --build-arg` explicito (ver comando do frontend acima) |
+| FB popup "JSSDK nao ativada" | App ID errado no bundle | Verificar `grep -o APP_ID /assets/*.js` dentro do container |
 
 ---
 
