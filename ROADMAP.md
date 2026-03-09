@@ -71,7 +71,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 
 - [x] Scaffold (Vite 6 + React 19 + TypeScript + Tailwind 3.4)
 - [x] shadcn/ui components (Radix UI + lucide-react + CVA)
-- [x] Zustand stores (auth, ticket, chat, notification)
+- [x] Zustand stores (auth, ticket, chat, notification, whatsapp)
 - [x] Axios com interceptor de refresh token
 - [x] Socket.IO client com auth JWT
 - [x] Login com refresh automatico
@@ -80,7 +80,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Contatos (DataTable, CRUD, tags)
 - [x] CRM/Pipeline (Kanban drag-and-drop @dnd-kit)
 - [x] Campanhas (lista com filtros, form com seletor de template WABA)
-- [x] Configuracoes (4 tabs: Geral, Filas, WhatsApp, Usuarios)
+- [x] Configuracoes (4 tabs: Geral, Filas, WhatsApp com limites/status real-time, Usuarios)
 - [x] Componentes: DataTable, SearchInput, StatusBadge, ConfirmDialog, ErrorBoundary
 - [x] Audio: useAudioRecorder hook, AudioRecorder, AudioPreview, AudioPlayer
 - [x] Sidebar colapsavel (toggle expand/collapse com estado persistido em localStorage + tooltips)
@@ -104,6 +104,7 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] chatStore: updateMessage para ACK updates em tempo real
 - [x] ChatPanel: joinTicket/leaveTicket rooms para receber mensagens do ticket aberto
 - [x] Sidebar de tickets atualiza lastMessage e unreadMessages em tempo real
+- [x] whatsapp:created/updated/deleted conectados ao whatsappStore (Fase 19)
 
 ### Fase 10: UX Essencial - Toasts e Rotas (CONCLUIDA)
 
@@ -196,6 +197,16 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Fix campaign scheduling: createCampaign seta status "scheduled" quando scheduledAt definido
 - [x] Backend permite update/start de campanhas "scheduled"
 - [x] Frontend: tab "Agendadas" na CampaignList, validacao de data no CampaignForm, canEdit/canStart incluem "scheduled"
+
+### Fase 19: WhatsApp Connection Management — Status Real-Time + Limites (CONCLUIDA)
+
+- [x] Backend: `GET /whatsapp` retorna `meta` com `connectionCount` e `maxConnections` do tenant
+- [x] Frontend: `whatsappStore` (Zustand) para estado centralizado de conexoes WhatsApp
+- [x] Frontend: `useSocket` escuta `whatsapp:created/updated/deleted` para atualizacao em tempo real
+- [x] Frontend: Settings.tsx migrado de `useState` local para `whatsappStore`
+- [x] Frontend: WhatsAppTab exibe barra de uso de conexoes (X/Y conexoes) com indicador colorido (azul/amarelo/vermelho)
+- [x] Frontend: Botao "Conectar WhatsApp" desabilitado quando atinge limite de conexoes
+- [x] Fix: Dockerfile frontend — `ARG` convertido em `ENV` para injecao correta de `VITE_META_APP_ID` e `VITE_META_CONFIG_ID` no build
 
 ### Fase 6: Testes (CONCLUIDA)
 
@@ -452,6 +463,8 @@ IMPACTO BAIXO
 | ~~Rate limiting per-route (upload, sync, start, onboard)~~ | ~~3h~~ | ~~Protecao granular~~ | **CONCLUIDO** |
 | ~~Painel de notificacoes (dropdown + pagina completa)~~ | ~~6h~~ | ~~Notificacoes funcionais~~ | **CONCLUIDO** |
 | ~~Fix agendamento de campanhas (status scheduled)~~ | ~~3h~~ | ~~Agendamento funcional~~ | **CONCLUIDO** |
+| ~~WhatsApp connection limits + real-time status~~ | ~~4h~~ | ~~Status e limites visiveis~~ | **CONCLUIDO** |
+| ~~Fix Dockerfile VITE_META env vars~~ | ~~1h~~ | ~~Facebook SDK funcional em prod~~ | **CONCLUIDO** |
 
 ---
 
