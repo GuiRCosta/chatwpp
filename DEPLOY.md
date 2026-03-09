@@ -323,22 +323,83 @@ curl -s -X POST https://DOMINIO/api/auth/login \
 
 ---
 
-## Operacoes comuns
+## Atualizacao via Git (deploy de atualizacoes)
 
-### Atualizar o codigo
+### Flags obrigatorias
+
+| Flag | Motivo |
+|------|--------|
+| `docker builder prune -af` | Limpa cache do BuildKit. Sem isso, `--no-cache` ainda usa layers cacheadas e o build completa em <1s sem aplicar mudancas |
+| `--no-cache` | Forca rebuild de todas as layers do Dockerfile |
+| `--no-resolve-image` | Impede que Docker Swarm puxe imagem do GHCR (stale). Forca uso da imagem local recem-construida |
+
+> **CRITICO**: Sem `--no-resolve-image`, o Swarm ignora a imagem local e puxa do GHCR (que nao tem permissao de push, entao esta desatualizada). Sem `docker builder prune -af`, o BuildKit usa cache antigo mesmo com `--no-cache`.
+
+### Atualizar apenas o backend
 
 ```bash
-cd /opt/zflow
-
-# 1. Copiar codigo atualizado para a VPS
-# 2. Rebuild das imagens
-docker build -t zflow-backend:latest -f backend/Dockerfile backend/
-docker build -t zflow-frontend:latest -f frontend/Dockerfile frontend/
-
-# 3. Atualizar servicos
-docker service update --image zflow-backend:latest --force zflow_backend
-docker service update --image zflow-frontend:latest --force zflow_frontend
+sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
+  'cd /opt/nuvio && git pull origin main && \
+   docker builder prune -af && \
+   docker compose build --no-cache backend && \
+   docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-backend:main --force nuvio_backend'
 ```
+
+### Atualizar apenas o frontend
+
+```bash
+sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
+  'cd /opt/nuvio && git pull origin main && \
+   docker builder prune -af && \
+   docker compose build --no-cache frontend && \
+   docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-frontend:main --force nuvio_frontend'
+```
+
+### Atualizar ambos (comando unico)
+
+Quando ambos precisam ser atualizados, use `git reset --hard` para evitar conflito do segundo `git pull`:
+
+```bash
+sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
+  'cd /opt/nuvio && git reset --hard origin/main && git pull origin main && \
+   docker builder prune -af && \
+   docker compose build --no-cache backend frontend && \
+   docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-backend:main --force nuvio_backend && \
+   docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-frontend:main --force nuvio_frontend'
+```
+
+### Verificacao pos-deploy
+
+```bash
+# Status dos services (todos devem estar 1/1)
+sshpass -p 'SENHA' ssh root@72.61.25.109 'docker service ls | grep nuvio'
+
+# Logs do backend (ultimas 20 linhas)
+sshpass -p 'SENHA' ssh root@72.61.25.109 'docker service logs nuvio_backend --tail 20'
+
+# Health check
+curl -s https://crm.ideva.ai/api/health | jq
+```
+
+Procurar nos logs:
+- `Nuvio backend running on port 7563` — OK
+- `Redis connected` — OK
+- `ERR_ERL_UNEXPECTED_X_FORWARDED_FOR` — Falta `trust proxy` no app.ts
+- `Seeds skipped (may already exist)` — Normal, seeds ja foram aplicados
+
+### Troubleshooting de atualizacao
+
+| Problema | Causa | Solucao |
+|----------|-------|---------|
+| Build completa em <1s | BuildKit usou cache stale | Executar `docker builder prune -af` antes |
+| `git pull` falha com "local changes" | Deploy anterior fez pull parcial | Usar `git reset --hard origin/main` |
+| Service nao atualiza | Swarm puxou imagem antiga do GHCR | Verificar se usou `--no-resolve-image` |
+| 504 Gateway Timeout | `express-rate-limit` crashando | Verificar `app.set("trust proxy", 1)` no app.ts |
+| `Refresh token not provided` | Sessao expirou | Normal — usuario precisa fazer login novamente |
+
+---
+
+## Operacoes comuns
 
 ### Rodar migrations manualmente
 
