@@ -25,6 +25,22 @@ export const onboardFBLSchema = yup.object().shape({
   userIds: yup.array().of(yup.number().integer().positive()).default([])
 })
 
+export const discoverWabasSchema = yup.object().shape({
+  code: yup.string().required("Authorization code is required")
+})
+
+export const registerFromDiscoverSchema = yup.object().shape({
+  sessionToken: yup.string().required("Session token is required"),
+  wabaId: yup.string()
+    .matches(/^\d+$/, "WABA ID must be numeric")
+    .required("WABA ID is required"),
+  phoneNumberId: yup.string()
+    .matches(/^\d+$/, "Phone number ID must be numeric")
+    .required("Phone number ID is required"),
+  name: yup.string().min(2).max(100).required("Connection name is required"),
+  userIds: yup.array().of(yup.number().integer().positive()).default([])
+})
+
 export const updateWhatsAppSchema = yup.object().shape({
   name: yup.string().min(2).max(100),
   wabaAccountId: yup.string().nullable(),

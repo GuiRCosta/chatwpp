@@ -237,7 +237,7 @@ export async function debugToken(inputToken: string): Promise<DebugTokenResult> 
   }
 }
 
-interface PhoneNumberInfo {
+export interface PhoneNumberInfo {
   id: string
   displayPhoneNumber: string
   verifiedName: string
@@ -269,6 +269,52 @@ export async function subscribeApp(
   await client.post(`/${phoneNumberId}/subscribed_apps`, {})
 
   logger.info("Webhook subscription registered for phone %s", phoneNumberId)
+}
+
+// --- WABA Discovery (list businesses → WABAs → phone numbers) ---
+
+export interface BusinessInfo {
+  id: string
+  name: string
+}
+
+export interface WabaInfo {
+  id: string
+  name: string
+  currency: string
+  timezoneId: string
+}
+
+export async function getBusinesses(token: string): Promise<BusinessInfo[]> {
+  const client = createClient(token)
+
+  const { data } = await client.get("/me/businesses", {
+    params: { fields: "id,name", limit: 100 }
+  })
+
+  return (data.data || []).map((biz: Record<string, unknown>) => ({
+    id: String(biz.id),
+    name: String(biz.name || "")
+  }))
+}
+
+export async function getOwnedWabas(
+  businessId: string,
+  token: string
+): Promise<WabaInfo[]> {
+  const client = createClient(token)
+
+  const { data } = await client.get(
+    `/${businessId}/owned_whatsapp_business_accounts`,
+    { params: { fields: "id,name,currency,timezone_id", limit: 100 } }
+  )
+
+  return (data.data || []).map((waba: Record<string, unknown>) => ({
+    id: String(waba.id),
+    name: String(waba.name || ""),
+    currency: String(waba.currency || ""),
+    timezoneId: String(waba.timezone_id || "")
+  }))
 }
 
 export async function getMessageTemplates(

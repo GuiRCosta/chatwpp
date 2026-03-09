@@ -10,8 +10,12 @@ import {
   exchangeCodeForToken,
   debugToken,
   getPhoneNumbers,
-  subscribeApp
+  subscribeApp,
+  getBusinesses,
+  getOwnedWabas
 } from "../libs/waba/wabaClient"
+import type { PhoneNumberInfo } from "../libs/waba/wabaClient"
+import { encrypt, decrypt } from "../helpers/encryption"
 import { logger } from "../helpers/logger"
 
 interface ListParams {
@@ -261,6 +265,167 @@ export const onboardFromFBL = async (tenantId: number, data: {
   logger.info(
     "FBL onboard complete: tenant=%d, whatsappId=%d, phone=%s",
     tenantId, whatsapp.id, displayNumber
+  )
+
+  return created
+}
+
+// --- WABA Discovery Flow ---
+
+interface DiscoverWabaPhone {
+  id: string
+  displayPhoneNumber: string
+  verifiedName: string
+  qualityRating: string
+  alreadyConnected: boolean
+}
+
+interface DiscoverWaba {
+  id: string
+  name: string
+  phones: DiscoverWabaPhone[]
+}
+
+interface DiscoverResult {
+  wabas: DiscoverWaba[]
+  sessionToken: string
+}
+
+export const discoverWabas = async (tenantId: number, code: string): Promise<DiscoverResult> => {
+  const tokenResult = await exchangeCodeForToken(code)
+  logger.info("Discover: token exchange successful for tenant %d", tenantId)
+
+  const tokenInfo = await debugToken(tokenResult.accessToken)
+
+  if (!tokenInfo.isValid) {
+    throw new AppError("Invalid access token received from Facebook", 400)
+  }
+
+  const requiredScopes = ["whatsapp_business_management", "whatsapp_business_messaging"]
+  const missingScopes = requiredScopes.filter(scope => !tokenInfo.scopes.includes(scope))
+
+  if (missingScopes.length > 0) {
+    throw new AppError(
+      `Missing required permissions: ${missingScopes.join(", ")}. Please re-authorize.`,
+      400
+    )
+  }
+
+  const businesses = await getBusinesses(tokenResult.accessToken)
+
+  if (businesses.length === 0) {
+    throw new AppError("No businesses found for this account", 400)
+  }
+
+  const connectedPhoneIds = new Set(
+    (await WhatsApp.findAll({
+      where: { tenantId },
+      attributes: ["wabaPhoneNumberId"]
+    })).map(w => w.wabaPhoneNumberId)
+  )
+
+  const wabas: DiscoverWaba[] = []
+
+  for (const biz of businesses) {
+    const bizWabas = await getOwnedWabas(biz.id, tokenResult.accessToken)
+
+    for (const waba of bizWabas) {
+      let phones: PhoneNumberInfo[] = []
+      try {
+        phones = await getPhoneNumbers(waba.id, tokenResult.accessToken)
+      } catch {
+        logger.warn("Discover: failed to list phones for WABA %s", waba.id)
+      }
+
+      wabas.push({
+        id: waba.id,
+        name: waba.name || `WABA ${waba.id}`,
+        phones: phones.map(p => ({
+          id: p.id,
+          displayPhoneNumber: p.displayPhoneNumber,
+          verifiedName: p.verifiedName,
+          qualityRating: p.qualityRating,
+          alreadyConnected: connectedPhoneIds.has(p.id)
+        }))
+      })
+    }
+  }
+
+  const sessionToken = encrypt(tokenResult.accessToken)
+
+  logger.info(
+    "Discover: found %d WABAs for tenant %d",
+    wabas.length, tenantId
+  )
+
+  return { wabas, sessionToken }
+}
+
+export const registerFromDiscover = async (tenantId: number, data: {
+  sessionToken: string
+  wabaId: string
+  phoneNumberId: string
+  name: string
+  userIds?: number[]
+}): Promise<WhatsApp> => {
+  const accessToken = decrypt(data.sessionToken)
+
+  const existing = await WhatsApp.findOne({
+    where: { tenantId, wabaPhoneNumberId: data.phoneNumberId }
+  })
+
+  if (existing) {
+    throw new AppError("This phone number is already connected", 409)
+  }
+
+  const tenant = await Tenant.findByPk(tenantId)
+  const connectionCount = await WhatsApp.count({ where: { tenantId } })
+
+  if (tenant && connectionCount >= tenant.maxConnections) {
+    throw new AppError("Connection limit reached for this tenant", 403)
+  }
+
+  const phoneNumbers = await getPhoneNumbers(data.wabaId, accessToken)
+  const phoneInfo = phoneNumbers.find(p => p.id === data.phoneNumberId)
+
+  if (!phoneInfo) {
+    throw new AppError("Phone number not found in the selected WABA", 404)
+  }
+
+  await subscribeApp(data.phoneNumberId, accessToken)
+
+  const isFirst = connectionCount === 0
+
+  const whatsapp = await WhatsApp.create({
+    tenantId,
+    name: data.name,
+    type: "waba",
+    status: "connected",
+    wabaAccountId: data.wabaId,
+    wabaPhoneNumberId: data.phoneNumberId,
+    wabaToken: accessToken,
+    number: phoneInfo.displayPhoneNumber,
+    isDefault: isFirst,
+    greetingMessage: "",
+    farewellMessage: ""
+  })
+
+  if (data.userIds && data.userIds.length > 0) {
+    const entries = data.userIds.map(userId => ({
+      userId,
+      whatsappId: whatsapp.id
+    }))
+    await UserWhatsApp.bulkCreate(entries)
+  }
+
+  const created = await findWhatsAppById(whatsapp.id, tenantId)
+
+  const { wabaToken: _t, wabaWebhookSecret: _w, ...safeWhatsapp } = created.toJSON()
+  emitToTenant(tenantId, "whatsapp:created", safeWhatsapp)
+
+  logger.info(
+    "Register from discover: tenant=%d, whatsappId=%d, phone=%s",
+    tenantId, whatsapp.id, phoneInfo.displayPhoneNumber
   )
 
   return created

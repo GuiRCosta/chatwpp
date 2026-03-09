@@ -98,6 +98,56 @@ export function loadFacebookSDK(appId: string): Promise<void> {
 
 const SIGNUP_TIMEOUT_MS = 5 * 60 * 1000
 
+/**
+ * Launches FB.login with Embedded Signup config.
+ * Returns ONLY the authorization code — does NOT wait for WA_EMBEDDED_SIGNUP event.
+ * The code is used to call POST /whatsapp/discover on the backend,
+ * which lists all WABAs + phone numbers for user selection.
+ */
+export function launchFBLoginOnly(configId: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!window.FB) {
+      reject(new Error("Facebook SDK not loaded"))
+      return
+    }
+
+    let settled = false
+
+    const settle = (fn: () => void) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeoutId)
+      fn()
+    }
+
+    const timeoutId = setTimeout(() => {
+      settle(() => reject(new Error("Facebook login timed out")))
+    }, SIGNUP_TIMEOUT_MS)
+
+    window.FB.login(
+      (response: FBLoginResponse) => {
+        if (response.authResponse?.code) {
+          settle(() => resolve(response.authResponse!.code!))
+        } else {
+          settle(() =>
+            reject(new Error("Facebook login was cancelled or failed"))
+          )
+        }
+      },
+      {
+        config_id: configId,
+        response_type: "code",
+        override_default_response_type: true,
+        extras: {
+          setup: {},
+          featureType: "",
+          sessionInfoVersion: "3"
+        }
+      }
+    )
+  })
+}
+
 export function launchWhatsAppSignup(configId: string): Promise<EmbeddedSignupResult> {
   return new Promise((resolve, reject) => {
     if (!window.FB) {

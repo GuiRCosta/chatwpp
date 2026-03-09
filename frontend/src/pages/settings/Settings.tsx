@@ -183,30 +183,6 @@ export function Settings() {
     [fetchQueues]
   )
 
-  const handleOnboard = useCallback(
-    async (data: {
-      code: string
-      wabaId: string
-      phoneNumberId: string
-      name: string
-      userIds?: number[]
-    }) => {
-      try {
-        setError(null)
-        await api.post("/whatsapp/onboard", data)
-        await fetchConnections()
-        toast.success("WhatsApp conectado com sucesso")
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Erro ao conectar WhatsApp"
-        setError(message)
-        toast.error(message)
-        throw err
-      }
-    },
-    [fetchConnections]
-  )
-
   const handleUpdateWhatsApp = useCallback(
     async (id: number, data: { name?: string; userIds?: number[] }) => {
       try {
@@ -313,7 +289,6 @@ export function Settings() {
             connectionCount={connectionCount}
             users={users}
             isLoading={isLoadingWhatsApp}
-            onOnboard={handleOnboard}
             onUpdateWhatsApp={handleUpdateWhatsApp}
             onDeleteWhatsApp={handleDeleteWhatsApp}
           />

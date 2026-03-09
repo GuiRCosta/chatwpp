@@ -9,6 +9,7 @@ import {
   Trash2,
   Users as UsersIcon
 } from "lucide-react"
+import { toast } from "sonner"
 import {
   Card,
   CardContent,
@@ -26,26 +27,37 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger
+  DialogTitle
 } from "@/components/ui/Dialog"
 import type { WhatsApp, User } from "@/types"
 import { formatWhatsAppStatus, isWhatsAppOnline } from "./types"
-import {
-  loadFacebookSDK,
-  launchWhatsAppSignup,
-  type EmbeddedSignupResult
-} from "@/lib/facebook"
+import { loadFacebookSDK, launchFBLoginOnly } from "@/lib/facebook"
+import { WabaSelector } from "./WabaSelector"
+import api from "@/lib/api"
 
 const META_APP_ID = import.meta.env.VITE_META_APP_ID || ""
 const META_CONFIG_ID = import.meta.env.VITE_META_CONFIG_ID || ""
 
-interface OnboardData {
-  code: string
-  wabaId: string
-  phoneNumberId: string
+interface DiscoverPhone {
+  id: string
+  displayPhoneNumber: string
+  verifiedName: string
+  qualityRating: string
+  alreadyConnected: boolean
+}
+
+interface DiscoverWaba {
+  id: string
   name: string
-  userIds?: number[]
+  phones: DiscoverPhone[]
+}
+
+interface DiscoverResponse {
+  success: boolean
+  data: {
+    wabas: DiscoverWaba[]
+    sessionToken: string
+  }
 }
 
 interface WhatsAppTabProps {
@@ -54,7 +66,6 @@ interface WhatsAppTabProps {
   connectionCount: number
   users: User[]
   isLoading: boolean
-  onOnboard: (data: OnboardData) => Promise<void>
   onUpdateWhatsApp: (id: number, data: { name?: string; userIds?: number[] }) => Promise<void>
   onDeleteWhatsApp: (id: number) => Promise<void>
 }
@@ -104,25 +115,29 @@ export function WhatsAppTab({
   connectionCount,
   users,
   isLoading,
-  onOnboard,
   onUpdateWhatsApp,
   onDeleteWhatsApp
 }: WhatsAppTabProps) {
   const isAtLimit = connectionCount >= maxConnections
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [newName, setNewName] = useState("")
-  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set())
   const [isConnecting, setIsConnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sdkReady, setSdkReady] = useState(false)
   const sdkLoadAttempted = useRef(false)
 
+  // WABA Discovery state
+  const [discoveredWabas, setDiscoveredWabas] = useState<DiscoverWaba[]>([])
+  const [sessionToken, setSessionToken] = useState("")
+  const [wabaSelectorOpen, setWabaSelectorOpen] = useState(false)
+  const [isRegistering, setIsRegistering] = useState(false)
+
+  // Edit dialog state
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [editingConnection, setEditingConnection] = useState<WhatsApp | null>(null)
   const [editName, setEditName] = useState("")
   const [editUserIds, setEditUserIds] = useState<Set<number>>(new Set())
   const [isSaving, setIsSaving] = useState(false)
 
+  // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deletingConnection, setDeletingConnection] = useState<WhatsApp | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -140,18 +155,6 @@ export function WhatsAppTab({
       })
   }, [])
 
-  const handleToggleUser = useCallback((userId: number) => {
-    setSelectedUserIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(userId)) {
-        next.delete(userId)
-      } else {
-        next.add(userId)
-      }
-      return next
-    })
-  }, [])
-
   const handleToggleEditUser = useCallback((userId: number) => {
     setEditUserIds((prev) => {
       const next = new Set(prev)
@@ -164,27 +167,32 @@ export function WhatsAppTab({
     })
   }, [])
 
-  const handleConnectWithFacebook = useCallback(async () => {
-    if (!newName.trim()) return
+  // --- New flow: FB Login → Discover → WabaSelector → Register ---
 
+  const handleConnectClick = useCallback(async () => {
     setIsConnecting(true)
     setError(null)
 
     try {
-      const result: EmbeddedSignupResult =
-        await launchWhatsAppSignup(META_CONFIG_ID)
+      // Step 1: Launch FB Login to get authorization code
+      const code = await launchFBLoginOnly(META_CONFIG_ID)
 
-      await onOnboard({
-        code: result.code,
-        wabaId: result.wabaId,
-        phoneNumberId: result.phoneNumberId,
-        name: newName.trim(),
-        userIds: Array.from(selectedUserIds)
-      })
+      // Step 2: Call discover to list WABAs and phone numbers
+      toast.info("Buscando WABAs e numeros disponiveis...")
 
-      setNewName("")
-      setSelectedUserIds(new Set())
-      setDialogOpen(false)
+      const response = await api.post<DiscoverResponse>("/whatsapp/discover", { code })
+
+      const { wabas, sessionToken: token } = response.data.data
+
+      if (wabas.length === 0) {
+        setError("Nenhuma WABA encontrada na sua conta Meta Business")
+        return
+      }
+
+      // Step 3: Open WabaSelector dialog
+      setDiscoveredWabas(wabas)
+      setSessionToken(token)
+      setWabaSelectorOpen(true)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Erro ao conectar WhatsApp"
@@ -192,16 +200,45 @@ export function WhatsAppTab({
     } finally {
       setIsConnecting(false)
     }
-  }, [newName, selectedUserIds, onOnboard])
+  }, [])
 
-  const handleDialogChange = useCallback((open: boolean) => {
-    setDialogOpen(open)
-    if (!open) {
-      setNewName("")
-      setSelectedUserIds(new Set())
-      setError(null)
+  const handleRegister = useCallback(async (data: {
+    sessionToken: string
+    wabaId: string
+    phoneNumberId: string
+    name: string
+    userIds: number[]
+  }) => {
+    setIsRegistering(true)
+    setError(null)
+
+    try {
+      await api.post("/whatsapp/register", data)
+
+      toast.success("WhatsApp conectado com sucesso")
+      setWabaSelectorOpen(false)
+      setDiscoveredWabas([])
+      setSessionToken("")
+
+      // Connection will appear via socket event (whatsapp:created)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Erro ao registrar conexao"
+      setError(message)
+      toast.error(message)
+      throw err
+    } finally {
+      setIsRegistering(false)
     }
   }, [])
+
+  const handleCloseWabaSelector = useCallback(() => {
+    setWabaSelectorOpen(false)
+    setDiscoveredWabas([])
+    setSessionToken("")
+  }, [])
+
+  // --- Edit / Delete handlers ---
 
   const handleOpenEdit = useCallback((conn: WhatsApp) => {
     setEditingConnection(conn)
@@ -287,84 +324,34 @@ export function WhatsAppTab({
               </div>
             </div>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
-            <DialogTrigger asChild>
-              <Button
-                size="sm"
-                rounded="lg"
-                disabled={isAtLimit}
-                title={isAtLimit ? "Limite de conexoes atingido" : undefined}
-              >
+          <Button
+            size="sm"
+            rounded="lg"
+            disabled={isAtLimit || isConnecting || !sdkReady}
+            title={isAtLimit ? "Limite de conexoes atingido" : undefined}
+            onClick={handleConnectClick}
+          >
+            {isConnecting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Autorizando...
+              </>
+            ) : (
+              <>
                 <Plus className="h-4 w-4" />
                 Conectar WhatsApp
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Conectar WhatsApp</DialogTitle>
-                <DialogDescription>
-                  Conecte seu numero do WhatsApp Business via Facebook
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="whatsappName">Nome da Conexao</Label>
-                  <Input
-                    id="whatsappName"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Ex: WhatsApp Principal"
-                    disabled={isConnecting}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-1.5">
-                    <UsersIcon className="h-4 w-4" />
-                    Atendentes Responsaveis
-                  </Label>
-                  <UserCheckboxList
-                    users={users}
-                    selectedIds={selectedUserIds}
-                    onToggle={handleToggleUser}
-                    disabled={isConnecting}
-                  />
-                </div>
-
-                {error && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
-                    {error}
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  rounded="lg"
-                  onClick={() => handleDialogChange(false)}
-                  disabled={isConnecting}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  rounded="lg"
-                  onClick={handleConnectWithFacebook}
-                  disabled={!newName.trim() || isConnecting || !sdkReady}
-                >
-                  {isConnecting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Conectando...
-                    </>
-                  ) : (
-                    "Conectar com Facebook"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </>
+            )}
+          </Button>
         </div>
       </CardHeader>
+
+      {error && (
+        <div className="mx-6 mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
       <CardContent>
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
@@ -456,6 +443,18 @@ export function WhatsAppTab({
         )}
       </CardContent>
 
+      {/* WABA Selector Dialog */}
+      <WabaSelector
+        open={wabaSelectorOpen}
+        wabas={discoveredWabas}
+        sessionToken={sessionToken}
+        users={users}
+        isRegistering={isRegistering}
+        onRegister={handleRegister}
+        onClose={handleCloseWabaSelector}
+      />
+
+      {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -515,6 +514,7 @@ export function WhatsAppTab({
         </DialogContent>
       </Dialog>
 
+      {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>

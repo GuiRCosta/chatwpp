@@ -208,6 +208,20 @@ Plataforma multi-canal de atendimento ao cliente com CRM integrado.
 - [x] Frontend: Botao "Conectar WhatsApp" desabilitado quando atinge limite de conexoes
 - [x] Fix: Dockerfile frontend — `ARG` convertido em `ENV` para injecao correta de `VITE_META_APP_ID` e `VITE_META_CONFIG_ID` no build
 
+### Fase 20: WABA Discovery — Selecao de WABA e Numero via API (CONCLUIDA)
+
+- [x] Backend: `wabaClient.ts` — novas funcoes `getBusinesses()` e `getOwnedWabas()` (Meta Graph API)
+- [x] Backend: `POST /whatsapp/discover` — troca code por token, lista WABAs + numeros de telefone, retorna sessionToken encriptado
+- [x] Backend: `POST /whatsapp/register` — recebe sessionToken + selecao do usuario, registra conexao
+- [x] Backend: Validators para discover/register schemas
+- [x] Frontend: `facebook.ts` — novo `launchFBLoginOnly()` que retorna apenas o code (sem esperar WA_EMBEDDED_SIGNUP)
+- [x] Frontend: `WabaSelector.tsx` — dialog com lista de WABAs → telefones, marcacao de ja conectados
+- [x] Frontend: `WhatsAppTab.tsx` — novo fluxo: FBL → discover → WabaSelector → register
+- [x] Limpeza: Removido prop `onOnboard` nao utilizado de WhatsAppTab e Settings
+
+**Problema**: Meta Embedded Signup nao permite filtrar WABAs no popup. Com 20+ WABAs, UX fica ruim.
+**Solucao**: Apos FBL retornar o code, backend lista WABAs via API e frontend mostra selecao propria.
+
 ### Fase 6: Testes (CONCLUIDA)
 
 - [x] Backend: 66 arquivos, 670 testes, cobertura 93.62% statements

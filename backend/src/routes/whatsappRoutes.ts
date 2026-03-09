@@ -17,6 +17,8 @@ const whatsappRoutes = Router()
 whatsappRoutes.get("/", WhatsAppController.index)
 whatsappRoutes.post("/", isAdmin, WhatsAppController.store)
 whatsappRoutes.post("/onboard", isAdmin, onboardLimiter, WhatsAppController.onboard)
+whatsappRoutes.post("/discover", isAdmin, onboardLimiter, WhatsAppController.discover)
+whatsappRoutes.post("/register", isAdmin, onboardLimiter, WhatsAppController.register)
 whatsappRoutes.put("/:id", isAdmin, WhatsAppController.update)
 whatsappRoutes.delete("/:id", isAdmin, WhatsAppController.remove)
 
