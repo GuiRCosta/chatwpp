@@ -13,6 +13,8 @@ import { setupBullBoard } from "./libs/bullBoard"
 
 const app = express()
 
+app.set("trust proxy", 1)
+
 app.use(
   cors({
     credentials: true,
