@@ -31,8 +31,7 @@ import {
 } from "@/components/ui/Dialog"
 import type { WhatsApp, User } from "@/types"
 import { formatWhatsAppStatus, isWhatsAppOnline } from "./types"
-import { loadFacebookSDK, launchWhatsAppSignup } from "@/lib/facebook"
-import type { EmbeddedSignupResult } from "@/lib/facebook"
+import { loadFacebookSDK, launchFBLoginOnly } from "@/lib/facebook"
 import { UserCheckboxList } from "./UserCheckboxList"
 import api from "@/lib/api"
 
@@ -64,10 +63,12 @@ export function WhatsAppTab({
   const [sdkReady, setSdkReady] = useState(false)
   const sdkLoadAttempted = useRef(false)
 
-  // Embedded Signup → Name dialog state
-  const [signupResult, setSignupResult] = useState<EmbeddedSignupResult | null>(null)
+  // FB Login → Onboard dialog state
+  const [authCode, setAuthCode] = useState<string | null>(null)
   const [nameDialogOpen, setNameDialogOpen] = useState(false)
   const [newConnectionName, setNewConnectionName] = useState("")
+  const [newWabaId, setNewWabaId] = useState("")
+  const [newPhoneNumberId, setNewPhoneNumberId] = useState("")
   const [newConnectionUserIds, setNewConnectionUserIds] = useState<Set<number>>(new Set())
   const [isOnboarding, setIsOnboarding] = useState(false)
 
@@ -108,17 +109,19 @@ export function WhatsAppTab({
     })
   }, [])
 
-  // --- Embedded Signup flow: FB.login → WA_EMBEDDED_SIGNUP → Name dialog → Onboard ---
+  // --- FB Login flow: get auth code → show onboard form → POST /onboard ---
 
   const handleConnectClick = useCallback(async () => {
     setIsConnecting(true)
     setError(null)
 
     try {
-      const result = await launchWhatsAppSignup(META_CONFIG_ID)
+      const code = await launchFBLoginOnly(META_CONFIG_ID)
 
-      setSignupResult(result)
+      setAuthCode(code)
       setNewConnectionName("")
+      setNewWabaId("")
+      setNewPhoneNumberId("")
       setNewConnectionUserIds(new Set())
       setNameDialogOpen(true)
     } catch (err) {
@@ -130,37 +133,45 @@ export function WhatsAppTab({
     }
   }, [])
 
+  const isOnboardFormValid =
+    !!authCode &&
+    newConnectionName.trim().length >= 2 &&
+    /^\d+$/.test(newWabaId.trim()) &&
+    /^\d+$/.test(newPhoneNumberId.trim())
+
   const handleConfirmOnboard = useCallback(async () => {
-    if (!signupResult || !newConnectionName.trim()) return
+    if (!authCode || !newConnectionName.trim() || !newWabaId.trim() || !newPhoneNumberId.trim()) return
 
     setIsOnboarding(true)
     setError(null)
 
     try {
       await api.post("/whatsapp/onboard", {
-        code: signupResult.code,
-        wabaId: signupResult.wabaId,
-        phoneNumberId: signupResult.phoneNumberId,
+        code: authCode,
+        wabaId: newWabaId.trim(),
+        phoneNumberId: newPhoneNumberId.trim(),
         name: newConnectionName.trim(),
         userIds: Array.from(newConnectionUserIds)
       })
 
       toast.success("WhatsApp conectado com sucesso")
       setNameDialogOpen(false)
-      setSignupResult(null)
+      setAuthCode(null)
     } catch (err) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
       const message =
-        err instanceof Error ? err.message : "Erro ao registrar conexao"
+        axiosErr.response?.data?.error ||
+        (err instanceof Error ? err.message : "Erro ao registrar conexao")
       setError(message)
       toast.error(message)
     } finally {
       setIsOnboarding(false)
     }
-  }, [signupResult, newConnectionName, newConnectionUserIds])
+  }, [authCode, newConnectionName, newWabaId, newPhoneNumberId, newConnectionUserIds])
 
   const handleCloseNameDialog = useCallback(() => {
     setNameDialogOpen(false)
-    setSignupResult(null)
+    setAuthCode(null)
   }, [])
 
   const handleToggleNewUser = useCallback((userId: number) => {
@@ -380,13 +391,13 @@ export function WhatsAppTab({
         )}
       </CardContent>
 
-      {/* Name Connection Dialog (after Embedded Signup) */}
+      {/* Onboard Dialog (after FB Login) */}
       <Dialog open={nameDialogOpen} onOpenChange={(v) => !v && handleCloseNameDialog()}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Nomear Conexao</DialogTitle>
+            <DialogTitle>Configurar Conexao WhatsApp</DialogTitle>
             <DialogDescription>
-              Autorizacao concluida. Escolha um nome para esta conexao.
+              Autorizacao concluida. Informe os dados da sua conta WhatsApp Business.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -399,6 +410,52 @@ export function WhatsAppTab({
                 placeholder="Ex: WhatsApp Vendas"
                 disabled={isOnboarding}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="newWabaId">WABA ID (WhatsApp Business Account)</Label>
+              <Input
+                id="newWabaId"
+                value={newWabaId}
+                onChange={(e) => setNewWabaId(e.target.value.replace(/\D/g, ""))}
+                placeholder="Ex: 123456789012345"
+                disabled={isOnboarding}
+              />
+              <p className="text-xs text-gray-500">
+                Encontre em{" "}
+                <a
+                  href="https://business.facebook.com/settings/whatsapp-business-accounts"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  Meta Business Suite
+                </a>
+                {" "}&gt; Contas do WhatsApp Business
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="newPhoneNumberId">Phone Number ID</Label>
+              <Input
+                id="newPhoneNumberId"
+                value={newPhoneNumberId}
+                onChange={(e) => setNewPhoneNumberId(e.target.value.replace(/\D/g, ""))}
+                placeholder="Ex: 987654321098765"
+                disabled={isOnboarding}
+              />
+              <p className="text-xs text-gray-500">
+                Encontre em{" "}
+                <a
+                  href="https://developers.facebook.com/apps"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  Meta Developers
+                </a>
+                {" "}&gt; Seu App &gt; WhatsApp &gt; Configuracao da API
+              </p>
             </div>
 
             {users.length > 0 && (
@@ -429,7 +486,7 @@ export function WhatsAppTab({
             <Button
               rounded="lg"
               onClick={handleConfirmOnboard}
-              disabled={!newConnectionName.trim() || isOnboarding}
+              disabled={!isOnboardFormValid || isOnboarding}
             >
               {isOnboarding ? (
                 <>

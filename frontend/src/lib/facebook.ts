@@ -35,12 +35,6 @@ interface FBLoginResponse {
   status: string
 }
 
-export interface EmbeddedSignupResult {
-  code: string
-  wabaId: string
-  phoneNumberId: string
-}
-
 let sdkLoaded = false
 let sdkLoading: Promise<void> | null = null
 
@@ -99,10 +93,9 @@ export function loadFacebookSDK(appId: string): Promise<void> {
 const SIGNUP_TIMEOUT_MS = 5 * 60 * 1000
 
 /**
- * Launches FB.login with Embedded Signup config.
- * Returns ONLY the authorization code — does NOT wait for WA_EMBEDDED_SIGNUP event.
- * The code is used to call POST /whatsapp/discover on the backend,
- * which lists all WABAs + phone numbers for user selection.
+ * Launches FB.login with the configured Facebook Login for Business flow.
+ * Returns the authorization code from the FB.login callback.
+ * The code is exchanged for an access token on the backend via POST /whatsapp/onboard.
  */
 export function launchFBLoginOnly(configId: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -148,111 +141,3 @@ export function launchFBLoginOnly(configId: string): Promise<string> {
   })
 }
 
-const EMBEDDED_SIGNUP_WAIT_MS = 15_000
-
-export function launchWhatsAppSignup(configId: string): Promise<EmbeddedSignupResult> {
-  return new Promise((resolve, reject) => {
-    if (!window.FB) {
-      reject(new Error("Facebook SDK not loaded"))
-      return
-    }
-
-    let loginCode = ""
-    let settled = false
-    let codeReceivedTimer: ReturnType<typeof setTimeout> | null = null
-
-    const cleanup = () => {
-      window.removeEventListener("message", messageHandler)
-      clearTimeout(timeoutId)
-      if (codeReceivedTimer) clearTimeout(codeReceivedTimer)
-    }
-
-    const settle = (fn: () => void) => {
-      if (settled) return
-      settled = true
-      cleanup()
-      fn()
-    }
-
-    const timeoutId = setTimeout(() => {
-      settle(() => reject(new Error("WhatsApp signup timed out")))
-    }, SIGNUP_TIMEOUT_MS)
-
-    const messageHandler = (event: MessageEvent) => {
-      const isFacebookOrigin =
-        event.origin === "https://www.facebook.com" ||
-        event.origin === "https://web.facebook.com"
-
-      if (!isFacebookOrigin) return
-
-      try {
-        const data = typeof event.data === "string"
-          ? JSON.parse(event.data)
-          : event.data
-
-        // Debug: log all FB messages to diagnose event flow
-        if (data.type) {
-          // eslint-disable-next-line no-console
-          console.log("[FB Event]", data.type, data.event, JSON.stringify(data.data ?? {}))
-        }
-
-        if (data.type === "WA_EMBEDDED_SIGNUP") {
-          if (data.event === "FINISH") {
-            const wabaId = data.data?.waba_id
-            const phoneNumberId = data.data?.phone_number_id
-
-            if (!wabaId || !phoneNumberId) {
-              settle(() =>
-                reject(new Error("Incomplete signup data received from Facebook"))
-              )
-              return
-            }
-
-            settle(() => resolve({ code: loginCode, wabaId, phoneNumberId }))
-          } else if (data.event === "CANCEL") {
-            settle(() => reject(new Error("WhatsApp signup was cancelled")))
-          }
-        }
-      } catch {
-        // Ignore non-JSON messages
-      }
-    }
-
-    window.addEventListener("message", messageHandler)
-
-    window.FB.login(
-      (response: FBLoginResponse) => {
-        // eslint-disable-next-line no-console
-        console.log("[FB Login] callback fired, hasCode:", !!response.authResponse?.code)
-
-        if (response.authResponse?.code) {
-          loginCode = response.authResponse.code
-
-          // Wait for WA_EMBEDDED_SIGNUP event; if it doesn't come, reject with clear message
-          codeReceivedTimer = setTimeout(() => {
-            settle(() =>
-              reject(new Error(
-                "Autorizacao recebida, mas o evento WA_EMBEDDED_SIGNUP nao foi detectado. " +
-                "Verifique a configuracao do Embedded Signup no Meta Business."
-              ))
-            )
-          }, EMBEDDED_SIGNUP_WAIT_MS)
-        } else {
-          settle(() =>
-            reject(new Error("Facebook login was cancelled or failed"))
-          )
-        }
-      },
-      {
-        config_id: configId,
-        response_type: "code",
-        override_default_response_type: true,
-        extras: {
-          setup: {},
-          featureType: "",
-          sessionInfoVersion: "3"
-        }
-      }
-    )
-  })
-}
