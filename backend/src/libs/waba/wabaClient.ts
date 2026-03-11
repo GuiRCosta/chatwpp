@@ -208,9 +208,7 @@ export async function exchangeCodeForToken(code: string): Promise<ExchangeTokenR
     const axiosErr = err as { response?: { data?: unknown; status?: number } }
     if (axiosErr.response) {
       logger.error(
-        "Meta token exchange failed (HTTP %d): %s",
-        axiosErr.response.status,
-        JSON.stringify(axiosErr.response.data)
+        `Meta token exchange failed (HTTP ${axiosErr.response.status}): ${JSON.stringify(axiosErr.response.data)}`
       )
     }
     throw err
