@@ -335,7 +335,32 @@ curl -s -X POST https://DOMINIO/api/auth/login \
 
 > **CRITICO**: Sem `--no-resolve-image`, o Swarm ignora a imagem local e puxa do GHCR (que nao tem permissao de push, entao esta desatualizada). Sem `docker builder prune -af`, o BuildKit usa cache antigo mesmo com `--no-cache`.
 
-### Atualizar apenas o backend
+### Usando o script de deploy (RECOMENDADO)
+
+O script `scripts/deploy.sh` resolve automaticamente os problemas de BuildKit/Swarm:
+- Usa `docker build --build-arg` explicito (nao `docker compose build`) para o frontend
+- Usa tag unica para evitar conflito de manifests BuildKit no Swarm
+- Verifica que o `META_APP_ID` esta no bundle antes de fazer deploy
+- Verifica que o container rodando tem o App ID correto apos deploy
+
+```bash
+# Atualizar apenas o backend
+sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
+  'cd /opt/nuvio && bash scripts/deploy.sh backend'
+
+# Atualizar apenas o frontend
+sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
+  'cd /opt/nuvio && bash scripts/deploy.sh frontend'
+
+# Atualizar ambos
+sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
+  'cd /opt/nuvio && bash scripts/deploy.sh all'
+```
+
+### Comandos manuais (caso o script falhe)
+
+<details>
+<summary>Backend manual</summary>
 
 ```bash
 sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
@@ -344,42 +369,26 @@ sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
    docker compose build --no-cache backend && \
    docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-backend:main --force nuvio_backend'
 ```
+</details>
 
-### Atualizar apenas o frontend
+<details>
+<summary>Frontend manual</summary>
 
-> **IMPORTANTE**: O frontend usa `docker build` com `--build-arg` explicito (nao `docker compose build`).
-> O `docker compose build` tem um bug com BuildKit que nao passa os build args de env vars corretamente,
-> resultando em `VITE_META_APP_ID` vazio no bundle.
+> **IMPORTANTE**: O frontend DEVE usar `docker build` com `--build-arg` (nao `docker compose build`).
+> Alem disso, deve usar uma tag unica para evitar conflito de manifests BuildKit no Swarm.
 
 ```bash
 sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
-  'cd /opt/nuvio && git pull origin main && \
-   source .env && \
+  'cd /opt/nuvio && git pull origin main && source .env && \
    docker builder prune -af && \
    docker build --no-cache \
      --build-arg VITE_META_APP_ID=$META_APP_ID \
      --build-arg VITE_META_CONFIG_ID=$META_CONFIG_ID \
-     -t ghcr.io/guircosta/zflow-frontend:main ./frontend && \
-   docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-frontend:main --force nuvio_frontend'
+     -t nuvio-frontend-build ./frontend && \
+   docker rmi ghcr.io/guircosta/zflow-frontend:main 2>/dev/null; \
+   docker service update --no-resolve-image --image nuvio-frontend-build --force nuvio_frontend'
 ```
-
-### Atualizar ambos (comando unico)
-
-Quando ambos precisam ser atualizados, use `git reset --hard` para evitar conflito do segundo `git pull`:
-
-```bash
-sshpass -p 'SENHA' ssh -o StrictHostKeyChecking=no root@72.61.25.109 \
-  'cd /opt/nuvio && git reset --hard origin/main && git pull origin main && \
-   source .env && \
-   docker builder prune -af && \
-   docker compose build --no-cache backend && \
-   docker build --no-cache \
-     --build-arg VITE_META_APP_ID=$META_APP_ID \
-     --build-arg VITE_META_CONFIG_ID=$META_CONFIG_ID \
-     -t ghcr.io/guircosta/zflow-frontend:main ./frontend && \
-   docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-backend:main --force nuvio_backend && \
-   docker service update --no-resolve-image --image ghcr.io/guircosta/zflow-frontend:main --force nuvio_frontend'
-```
+</details>
 
 ### Verificacao pos-deploy
 
