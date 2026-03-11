@@ -214,10 +214,16 @@ export async function exchangeCodeForToken(code: string): Promise<ExchangeTokenR
   }
 }
 
+export interface GranularScope {
+  scope: string
+  target_ids: string[]
+}
+
 interface DebugTokenResult {
   isValid: boolean
   appId: string
   scopes: string[]
+  granularScopes: GranularScope[]
   expiresAt: number
 }
 
@@ -242,6 +248,7 @@ export async function debugToken(inputToken: string): Promise<DebugTokenResult> 
       isValid: data.data.is_valid,
       appId: data.data.app_id,
       scopes: data.data.scopes || [],
+      granularScopes: data.data.granular_scopes || [],
       expiresAt: data.data.expires_at
     }
   } catch (err: unknown) {
@@ -287,52 +294,6 @@ export async function subscribeApp(
   await client.post(`/${wabaId}/subscribed_apps`, {})
 
   logger.info(`Webhook subscription registered for WABA ${wabaId}`)
-}
-
-// --- WABA Discovery (list businesses → WABAs → phone numbers) ---
-
-export interface BusinessInfo {
-  id: string
-  name: string
-}
-
-export interface WabaInfo {
-  id: string
-  name: string
-  currency: string
-  timezoneId: string
-}
-
-export async function getBusinesses(token: string): Promise<BusinessInfo[]> {
-  const client = createClient(token)
-
-  const { data } = await client.get("/me/businesses", {
-    params: { fields: "id,name", limit: 100 }
-  })
-
-  return (data.data || []).map((biz: Record<string, unknown>) => ({
-    id: String(biz.id),
-    name: String(biz.name || "")
-  }))
-}
-
-export async function getOwnedWabas(
-  businessId: string,
-  token: string
-): Promise<WabaInfo[]> {
-  const client = createClient(token)
-
-  const { data } = await client.get(
-    `/${businessId}/owned_whatsapp_business_accounts`,
-    { params: { fields: "id,name,currency,timezone_id", limit: 100 } }
-  )
-
-  return (data.data || []).map((waba: Record<string, unknown>) => ({
-    id: String(waba.id),
-    name: String(waba.name || ""),
-    currency: String(waba.currency || ""),
-    timezoneId: String(waba.timezone_id || "")
-  }))
 }
 
 export async function getMessageTemplates(

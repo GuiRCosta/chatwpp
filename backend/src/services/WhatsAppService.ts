@@ -10,9 +10,7 @@ import {
   exchangeCodeForToken,
   debugToken,
   getPhoneNumbers,
-  subscribeApp,
-  getBusinesses,
-  getOwnedWabas
+  subscribeApp
 } from "../libs/waba/wabaClient"
 import type { PhoneNumberInfo } from "../libs/waba/wabaClient"
 import { encrypt, decrypt } from "../helpers/encryption"
@@ -310,11 +308,17 @@ export const discoverWabas = async (tenantId: number, code: string): Promise<Dis
     )
   }
 
-  const businesses = await getBusinesses(tokenResult.accessToken)
+  const wabaIds = tokenInfo.granularScopes
+    .filter(gs => gs.scope === "whatsapp_business_management")
+    .flatMap(gs => gs.target_ids)
 
-  if (businesses.length === 0) {
-    throw new AppError("No businesses found for this account", 400)
+  const uniqueWabaIds = [...new Set(wabaIds)]
+
+  if (uniqueWabaIds.length === 0) {
+    throw new AppError("No WhatsApp Business Accounts found. Please re-authorize.", 400)
   }
+
+  logger.info(`Discover: found ${uniqueWabaIds.length} WABA IDs in granular_scopes for tenant ${tenantId}`)
 
   const connectedPhoneIds = new Set(
     (await WhatsApp.findAll({
@@ -325,29 +329,25 @@ export const discoverWabas = async (tenantId: number, code: string): Promise<Dis
 
   const wabas: DiscoverWaba[] = []
 
-  for (const biz of businesses) {
-    const bizWabas = await getOwnedWabas(biz.id, tokenResult.accessToken)
-
-    for (const waba of bizWabas) {
-      let phones: PhoneNumberInfo[] = []
-      try {
-        phones = await getPhoneNumbers(waba.id, tokenResult.accessToken)
-      } catch {
-        logger.warn(`Discover: failed to list phones for WABA ${waba.id}`)
-      }
-
-      wabas.push({
-        id: waba.id,
-        name: waba.name || `WABA ${waba.id}`,
-        phones: phones.map(p => ({
-          id: p.id,
-          displayPhoneNumber: p.displayPhoneNumber,
-          verifiedName: p.verifiedName,
-          qualityRating: p.qualityRating,
-          alreadyConnected: connectedPhoneIds.has(p.id)
-        }))
-      })
+  for (const wabaId of uniqueWabaIds) {
+    let phones: PhoneNumberInfo[] = []
+    try {
+      phones = await getPhoneNumbers(wabaId, tokenResult.accessToken)
+    } catch {
+      logger.warn(`Discover: failed to list phones for WABA ${wabaId}`)
     }
+
+    wabas.push({
+      id: wabaId,
+      name: `WABA ${wabaId}`,
+      phones: phones.map(p => ({
+        id: p.id,
+        displayPhoneNumber: p.displayPhoneNumber,
+        verifiedName: p.verifiedName,
+        qualityRating: p.qualityRating,
+        alreadyConnected: connectedPhoneIds.has(p.id)
+      }))
+    })
   }
 
   const sessionToken = encrypt(tokenResult.accessToken)
