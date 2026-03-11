@@ -16,6 +16,7 @@ cd "$DEPLOY_DIR"
 
 source .env
 
+BACKEND_TAG="nuvio-backend-build"
 BACKEND_IMAGE="ghcr.io/guircosta/zflow-backend:main"
 FRONTEND_TAG="nuvio-frontend-build"
 FRONTEND_IMAGE="ghcr.io/guircosta/zflow-frontend:main"
@@ -27,9 +28,16 @@ log() {
 deploy_backend() {
   log "Building backend..."
   docker builder prune -af >/dev/null 2>&1
-  docker compose build --no-cache backend
+
+  # Build com tag unica (evita conflito de manifests BuildKit)
+  docker build --no-cache -t "$BACKEND_TAG" -f backend/Dockerfile ./backend
+
+  # Remover imagens antigas para evitar conflito de digest
+  docker rmi "$BACKEND_IMAGE" 2>/dev/null || true
+  docker image prune -f >/dev/null 2>&1
+
   log "Deploying backend..."
-  docker service update --no-resolve-image --image "$BACKEND_IMAGE" --force nuvio_backend
+  docker service update --no-resolve-image --image "$BACKEND_TAG" --force nuvio_backend
   log "Backend deployed."
 }
 
