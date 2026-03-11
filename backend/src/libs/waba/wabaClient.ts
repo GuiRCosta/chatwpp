@@ -186,23 +186,35 @@ export async function exchangeCodeForToken(code: string): Promise<ExchangeTokenR
     throw new Error("META_APP_ID and META_APP_SECRET must be configured")
   }
 
-  const { data } = await axios.post(
-    `${GRAPH_API_URL}/oauth/access_token`,
-    new URLSearchParams({
-      client_id: appId,
-      client_secret: appSecret,
-      code
-    }).toString(),
-    {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      timeout: 30000
-    }
-  )
+  try {
+    const { data } = await axios.post(
+      `${GRAPH_API_URL}/oauth/access_token`,
+      new URLSearchParams({
+        client_id: appId,
+        client_secret: appSecret,
+        code
+      }).toString(),
+      {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        timeout: 30000
+      }
+    )
 
-  return {
-    accessToken: data.access_token,
-    tokenType: data.token_type,
-    expiresIn: data.expires_in
+    return {
+      accessToken: data.access_token,
+      tokenType: data.token_type,
+      expiresIn: data.expires_in
+    }
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: unknown; status?: number } }
+    if (axiosErr.response) {
+      logger.error(
+        "Meta token exchange failed (HTTP %d): %s",
+        axiosErr.response.status,
+        JSON.stringify(axiosErr.response.data)
+      )
+    }
+    throw err
   }
 }
 
