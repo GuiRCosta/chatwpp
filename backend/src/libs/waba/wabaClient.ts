@@ -187,15 +187,14 @@ export async function exchangeCodeForToken(code: string): Promise<ExchangeTokenR
   }
 
   try {
-    const { data } = await axios.post(
+    const { data } = await axios.get(
       `${GRAPH_API_URL}/oauth/access_token`,
-      new URLSearchParams({
-        client_id: appId,
-        client_secret: appSecret,
-        code
-      }).toString(),
       {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        params: {
+          client_id: appId,
+          client_secret: appSecret,
+          code
+        },
         timeout: 30000
       }
     )
@@ -273,14 +272,14 @@ export async function getPhoneNumbers(
 }
 
 export async function subscribeApp(
-  phoneNumberId: string,
+  wabaId: string,
   token: string
 ): Promise<void> {
   const client = createClient(token)
 
-  await client.post(`/${phoneNumberId}/subscribed_apps`, {})
+  await client.post(`/${wabaId}/subscribed_apps`, {})
 
-  logger.info("Webhook subscription registered for phone %s", phoneNumberId)
+  logger.info("Webhook subscription registered for WABA %s", wabaId)
 }
 
 // --- WABA Discovery (list businesses → WABAs → phone numbers) ---

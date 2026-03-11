@@ -59,7 +59,7 @@ export function loadFacebookSDK(appId: string): Promise<void> {
         appId,
         cookie: true,
         xfbml: true,
-        version: "v22.0"
+        version: "v25.0"
       })
       sdkLoaded = true
       resolve()

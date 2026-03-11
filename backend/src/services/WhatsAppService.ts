@@ -231,7 +231,7 @@ export const onboardFromFBL = async (tenantId: number, data: {
   const phoneInfo = phoneNumbers.find(p => p.id === data.phoneNumberId)
   const displayNumber = phoneInfo?.displayPhoneNumber || ""
 
-  await subscribeApp(data.phoneNumberId, tokenResult.accessToken)
+  await subscribeApp(data.wabaId, tokenResult.accessToken)
 
   const isFirst = connectionCount === 0
 
@@ -392,7 +392,7 @@ export const registerFromDiscover = async (tenantId: number, data: {
     throw new AppError("Phone number not found in the selected WABA", 404)
   }
 
-  await subscribeApp(data.phoneNumberId, accessToken)
+  await subscribeApp(data.wabaId, accessToken)
 
   const isFirst = connectionCount === 0
 
