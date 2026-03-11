@@ -294,6 +294,8 @@ export const discoverWabas = async (tenantId: number, code: string): Promise<Dis
 
   const tokenInfo = await debugToken(tokenResult.accessToken)
 
+  logger.info(`Discover: debugToken result — scopes=${JSON.stringify(tokenInfo.scopes)}, granularScopes=${JSON.stringify(tokenInfo.granularScopes)}`)
+
   if (!tokenInfo.isValid) {
     throw new AppError("Invalid access token received from Facebook", 400)
   }

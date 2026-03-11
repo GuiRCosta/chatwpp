@@ -244,6 +244,8 @@ export async function debugToken(inputToken: string): Promise<DebugTokenResult> 
       timeout: 30000
     })
 
+    logger.info(`debugToken raw granular_scopes: ${JSON.stringify(data.data.granular_scopes)}`)
+
     return {
       isValid: data.data.is_valid,
       appId: data.data.app_id,
