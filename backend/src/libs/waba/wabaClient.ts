@@ -187,14 +187,15 @@ export async function exchangeCodeForToken(code: string): Promise<ExchangeTokenR
   }
 
   try {
-    const { data } = await axios.get(
+    const { data } = await axios.post(
       `${GRAPH_API_URL}/oauth/access_token`,
+      new URLSearchParams({
+        client_id: appId,
+        client_secret: appSecret,
+        code
+      }).toString(),
       {
-        params: {
-          client_id: appId,
-          client_secret: appSecret,
-          code
-        },
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         timeout: 30000
       }
     )
