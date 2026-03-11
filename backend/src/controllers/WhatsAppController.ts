@@ -4,9 +4,7 @@ import * as WhatsAppService from "../services/WhatsAppService"
 import {
   createWhatsAppSchema,
   updateWhatsAppSchema,
-  onboardFBLSchema,
-  discoverWabasSchema,
-  registerFromDiscoverSchema
+  onboardFBLSchema
 } from "../validators/WhatsAppValidator"
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -63,38 +61,6 @@ export const onboard = async (req: Request, res: Response): Promise<Response> =>
   })
 
   const whatsapp = await WhatsAppService.onboardFromFBL(tenantId, validated)
-
-  return res.status(201).json({
-    success: true,
-    data: whatsapp
-  })
-}
-
-export const discover = async (req: Request, res: Response): Promise<Response> => {
-  const { tenantId } = req
-
-  const validated = await discoverWabasSchema.validate(req.body, {
-    abortEarly: false,
-    stripUnknown: true
-  })
-
-  const result = await WhatsAppService.discoverWabas(tenantId, validated.code)
-
-  return res.json({
-    success: true,
-    data: result
-  })
-}
-
-export const register = async (req: Request, res: Response): Promise<Response> => {
-  const { tenantId } = req
-
-  const validated = await registerFromDiscoverSchema.validate(req.body, {
-    abortEarly: false,
-    stripUnknown: true
-  })
-
-  const whatsapp = await WhatsAppService.registerFromDiscover(tenantId, validated)
 
   return res.status(201).json({
     success: true,
