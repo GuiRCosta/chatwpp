@@ -27,11 +27,9 @@ function createClient(token: string): AxiosInstance {
     (response) => response,
     (error) => {
       const data = error.response?.data?.error || error.response?.data || {}
-      logger.error("WABA API error: %o", {
-        status: error.response?.status,
-        code: data.code,
-        message: data.message || error.message
-      })
+      logger.error(
+        `WABA API error (HTTP ${error.response?.status}): [${data.code || "no_code"}] ${data.message || error.message} | ${JSON.stringify(data)}`
+      )
       throw error
     }
   )
@@ -231,19 +229,29 @@ export async function debugToken(inputToken: string): Promise<DebugTokenResult> 
     throw new Error("META_APP_ID and META_APP_SECRET must be configured")
   }
 
-  const { data } = await axios.get(`${GRAPH_API_URL}/debug_token`, {
-    params: {
-      input_token: inputToken,
-      access_token: `${appId}|${appSecret}`
-    },
-    timeout: 30000
-  })
+  try {
+    const { data } = await axios.get(`${GRAPH_API_URL}/debug_token`, {
+      params: {
+        input_token: inputToken,
+        access_token: `${appId}|${appSecret}`
+      },
+      timeout: 30000
+    })
 
-  return {
-    isValid: data.data.is_valid,
-    appId: data.data.app_id,
-    scopes: data.data.scopes || [],
-    expiresAt: data.data.expires_at
+    return {
+      isValid: data.data.is_valid,
+      appId: data.data.app_id,
+      scopes: data.data.scopes || [],
+      expiresAt: data.data.expires_at
+    }
+  } catch (err: unknown) {
+    const axiosErr = err as { response?: { data?: unknown; status?: number } }
+    if (axiosErr.response) {
+      logger.error(
+        `Meta debugToken failed (HTTP ${axiosErr.response.status}): ${JSON.stringify(axiosErr.response.data)}`
+      )
+    }
+    throw err
   }
 }
 
@@ -278,7 +286,7 @@ export async function subscribeApp(
 
   await client.post(`/${wabaId}/subscribed_apps`, {})
 
-  logger.info("Webhook subscription registered for WABA %s", wabaId)
+  logger.info(`Webhook subscription registered for WABA ${wabaId}`)
 }
 
 // --- WABA Discovery (list businesses → WABAs → phone numbers) ---

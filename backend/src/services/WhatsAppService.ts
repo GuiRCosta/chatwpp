@@ -209,7 +209,7 @@ export const onboardFromFBL = async (tenantId: number, data: {
   }
 
   const tokenResult = await exchangeCodeForToken(data.code)
-  logger.info("FBL token exchange successful for tenant %d", tenantId)
+  logger.info(`FBL token exchange successful for tenant ${tenantId}`)
 
   const tokenInfo = await debugToken(tokenResult.accessToken)
 
@@ -263,8 +263,7 @@ export const onboardFromFBL = async (tenantId: number, data: {
   emitToTenant(tenantId, "whatsapp:created", safeWhatsapp)
 
   logger.info(
-    "FBL onboard complete: tenant=%d, whatsappId=%d, phone=%s",
-    tenantId, whatsapp.id, displayNumber
+    `FBL onboard complete: tenant=${tenantId}, whatsappId=${whatsapp.id}, phone=${displayNumber}`
   )
 
   return created
@@ -293,7 +292,7 @@ interface DiscoverResult {
 
 export const discoverWabas = async (tenantId: number, code: string): Promise<DiscoverResult> => {
   const tokenResult = await exchangeCodeForToken(code)
-  logger.info("Discover: token exchange successful for tenant %d", tenantId)
+  logger.info(`Discover: token exchange successful for tenant ${tenantId}`)
 
   const tokenInfo = await debugToken(tokenResult.accessToken)
 
@@ -334,7 +333,7 @@ export const discoverWabas = async (tenantId: number, code: string): Promise<Dis
       try {
         phones = await getPhoneNumbers(waba.id, tokenResult.accessToken)
       } catch {
-        logger.warn("Discover: failed to list phones for WABA %s", waba.id)
+        logger.warn(`Discover: failed to list phones for WABA ${waba.id}`)
       }
 
       wabas.push({
@@ -354,8 +353,7 @@ export const discoverWabas = async (tenantId: number, code: string): Promise<Dis
   const sessionToken = encrypt(tokenResult.accessToken)
 
   logger.info(
-    "Discover: found %d WABAs for tenant %d",
-    wabas.length, tenantId
+    `Discover: found ${wabas.length} WABAs for tenant ${tenantId}`
   )
 
   return { wabas, sessionToken }
@@ -424,8 +422,7 @@ export const registerFromDiscover = async (tenantId: number, data: {
   emitToTenant(tenantId, "whatsapp:created", safeWhatsapp)
 
   logger.info(
-    "Register from discover: tenant=%d, whatsappId=%d, phone=%s",
-    tenantId, whatsapp.id, phoneInfo.displayPhoneNumber
+    `Register from discover: tenant=${tenantId}, whatsappId=${whatsapp.id}, phone=${phoneInfo.displayPhoneNumber}`
   )
 
   return created
