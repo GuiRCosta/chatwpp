@@ -148,6 +148,8 @@ export function launchFBLoginOnly(configId: string): Promise<string> {
   })
 }
 
+const EMBEDDED_SIGNUP_WAIT_MS = 15_000
+
 export function launchWhatsAppSignup(configId: string): Promise<EmbeddedSignupResult> {
   return new Promise((resolve, reject) => {
     if (!window.FB) {
@@ -157,10 +159,12 @@ export function launchWhatsAppSignup(configId: string): Promise<EmbeddedSignupRe
 
     let loginCode = ""
     let settled = false
+    let codeReceivedTimer: ReturnType<typeof setTimeout> | null = null
 
     const cleanup = () => {
       window.removeEventListener("message", messageHandler)
       clearTimeout(timeoutId)
+      if (codeReceivedTimer) clearTimeout(codeReceivedTimer)
     }
 
     const settle = (fn: () => void) => {
@@ -175,17 +179,22 @@ export function launchWhatsAppSignup(configId: string): Promise<EmbeddedSignupRe
     }, SIGNUP_TIMEOUT_MS)
 
     const messageHandler = (event: MessageEvent) => {
-      if (
-        event.origin !== "https://www.facebook.com" &&
-        event.origin !== "https://web.facebook.com"
-      ) {
-        return
-      }
+      const isFacebookOrigin =
+        event.origin === "https://www.facebook.com" ||
+        event.origin === "https://web.facebook.com"
+
+      if (!isFacebookOrigin) return
 
       try {
         const data = typeof event.data === "string"
           ? JSON.parse(event.data)
           : event.data
+
+        // Debug: log all FB messages to diagnose event flow
+        if (data.type) {
+          // eslint-disable-next-line no-console
+          console.log("[FB Event]", data.type, data.event, JSON.stringify(data.data ?? {}))
+        }
 
         if (data.type === "WA_EMBEDDED_SIGNUP") {
           if (data.event === "FINISH") {
@@ -213,8 +222,21 @@ export function launchWhatsAppSignup(configId: string): Promise<EmbeddedSignupRe
 
     window.FB.login(
       (response: FBLoginResponse) => {
+        // eslint-disable-next-line no-console
+        console.log("[FB Login] callback fired, hasCode:", !!response.authResponse?.code)
+
         if (response.authResponse?.code) {
           loginCode = response.authResponse.code
+
+          // Wait for WA_EMBEDDED_SIGNUP event; if it doesn't come, reject with clear message
+          codeReceivedTimer = setTimeout(() => {
+            settle(() =>
+              reject(new Error(
+                "Autorizacao recebida, mas o evento WA_EMBEDDED_SIGNUP nao foi detectado. " +
+                "Verifique a configuracao do Embedded Signup no Meta Business."
+              ))
+            )
+          }, EMBEDDED_SIGNUP_WAIT_MS)
         } else {
           settle(() =>
             reject(new Error("Facebook login was cancelled or failed"))
