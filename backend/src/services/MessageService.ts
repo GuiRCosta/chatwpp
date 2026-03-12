@@ -137,5 +137,11 @@ export const markMessagesAsRead = async (ticketId: number, tenantId: number): Pr
 
   await ticket.update({ unreadMessages: 0 })
 
-  emitToTenant(tenantId, "ticket:updated", ticket)
+  const fullTicket = await Ticket.findByPk(ticketId, {
+    include: [
+      { model: Contact, as: "contact", attributes: ["id", "name", "number", "profilePicUrl"] }
+    ]
+  })
+
+  emitToTenant(tenantId, "ticket:updated", fullTicket)
 }

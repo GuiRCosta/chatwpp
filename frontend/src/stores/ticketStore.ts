@@ -109,13 +109,28 @@ export const useTicketStore = create<TicketState>()((set, get) => ({
 
   updateTicket: (updatedTicket: Ticket) => {
     set((state) => {
-      const updatedTickets = state.tickets.map((ticket) =>
-        ticket.id === updatedTicket.id ? updatedTicket : ticket
-      )
+      const updatedTickets = state.tickets.map((ticket) => {
+        if (ticket.id !== updatedTicket.id) return ticket
+        return {
+          ...ticket,
+          ...updatedTicket,
+          contact: updatedTicket.contact || ticket.contact,
+          user: updatedTicket.user || ticket.user,
+          queue: updatedTicket.queue || ticket.queue,
+          whatsapp: updatedTicket.whatsapp || ticket.whatsapp
+        }
+      })
 
       const updatedSelectedTicket =
         state.selectedTicket?.id === updatedTicket.id
-          ? updatedTicket
+          ? {
+              ...state.selectedTicket,
+              ...updatedTicket,
+              contact: updatedTicket.contact || state.selectedTicket.contact,
+              user: updatedTicket.user || state.selectedTicket.user,
+              queue: updatedTicket.queue || state.selectedTicket.queue,
+              whatsapp: updatedTicket.whatsapp || state.selectedTicket.whatsapp
+            }
           : state.selectedTicket
 
       return {

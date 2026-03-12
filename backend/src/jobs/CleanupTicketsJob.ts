@@ -2,6 +2,7 @@ import { Job } from "bull"
 import { Op } from "sequelize"
 
 import Ticket from "../models/Ticket"
+import Contact from "../models/Contact"
 import TicketLog from "../models/TicketLog"
 import Setting from "../models/Setting"
 import Tenant from "../models/Tenant"
@@ -53,7 +54,12 @@ export async function process(job: Job<CleanupData>): Promise<void> {
         }
       })
 
-      emitToTenant(tenant.id, "ticket:updated", ticket)
+      const fullTicket = await Ticket.findByPk(ticket.id, {
+        include: [
+          { model: Contact, as: "contact", attributes: ["id", "name", "number", "profilePicUrl"] }
+        ]
+      })
+      emitToTenant(tenant.id, "ticket:updated", fullTicket)
       totalClosed++
     }
   }
