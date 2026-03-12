@@ -10,15 +10,6 @@ import type { Campaign, Contact, Notification, Ticket, Message, WhatsApp } from 
 
 export function useSocket() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const addNotification = useNotificationStore((s) => s.addNotification)
-  const addTicket = useTicketStore((s) => s.addTicket)
-  const updateTicket = useTicketStore((s) => s.updateTicket)
-  const removeTicket = useTicketStore((s) => s.removeTicket)
-  const addMessage = useChatStore((s) => s.addMessage)
-  const updateMessage = useChatStore((s) => s.updateMessage)
-  const addConnection = useWhatsAppStore((s) => s.addConnection)
-  const updateConnection = useWhatsAppStore((s) => s.updateConnection)
-  const removeConnection = useWhatsAppStore((s) => s.removeConnection)
   const registeredRef = useRef(false)
 
   useEffect(() => {
@@ -37,25 +28,25 @@ export function useSocket() {
 
     // ── Notifications ──
     socket.on("notification:created", (notification: Notification) => {
-      addNotification(notification)
+      useNotificationStore.getState().addNotification(notification)
     })
 
     // ── Tickets ──
     socket.on("ticket:created", (ticket: Ticket) => {
-      addTicket(ticket)
+      useTicketStore.getState().addTicket(ticket)
     })
 
     socket.on("ticket:updated", (ticket: Ticket) => {
-      updateTicket(ticket)
+      useTicketStore.getState().updateTicket(ticket)
     })
 
     socket.on("ticket:deleted", (data: { id: number }) => {
-      removeTicket(data.id)
+      useTicketStore.getState().removeTicket(data.id)
     })
 
     // ── Messages ──
     socket.on("message:created", (message: Message) => {
-      addMessage(message)
+      useChatStore.getState().addMessage(message)
 
       // Also update the ticket's lastMessage in the sidebar
       const ticketStore = useTicketStore.getState()
@@ -64,7 +55,7 @@ export function useSocket() {
       )
 
       if (existingTicket) {
-        updateTicket({
+        useTicketStore.getState().updateTicket({
           ...existingTicket,
           lastMessage: message.body || existingTicket.lastMessage,
           lastMessageAt: message.createdAt,
@@ -78,7 +69,7 @@ export function useSocket() {
     socket.on(
       "message:updated",
       (message: Partial<Message> & { id: number }) => {
-        updateMessage(message)
+        useChatStore.getState().updateMessage(message)
       }
     )
 
@@ -117,15 +108,15 @@ export function useSocket() {
 
     // ── WhatsApp Connections ──
     socket.on("whatsapp:created", (connection: WhatsApp) => {
-      addConnection(connection)
+      useWhatsAppStore.getState().addConnection(connection)
     })
 
     socket.on("whatsapp:updated", (connection: WhatsApp) => {
-      updateConnection(connection)
+      useWhatsAppStore.getState().updateConnection(connection)
     })
 
     socket.on("whatsapp:deleted", (data: { id: number }) => {
-      removeConnection(data.id)
+      useWhatsAppStore.getState().removeConnection(data.id)
     })
 
     // Cleanup listeners on unmount
@@ -147,18 +138,7 @@ export function useSocket() {
       socket.off("whatsapp:deleted")
       registeredRef.current = false
     }
-  }, [
-    isAuthenticated,
-    addNotification,
-    addTicket,
-    updateTicket,
-    removeTicket,
-    addMessage,
-    updateMessage,
-    addConnection,
-    updateConnection,
-    removeConnection
-  ])
+  }, [isAuthenticated])
 
   return { socket: getSocket() }
 }

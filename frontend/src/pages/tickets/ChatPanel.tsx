@@ -146,6 +146,7 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
 
   const [messageInput, setMessageInput] = useState("")
   const [isRecording, setIsRecording] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -171,20 +172,23 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
   }, [messages])
 
   const handleSendMessage = async () => {
-    if (!messageInput.trim()) {
+    if (!messageInput.trim() || isSending) {
       return
     }
 
+    setIsSending(true)
     try {
       await sendMessage(ticket.id, messageInput.trim())
       setMessageInput("")
     } catch (error) {
       // Error handling can be added here (e.g., toast notification)
+    } finally {
+      setIsSending(false)
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey && !e.repeat) {
       e.preventDefault()
       handleSendMessage()
     }
@@ -333,6 +337,7 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
               {messageInput.trim() ? (
                 <Button
                   onClick={handleSendMessage}
+                  disabled={isSending}
                   size="icon"
                   className="bg-blue-600 hover:bg-blue-700 shrink-0"
                 >
