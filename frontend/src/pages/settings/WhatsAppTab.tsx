@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/Dialog"
 import type { WhatsApp, User } from "@/types"
 import { formatWhatsAppStatus, isWhatsAppOnline } from "./types"
-import { loadFacebookSDK, launchFBLoginOnly } from "@/lib/facebook"
+import { loadFacebookSDK, launchWhatsAppSignup } from "@/lib/facebook"
 import { UserCheckboxList } from "./UserCheckboxList"
 import api from "@/lib/api"
 
@@ -116,12 +116,12 @@ export function WhatsAppTab({
     setError(null)
 
     try {
-      const code = await launchFBLoginOnly(META_CONFIG_ID)
+      const result = await launchWhatsAppSignup(META_CONFIG_ID)
 
-      setAuthCode(code)
+      setAuthCode(result.code)
       setNewConnectionName("")
-      setNewWabaId("")
-      setNewPhoneNumberId("")
+      setNewWabaId(result.wabaId ?? "")
+      setNewPhoneNumberId(result.phoneNumberId ?? "")
       setNewConnectionUserIds(new Set())
       setNameDialogOpen(true)
     } catch (err) {
@@ -397,7 +397,9 @@ export function WhatsAppTab({
           <DialogHeader>
             <DialogTitle>Configurar Conexao WhatsApp</DialogTitle>
             <DialogDescription>
-              Autorizacao concluida. Informe os dados da sua conta WhatsApp Business.
+              {newWabaId && newPhoneNumberId
+                ? "Conta WhatsApp Business detectada automaticamente. Escolha um nome para a conexao."
+                : "Autorizacao concluida. Informe os dados da sua conta WhatsApp Business."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -412,51 +414,41 @@ export function WhatsAppTab({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="newWabaId">WABA ID (WhatsApp Business Account)</Label>
-              <Input
-                id="newWabaId"
-                value={newWabaId}
-                onChange={(e) => setNewWabaId(e.target.value.replace(/\D/g, ""))}
-                placeholder="Ex: 123456789012345"
-                disabled={isOnboarding}
-              />
-              <p className="text-xs text-gray-500">
-                Encontre em{" "}
-                <a
-                  href="https://business.facebook.com/settings/whatsapp-business-accounts"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline"
-                >
-                  Meta Business Suite
-                </a>
-                {" "}&gt; Contas do WhatsApp Business
-              </p>
-            </div>
+            {/* Show WABA fields: read-only when auto-captured, editable otherwise */}
+            {(!newWabaId || !newPhoneNumberId) && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="newWabaId">WABA ID (WhatsApp Business Account)</Label>
+                  <Input
+                    id="newWabaId"
+                    value={newWabaId}
+                    onChange={(e) => setNewWabaId(e.target.value.replace(/\D/g, ""))}
+                    placeholder="Ex: 123456789012345"
+                    disabled={isOnboarding}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="newPhoneNumberId">Phone Number ID</Label>
-              <Input
-                id="newPhoneNumberId"
-                value={newPhoneNumberId}
-                onChange={(e) => setNewPhoneNumberId(e.target.value.replace(/\D/g, ""))}
-                placeholder="Ex: 987654321098765"
-                disabled={isOnboarding}
-              />
-              <p className="text-xs text-gray-500">
-                Encontre em{" "}
-                <a
-                  href="https://developers.facebook.com/apps"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline"
-                >
-                  Meta Developers
-                </a>
-                {" "}&gt; Seu App &gt; WhatsApp &gt; Configuracao da API
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPhoneNumberId">Phone Number ID</Label>
+                  <Input
+                    id="newPhoneNumberId"
+                    value={newPhoneNumberId}
+                    onChange={(e) => setNewPhoneNumberId(e.target.value.replace(/\D/g, ""))}
+                    placeholder="Ex: 987654321098765"
+                    disabled={isOnboarding}
+                  />
+                </div>
+              </>
+            )}
+
+            {newWabaId && newPhoneNumberId && (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+                <p className="font-medium">Dados capturados automaticamente</p>
+                <p className="mt-1 text-xs text-green-600">
+                  WABA: {newWabaId} &middot; Phone: {newPhoneNumberId}
+                </p>
+              </div>
+            )}
 
             {users.length > 0 && (
               <div className="space-y-2">

@@ -92,12 +92,19 @@ export function loadFacebookSDK(appId: string): Promise<void> {
 
 const SIGNUP_TIMEOUT_MS = 5 * 60 * 1000
 
+export interface EmbeddedSignupResult {
+  code: string
+  wabaId?: string
+  phoneNumberId?: string
+}
+
 /**
- * Launches FB.login with the configured Facebook Login for Business flow.
- * Returns the authorization code from the FB.login callback.
- * The code is exchanged for an access token on the backend via POST /whatsapp/onboard.
+ * Launches FB.login with WhatsApp Embedded Signup.
+ * Listens for the WA_EMBEDDED_SIGNUP postMessage event to capture
+ * waba_id and phone_number_id automatically, then returns them
+ * along with the authorization code from FB.login.
  */
-export function launchFBLoginOnly(configId: string): Promise<string> {
+export function launchWhatsAppSignup(configId: string): Promise<EmbeddedSignupResult> {
   return new Promise((resolve, reject) => {
     if (!window.FB) {
       reject(new Error("Facebook SDK not loaded"))
@@ -105,11 +112,17 @@ export function launchFBLoginOnly(configId: string): Promise<string> {
     }
 
     let settled = false
+    let signupData: { wabaId?: string; phoneNumberId?: string } = {}
+
+    const cleanup = () => {
+      clearTimeout(timeoutId)
+      window.removeEventListener("message", signupListener)
+    }
 
     const settle = (fn: () => void) => {
       if (settled) return
       settled = true
-      clearTimeout(timeoutId)
+      cleanup()
       fn()
     }
 
@@ -117,10 +130,38 @@ export function launchFBLoginOnly(configId: string): Promise<string> {
       settle(() => reject(new Error("Facebook login timed out")))
     }, SIGNUP_TIMEOUT_MS)
 
+    const signupListener = (event: MessageEvent) => {
+      if (!event.origin?.endsWith("facebook.com")) return
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type !== "WA_EMBEDDED_SIGNUP") return
+
+        if (data.event === "FINISH") {
+          signupData = {
+            wabaId: data.data?.waba_id,
+            phoneNumberId: data.data?.phone_number_id
+          }
+        } else if (data.event === "FINISH_ONLY_WABA") {
+          signupData = { wabaId: data.data?.waba_id }
+        } else if (data.event === "CANCEL") {
+          settle(() => reject(new Error("Facebook login was cancelled or failed")))
+        }
+      } catch {
+        // Non-JSON message, ignore
+      }
+    }
+
+    window.addEventListener("message", signupListener)
+
     window.FB.login(
       (response: FBLoginResponse) => {
         if (response.authResponse?.code) {
-          settle(() => resolve(response.authResponse!.code!))
+          settle(() =>
+            resolve({
+              code: response.authResponse!.code!,
+              ...signupData
+            })
+          )
         } else {
           settle(() =>
             reject(new Error("Facebook login was cancelled or failed"))
