@@ -17,13 +17,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
   return res.json({
     success: true,
-    data: messages,
-    meta: {
-      total: count,
-      page: Number(pageNumber || 1),
-      limit: Number(limit || 20),
-      hasMore
-    }
+    data: { messages, count, hasMore }
   })
 }
 
