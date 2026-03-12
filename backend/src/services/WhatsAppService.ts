@@ -10,7 +10,8 @@ import {
   exchangeCodeForToken,
   debugToken,
   getPhoneNumbers,
-  subscribeApp
+  subscribeApp,
+  registerPhoneNumber
 } from "../libs/waba/wabaClient"
 import { logger } from "../helpers/logger"
 
@@ -228,6 +229,8 @@ export const onboardFromFBL = async (tenantId: number, data: {
   const displayNumber = phoneInfo?.displayPhoneNumber || ""
 
   await subscribeApp(data.wabaId, tokenResult.accessToken)
+
+  await registerPhoneNumber(data.phoneNumberId, tokenResult.accessToken)
 
   const isFirst = connectionCount === 0
 

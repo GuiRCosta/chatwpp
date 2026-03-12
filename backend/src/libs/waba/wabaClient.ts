@@ -296,6 +296,21 @@ export async function subscribeApp(
   logger.info(`Webhook subscription registered for WABA ${wabaId}`)
 }
 
+export async function registerPhoneNumber(
+  phoneNumberId: string,
+  token: string,
+  pin: string = "123456"
+): Promise<void> {
+  const client = createClient(token)
+
+  await client.post(`/${phoneNumberId}/register`, {
+    messaging_product: "whatsapp",
+    pin
+  })
+
+  logger.info(`Phone number ${phoneNumberId} registered on WhatsApp Cloud API`)
+}
+
 export async function getMessageTemplates(
   wabaId: string,
   token: string
