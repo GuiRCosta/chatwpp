@@ -25,6 +25,7 @@ import { autoreplyRoutes } from "./autoreplyRoutes"
 import { chatflowRoutes } from "./chatflowRoutes"
 import { uploadRoutes } from "./uploadRoutes"
 import { webhookConfigRoutes } from "./webhookConfigRoutes"
+import { deadLetterRoutes } from "./deadLetterRoutes"
 import { isAuth } from "../middleware/isAuth"
 import { getHealth } from "../services/HealthService"
 import { isShuttingDown } from "../helpers/shutdownState"
@@ -69,5 +70,6 @@ appRoutes.use("/auto-replies", autoreplyRoutes)
 appRoutes.use("/chatflows", chatflowRoutes)
 appRoutes.use("/upload", uploadRoutes)
 appRoutes.use("/webhook-configs", webhookConfigRoutes)
+appRoutes.use("/dead-letter", deadLetterRoutes)
 
 export { appRoutes }

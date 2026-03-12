@@ -4,6 +4,8 @@ import Campaign from "../models/Campaign"
 import { getQueue } from "../libs/queues"
 import { QUEUE_NAME as CAMPAIGN_QUEUE } from "./CampaignJob"
 import { QUEUE_NAME as CLEANUP_QUEUE } from "./CleanupTicketsJob"
+import { checkWhatsAppConnections } from "../services/WhatsAppHealthService"
+import { checkTokenExpirations } from "../services/TokenExpirationService"
 import { logger } from "../helpers/logger"
 
 const scheduledTasks: cron.ScheduledTask[] = []
@@ -29,7 +31,29 @@ export function initScheduledJobs(): void {
 
   scheduledTasks.push(ticketCleanup)
 
-  logger.info("Scheduled jobs initialized: campaign check (1min), ticket cleanup (30min)")
+  const whatsappHealthCheck = cron.schedule("*/5 * * * *", async () => {
+    try {
+      await checkWhatsAppConnections()
+    } catch (error) {
+      logger.error("ScheduledJobs: WhatsApp health check failed: %o", error)
+    }
+  })
+
+  scheduledTasks.push(whatsappHealthCheck)
+
+  const tokenExpirationCheck = cron.schedule("0 8 * * *", async () => {
+    try {
+      await checkTokenExpirations()
+    } catch (error) {
+      logger.error("ScheduledJobs: Token expiration check failed: %o", error)
+    }
+  })
+
+  scheduledTasks.push(tokenExpirationCheck)
+
+  logger.info(
+    "Scheduled jobs initialized: campaign check (1min), ticket cleanup (30min), whatsapp health (5min), token expiration (daily 8am)"
+  )
 }
 
 export function stopScheduledJobs(): void {

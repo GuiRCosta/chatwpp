@@ -242,6 +242,7 @@ export const onboardFromFBL = async (tenantId: number, data: {
     wabaAccountId: data.wabaId,
     wabaPhoneNumberId: data.phoneNumberId,
     wabaToken: tokenResult.accessToken,
+    tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
     number: displayNumber,
     isDefault: isFirst,
     greetingMessage: "",

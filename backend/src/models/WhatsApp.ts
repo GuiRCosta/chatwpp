@@ -67,6 +67,9 @@ export default class WhatsApp extends Model {
   @Column(DataType.TEXT)
   farewellMessage!: string
 
+  @Column(DataType.DATE)
+  tokenExpiresAt!: Date | null
+
   @CreatedAt
   createdAt!: Date
 
