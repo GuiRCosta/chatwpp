@@ -17,7 +17,7 @@ const refreshCookieOptions: CookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "strict",
-  path: "/auth/refresh"
+  path: "/api/auth/refresh"
 }
 
 export const login = async (req: Request, res: Response): Promise<Response> => {

@@ -153,7 +153,7 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
   useEffect(() => {
     if (ticket) {
       fetchMessages(ticket.id)
-      markAsRead(ticket.id)
+      markAsRead(ticket.id).catch(() => {})
 
       const socket = getSocket()
       socket?.emit("joinTicket", ticket.id)
