@@ -50,8 +50,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       }
 
       const data = response.data.data
-      const rawMessages = Array.isArray(data?.messages) ? data.messages : []
-      const messages = [...rawMessages].reverse()
+      const messages = Array.isArray(data?.messages) ? data.messages : []
 
       set({
         messages,
@@ -94,8 +93,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       }
 
       const data = response.data.data
-      const rawMessages = Array.isArray(data?.messages) ? data.messages : []
-      const newMessages = [...rawMessages].reverse()
+      const newMessages = Array.isArray(data?.messages) ? data.messages : []
 
       set((state) => ({
         messages: [...newMessages, ...state.messages],
