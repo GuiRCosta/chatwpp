@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/authStore"
 const api = axios.create({
   baseURL: "/api",
   withCredentials: true,
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json"
   }
@@ -23,6 +24,30 @@ api.interceptors.request.use(
   }
 )
 
+// Refresh token lock — only one refresh at a time, others wait
+let refreshPromise: Promise<string | null> | null = null
+
+function refreshToken(): Promise<string | null> {
+  if (refreshPromise) return refreshPromise
+
+  refreshPromise = axios
+    .post("/api/auth/refresh", {}, { withCredentials: true })
+    .then((response) => {
+      if (response.data.success && response.data.data?.token) {
+        const { token } = response.data.data
+        useAuthStore.getState().setToken(token)
+        return token
+      }
+      return null
+    })
+    .catch(() => null)
+    .finally(() => {
+      refreshPromise = null
+    })
+
+  return refreshPromise
+}
+
 // Response interceptor: on 401, try refresh via httpOnly cookie
 api.interceptors.response.use(
   (response) => response,
@@ -34,31 +59,21 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
       originalRequest._retry = true
 
-      try {
-        const response = await axios.post(
-          "/api/auth/refresh",
-          {},
-          { withCredentials: true }
-        )
+      const newToken = await refreshToken()
 
-        if (response.data.success) {
-          const { token } = response.data.data
-
-          useAuthStore.getState().setToken(token)
-
-          originalRequest.headers.Authorization = `Bearer ${token}`
-          return api(originalRequest)
-        }
-      } catch {
-        useAuthStore.setState({
-          user: null,
-          token: null,
-          isAuthenticated: false,
-          isInitialized: true
-        })
-
-        return Promise.reject(error)
+      if (newToken) {
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        return api(originalRequest)
       }
+
+      useAuthStore.setState({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        isInitialized: true
+      })
+
+      return Promise.reject(error)
     }
 
     return Promise.reject(error)
