@@ -132,10 +132,12 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       return
     }
 
-    // Message will be added via socket event or optimistically
-    set((state) => ({
-      messages: [...state.messages, response.data.data]
-    }))
+    // Add only if socket event hasn't already delivered it
+    set((state) => {
+      const exists = state.messages.some((m) => m.id === response.data.data.id)
+      if (exists) return state
+      return { messages: [...state.messages, response.data.data] }
+    })
   },
 
   sendAudioMessage: async (ticketId: number, blob: Blob, mimeType: string, _duration: number) => {
