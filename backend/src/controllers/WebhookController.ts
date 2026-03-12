@@ -21,6 +21,8 @@ export const verify = async (req: Request, res: Response): Promise<Response | vo
 }
 
 export const receive = async (req: Request, res: Response): Promise<Response> => {
+  logger.info("Webhook POST received from %s", req.ip)
+
   const appSecret = process.env.META_APP_SECRET
 
   if (!appSecret) {
@@ -36,10 +38,13 @@ export const receive = async (req: Request, res: Response): Promise<Response> =>
     return res.status(403).json({ error: "Invalid signature" })
   }
 
+  logger.info("Webhook signature valid, processing: %s", JSON.stringify(req.body).substring(0, 500))
+
   res.status(200).json({ status: "received" })
 
   try {
     await processWebhook(req.body)
+    logger.info("Webhook processed successfully")
   } catch (error) {
     logger.error("Error processing webhook: %o", error)
   }
