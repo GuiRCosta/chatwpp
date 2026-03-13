@@ -9,6 +9,7 @@ import { QUEUE_NAME as WEBHOOK_QUEUE } from "../jobs/WebhookDispatchJob"
 import * as MessageService from "./MessageService"
 import * as TicketService from "./TicketService"
 import * as NotificationService from "./NotificationService"
+import * as OpportunityService from "./OpportunityService"
 import { logger } from "../helpers/logger"
 
 export interface MacroAction {
@@ -202,6 +203,60 @@ async function handleSendNotification(
   await Promise.allSettled(promises)
 }
 
+async function handleCreateOpportunity(
+  ctx: ActionContext,
+  params: Record<string, unknown>
+): Promise<void> {
+  const pipelineId = Number(params.pipelineId)
+  const stageId = Number(params.stageId)
+
+  if (!pipelineId) {
+    throw new Error("pipelineId is required for create_opportunity")
+  }
+  if (!stageId) {
+    throw new Error("stageId is required for create_opportunity")
+  }
+
+  const ticket = await Ticket.findOne({
+    where: { id: ctx.ticketId, tenantId: ctx.tenantId }
+  })
+  if (!ticket) {
+    throw new Error("Ticket not found")
+  }
+
+  await OpportunityService.createOpportunity(ctx.tenantId, {
+    contactId: ticket.contactId,
+    pipelineId,
+    stageId,
+    title: params.title ? String(params.title) : undefined,
+    value: params.value ? Number(params.value) : undefined
+  })
+}
+
+async function handleSendMedia(
+  ctx: ActionContext,
+  params: Record<string, unknown>
+): Promise<void> {
+  const mediaUrl = String(params.mediaUrl || "")
+  const mediaType = String(params.mediaType || "")
+
+  if (!mediaUrl) {
+    throw new Error("mediaUrl is required for send_media")
+  }
+  if (!mediaType) {
+    throw new Error("mediaType is required for send_media")
+  }
+
+  const body = String(params.body || "")
+
+  await MessageService.createMessage(ctx.ticketId, ctx.tenantId, {
+    body,
+    mediaUrl,
+    mediaType,
+    fromMe: true
+  })
+}
+
 const ACTION_HANDLERS: Record<string, ActionHandler> = {
   send_message: handleSendMessage,
   assign_agent: handleAssignAgent,
@@ -210,7 +265,9 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
   close_ticket: (ctx) => handleCloseTicket(ctx),
   reopen_ticket: (ctx) => handleReopenTicket(ctx),
   send_webhook: handleSendWebhook,
-  send_notification: handleSendNotification
+  send_notification: handleSendNotification,
+  create_opportunity: handleCreateOpportunity,
+  send_media: handleSendMedia
 }
 
 export async function executeActions(

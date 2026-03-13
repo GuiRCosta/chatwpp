@@ -7,7 +7,9 @@ import {
   XCircle,
   RotateCcw,
   Globe,
-  Bell
+  Bell,
+  GitBranch,
+  Paperclip
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import {
@@ -58,7 +60,9 @@ const ACTION_TYPES: {
   { type: "close_ticket", label: "Fechar ticket", icon: XCircle },
   { type: "reopen_ticket", label: "Reabrir ticket", icon: RotateCcw },
   { type: "send_webhook", label: "Enviar webhook", icon: Globe },
-  { type: "send_notification", label: "Notificar admins", icon: Bell }
+  { type: "send_notification", label: "Notificar admins", icon: Bell },
+  { type: "create_opportunity", label: "Criar oportunidade", icon: GitBranch },
+  { type: "send_media", label: "Enviar midia", icon: Paperclip }
 ]
 
 export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
@@ -102,6 +106,10 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
       newAction.params = { title: "", message: "" }
     } else if (type === "assign_agent") {
       newAction.params = { userId: 0 }
+    } else if (type === "create_opportunity") {
+      newAction.params = { pipelineId: 0, stageId: 0, title: "", value: 0 }
+    } else if (type === "send_media") {
+      newAction.params = { mediaUrl: "", mediaType: "", originalName: "", body: "" }
     }
 
     setActions([...actions, newAction])
@@ -156,6 +164,16 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
       }
       if (action.type === "send_webhook" && !String(action.params.url || "").trim()) {
         newErrors[`action_${i}`] = "URL e obrigatoria"
+      }
+      if (action.type === "create_opportunity") {
+        if (!action.params.pipelineId) {
+          newErrors[`action_${i}`] = "Selecione um pipeline"
+        } else if (!action.params.stageId) {
+          newErrors[`action_${i}`] = "Selecione uma etapa"
+        }
+      }
+      if (action.type === "send_media" && !String(action.params.mediaUrl || "").trim()) {
+        newErrors[`action_${i}`] = "Faca upload de um arquivo"
       }
     }
 

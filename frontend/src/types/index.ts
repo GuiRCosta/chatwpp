@@ -387,6 +387,8 @@ export type MacroActionType =
   | "reopen_ticket"
   | "send_webhook"
   | "send_notification"
+  | "create_opportunity"
+  | "send_media"
 
 export interface MacroAction {
   type: MacroActionType

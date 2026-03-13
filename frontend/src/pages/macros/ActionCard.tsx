@@ -9,7 +9,11 @@ import {
   Bell,
   Trash2,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  GitBranch,
+  Paperclip,
+  Upload,
+  X
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
@@ -45,6 +49,18 @@ interface SimpleTag {
   color: string
 }
 
+interface SimplePipeline {
+  id: number
+  name: string
+}
+
+interface SimpleStage {
+  id: number
+  name: string
+  color: string
+  order: number
+}
+
 const ACTION_LABELS: Record<MacroActionType, string> = {
   send_message: "Enviar mensagem",
   assign_agent: "Atribuir agente",
@@ -53,7 +69,9 @@ const ACTION_LABELS: Record<MacroActionType, string> = {
   close_ticket: "Fechar ticket",
   reopen_ticket: "Reabrir ticket",
   send_webhook: "Enviar webhook",
-  send_notification: "Notificar admins"
+  send_notification: "Notificar admins",
+  create_opportunity: "Criar oportunidade",
+  send_media: "Enviar midia"
 }
 
 const ACTION_ICONS: Record<MacroActionType, React.ElementType> = {
@@ -64,8 +82,13 @@ const ACTION_ICONS: Record<MacroActionType, React.ElementType> = {
   close_ticket: XCircle,
   reopen_ticket: RotateCcw,
   send_webhook: Globe,
-  send_notification: Bell
+  send_notification: Bell,
+  create_opportunity: GitBranch,
+  send_media: Paperclip
 }
+
+const WABA_ACCEPT =
+  "image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/ogg,audio/aac,application/pdf"
 
 export function ActionCard({
   action,
@@ -78,12 +101,16 @@ export function ActionCard({
 }: ActionCardProps) {
   const [users, setUsers] = useState<SimpleUser[]>([])
   const [tags, setTags] = useState<SimpleTag[]>([])
+  const [pipelines, setPipelines] = useState<SimplePipeline[]>([])
+  const [stages, setStages] = useState<SimpleStage[]>([])
+  const [isUploading, setIsUploading] = useState(false)
 
   const Icon = ACTION_ICONS[action.type] || MessageSquare
   const label = ACTION_LABELS[action.type] || action.type
 
   const needsUsers = action.type === "assign_agent"
   const needsTags = action.type === "add_tag" || action.type === "remove_tag"
+  const needsPipelines = action.type === "create_opportunity"
 
   useEffect(() => {
     if (needsUsers && users.length === 0) {
@@ -107,6 +134,38 @@ export function ActionCard({
     }
   }, [needsTags, tags.length])
 
+  useEffect(() => {
+    if (needsPipelines && pipelines.length === 0) {
+      api
+        .get<ApiResponse<SimplePipeline[]>>("/pipelines")
+        .then((res) => {
+          if (res.data.success) setPipelines(res.data.data)
+        })
+        .catch(() => {})
+    }
+  }, [needsPipelines, pipelines.length])
+
+  useEffect(() => {
+    const selectedPipelineId = Number(action.params.pipelineId)
+    if (needsPipelines && selectedPipelineId) {
+      api
+        .get<
+          ApiResponse<{ id: number; name: string; stages?: SimpleStage[] }>
+        >(`/pipelines/${selectedPipelineId}`)
+        .then((res) => {
+          if (res.data.success && res.data.data.stages) {
+            const sorted = [...res.data.data.stages].sort(
+              (a, b) => a.order - b.order
+            )
+            setStages(sorted)
+          }
+        })
+        .catch(() => setStages([]))
+    } else if (needsPipelines) {
+      setStages([])
+    }
+  }, [needsPipelines, action.params.pipelineId])
+
   const updateParam = (key: string, value: unknown) => {
     onUpdate(index, {
       ...action,
@@ -120,6 +179,46 @@ export function ActionCard({
       ? currentIds.filter((id) => id !== tagId)
       : [...currentIds, tagId]
     updateParam("tagIds", newIds)
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append("media", file)
+
+    try {
+      setIsUploading(true)
+      const res = await api.post<
+        ApiResponse<{
+          mediaUrl: string
+          mediaType: string
+          originalName: string
+        }>
+      >("/upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      })
+
+      if (res.data.success) {
+        const { mediaUrl, mediaType, originalName } = res.data.data
+        onUpdate(index, {
+          ...action,
+          params: { ...action.params, mediaUrl, mediaType, originalName }
+        })
+      }
+    } catch {
+      // upload failed - user can try again
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const clearFile = () => {
+    onUpdate(index, {
+      ...action,
+      params: { ...action.params, mediaUrl: "", mediaType: "", originalName: "" }
+    })
   }
 
   const renderParams = () => {
@@ -239,6 +338,142 @@ export function ActionCard({
             </div>
           </div>
         )
+
+      case "create_opportunity":
+        return (
+          <div className="space-y-2">
+            <div>
+              <Label className="text-xs text-gray-500">Pipeline</Label>
+              <Select
+                value={String(action.params.pipelineId || "")}
+                onValueChange={(val) => {
+                  onUpdate(index, {
+                    ...action,
+                    params: {
+                      ...action.params,
+                      pipelineId: Number(val),
+                      stageId: 0
+                    }
+                  })
+                }}
+              >
+                <SelectTrigger className="mt-1 h-9">
+                  <SelectValue placeholder="Selecione um pipeline" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pipelines.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {Number(action.params.pipelineId) > 0 && (
+              <div>
+                <Label className="text-xs text-gray-500">Etapa</Label>
+                <Select
+                  value={String(action.params.stageId || "")}
+                  onValueChange={(val) => updateParam("stageId", Number(val))}
+                >
+                  <SelectTrigger className="mt-1 h-9">
+                    <SelectValue placeholder="Selecione uma etapa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stages.map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div>
+              <Label className="text-xs text-gray-500">
+                Titulo{" "}
+                <span className="text-gray-400">(opcional)</span>
+              </Label>
+              <Input
+                value={String(action.params.title || "")}
+                onChange={(e) => updateParam("title", e.target.value)}
+                placeholder="Titulo da oportunidade"
+                className="mt-1 h-9"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">
+                Valor{" "}
+                <span className="text-gray-400">(opcional)</span>
+              </Label>
+              <Input
+                type="number"
+                value={String(action.params.value || "")}
+                onChange={(e) => updateParam("value", Number(e.target.value))}
+                placeholder="0.00"
+                className="mt-1 h-9"
+              />
+            </div>
+          </div>
+        )
+
+      case "send_media": {
+        const hasFile = !!action.params.mediaUrl
+        return (
+          <div className="space-y-2">
+            <div>
+              <Label className="text-xs text-gray-500">Arquivo</Label>
+              {hasFile ? (
+                <div className="mt-1 flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2">
+                  <Paperclip className="h-4 w-4 shrink-0 text-gray-400" />
+                  <span className="flex-1 truncate text-sm text-gray-700">
+                    {String(
+                      action.params.originalName || "Arquivo selecionado"
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearFile}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <label className="mt-1 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-3 py-4 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors">
+                  <Upload className="h-4 w-4" />
+                  {isUploading
+                    ? "Enviando..."
+                    : "Clique para selecionar arquivo"}
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept={WABA_ACCEPT}
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                  />
+                </label>
+              )}
+              <p className="mt-1 text-xs text-gray-400">
+                Formatos: JPG, PNG, WebP, MP4, MP3, OGG, AAC, PDF
+              </p>
+            </div>
+            <div>
+              <Label className="text-xs text-gray-500">
+                Legenda{" "}
+                <span className="text-gray-400">(opcional)</span>
+              </Label>
+              <textarea
+                value={String(action.params.body || "")}
+                onChange={(e) => updateParam("body", e.target.value)}
+                placeholder="Legenda da midia..."
+                rows={2}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div>
+          </div>
+        )
+      }
 
       default:
         return null

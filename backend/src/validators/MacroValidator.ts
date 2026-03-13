@@ -8,7 +8,9 @@ const actionTypes = [
   "close_ticket",
   "reopen_ticket",
   "send_webhook",
-  "send_notification"
+  "send_notification",
+  "create_opportunity",
+  "send_media"
 ]
 
 const actionSchema = yup.object().shape({
