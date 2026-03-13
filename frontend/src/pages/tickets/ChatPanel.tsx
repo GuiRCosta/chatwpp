@@ -36,6 +36,33 @@ function MessageDateSeparator({ date }: { date: Date }) {
   )
 }
 
+const UNSUPPORTED_LABELS: Record<string, string> = {
+  "[unsupported]": "Mensagem nao suportada",
+  "[Mensagem nao suportada]": "Mensagem nao suportada",
+  "[reaction]": "Reacao",
+  "[Reaction]": "Reacao",
+  "[order]": "Pedido recebido",
+  "[Pedido recebido]": "Pedido recebido",
+  "[Location]": "Localizacao",
+  "[Contact]": "Contato",
+  "[Interactive]": "Resposta interativa",
+  "[Button]": "Resposta de botao"
+}
+
+function formatMessageBody(body: string): { text: string; isSpecial: boolean } {
+  const label = UNSUPPORTED_LABELS[body]
+  if (label) {
+    return { text: label, isSpecial: true }
+  }
+  if (body.startsWith("[Location]")) {
+    return { text: body.replace("[Location]", "Localizacao:"), isSpecial: true }
+  }
+  if (body.startsWith("[Contact]")) {
+    return { text: body.replace("[Contact]", "Contato:"), isSpecial: true }
+  }
+  return { text: body, isSpecial: false }
+}
+
 function MessageBubble({ message, showDate }: { message: Message; showDate: boolean }) {
   const isFromMe = message.fromMe
 
@@ -104,14 +131,18 @@ function MessageBubble({ message, showDate }: { message: Message; showDate: bool
                 </a>
               )}
             </div>
-          ) : (
-            <p className={cn(
-              "text-sm whitespace-pre-wrap break-words",
-              isFromMe ? "text-white" : "text-[#0A0A0A]"
-            )}>
-              {message.body}
-            </p>
-          )}
+          ) : (() => {
+            const { text, isSpecial } = formatMessageBody(message.body)
+            return (
+              <p className={cn(
+                "text-sm whitespace-pre-wrap break-words",
+                isFromMe ? "text-white" : "text-[#0A0A0A]",
+                isSpecial && "italic text-gray-400"
+              )}>
+                {text}
+              </p>
+            )
+          })()}
 
           <div className={cn(
             "flex items-center gap-1 mt-1",

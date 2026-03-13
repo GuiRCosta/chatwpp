@@ -342,8 +342,18 @@ async function extractMessageContent(
       body = msg.button?.text || "[Button]"
       break
 
+    case "reaction": {
+      const reactionData = (msg as unknown as Record<string, Record<string, string>>).reaction
+      body = reactionData?.emoji || "[Reaction]"
+      break
+    }
+
+    case "order":
+      body = "[Pedido recebido]"
+      break
+
     default:
-      body = `[${msg.type}]`
+      body = "[Mensagem nao suportada]"
   }
 
   return { body, mediaUrl, mediaType }
