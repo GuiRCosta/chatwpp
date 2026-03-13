@@ -35,7 +35,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/DropdownMenu"
-import { ScrollArea } from "@/components/ui/ScrollArea"
 import { ActionCard } from "./ActionCard"
 import { toast } from "sonner"
 import api from "@/lib/api"
@@ -236,9 +235,9 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col flex-1 overflow-hidden"
+          className="flex flex-col flex-1 min-h-0"
         >
-          <ScrollArea className="flex-1 px-1">
+          <div className="flex-1 overflow-y-auto px-1">
             <div className="space-y-4 pb-4">
               {/* Name */}
               <div>
@@ -360,7 +359,7 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
                 </div>
               </div>
             </div>
-          </ScrollArea>
+          </div>
 
           <DialogFooter className="mt-4">
             <Button
