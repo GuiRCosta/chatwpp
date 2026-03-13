@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { format, isSameDay } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Send, X, Check, CheckCheck, FileText, Mic } from "lucide-react"
+import { Send, X, Check, CheckCheck, FileText, Mic, Trash2 } from "lucide-react"
 import { useChatStore } from "@/stores/chatStore"
 import { AudioPlayer } from "@/components/chat/AudioPlayer"
 import { AudioRecorder } from "@/components/chat/AudioRecorder"
@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/Button"
 import { ScrollArea } from "@/components/ui/ScrollArea"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/Avatar"
 import { ExecuteMacroDropdown } from "@/components/macros/ExecuteMacroDropdown"
+import { ConfirmDialog } from "@/components/shared"
+import { toast } from "sonner"
+import api from "@/lib/api"
 import type { Ticket, Message } from "@/types"
 
 interface ChatPanelProps {
@@ -174,11 +177,12 @@ function MessageBubble({ message, showDate }: { message: Message; showDate: bool
 
 export default function ChatPanel({ ticket }: ChatPanelProps) {
   const { messages, isLoading, fetchMessages, sendMessage, sendAudioMessage, clearMessages, markAsRead } = useChatStore()
-  const { clearSelection } = useTicketStore()
+  const { clearSelection, removeTicket } = useTicketStore()
 
   const [messageInput, setMessageInput] = useState("")
   const [isRecording, setIsRecording] = useState(false)
   const [isSending, setIsSending] = useState(false)
+  const [deleteDialog, setDeleteDialog] = useState(false)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -228,6 +232,17 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
 
   const handleCloseTicket = () => {
     clearSelection()
+  }
+
+  const handleDeleteTicket = async () => {
+    try {
+      await api.delete(`/tickets/${ticket.id}`)
+      removeTicket(ticket.id)
+      clearSelection()
+      toast.success("Conversa excluida com sucesso")
+    } catch {
+      toast.error("Erro ao excluir conversa")
+    }
   }
 
   const handleAudioSend = useCallback(
@@ -287,6 +302,16 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
             </div>
 
             <ExecuteMacroDropdown ticketId={ticket.id} whatsappId={ticket.whatsappId} />
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDeleteDialog(true)}
+              className="hover:bg-gray-100 text-red-500 hover:text-red-700"
+              title="Excluir conversa"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
 
             <Button
               variant="ghost"
@@ -392,6 +417,16 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteDialog}
+        onOpenChange={setDeleteDialog}
+        title="Excluir Conversa"
+        description={`Tem certeza que deseja excluir a conversa com "${ticket.contact?.name}"? Todas as mensagens serao apagadas permanentemente.`}
+        onConfirm={handleDeleteTicket}
+        confirmLabel="Excluir"
+        variant="destructive"
+      />
     </div>
   )
 }
