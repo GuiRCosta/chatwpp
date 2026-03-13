@@ -114,6 +114,8 @@ export const createOpportunity = async (
     contactId: number
     pipelineId: number
     stageId: number
+    title?: string
+    description?: string
     value?: number
     status?: string
   }
@@ -147,6 +149,8 @@ export const createOpportunity = async (
     contactId: data.contactId,
     pipelineId: data.pipelineId,
     stageId: data.stageId,
+    title: data.title || null,
+    description: data.description || null,
     value: data.value || 0,
     status: data.status || "open"
   })
@@ -165,6 +169,8 @@ export const updateOpportunity = async (
     contactId?: number
     pipelineId?: number
     stageId?: number
+    title?: string
+    description?: string
     value?: number
     status?: string
   }

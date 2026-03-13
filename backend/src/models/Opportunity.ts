@@ -40,6 +40,12 @@ export default class Opportunity extends Model {
   @Column
   stageId!: number
 
+  @Column
+  title!: string | null
+
+  @Column(DataType.TEXT)
+  description!: string | null
+
   @Column(DataType.DECIMAL(10, 2))
   value!: number
 

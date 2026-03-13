@@ -12,6 +12,7 @@ import {
 } from "sequelize-typescript"
 
 import Tenant from "./Tenant"
+import Stage from "./Stage"
 import Opportunity from "./Opportunity"
 
 @Table({ tableName: "Pipelines", timestamps: true })
@@ -36,6 +37,9 @@ export default class Pipeline extends Model {
 
   @BelongsTo(() => Tenant)
   tenant!: Tenant
+
+  @HasMany(() => Stage)
+  stages!: Stage[]
 
   @HasMany(() => Opportunity)
   opportunities!: Opportunity[]

@@ -6,17 +6,14 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  closestCenter,
+  DragOverEvent,
+  closestCorners,
   PointerSensor,
   useSensor,
-  useSensors
+  useSensors,
+  useDroppable,
+  useDraggable
 } from "@dnd-kit/core"
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
 import { Badge } from "@/components/ui/Badge"
 import { cn } from "@/lib/utils"
 import type { Stage, Opportunity } from "@/types"
@@ -86,24 +83,25 @@ function OpportunityCard({ opportunity, isDragging = false }: OpportunityCardPro
   )
 }
 
-interface SortableOpportunityProps {
+interface DraggableOpportunityProps {
   opportunity: Opportunity
 }
 
-function SortableOpportunity({ opportunity }: SortableOpportunityProps) {
+function DraggableOpportunity({ opportunity }: DraggableOpportunityProps) {
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging
-  } = useSortable({ id: opportunity.id })
+  } = useDraggable({
+    id: `opp-${opportunity.id}`,
+    data: { opportunity }
+  })
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition
-  }
+  const style = transform
+    ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
+    : undefined
 
   return (
     <div
@@ -121,9 +119,15 @@ function SortableOpportunity({ opportunity }: SortableOpportunityProps) {
 interface KanbanColumnProps {
   stage: Stage
   opportunities: Opportunity[]
+  isOver: boolean
 }
 
-function KanbanColumn({ stage, opportunities }: KanbanColumnProps) {
+function KanbanColumn({ stage, opportunities, isOver }: KanbanColumnProps) {
+  const { setNodeRef } = useDroppable({
+    id: `stage-${stage.id}`,
+    data: { stageId: stage.id }
+  })
+
   const stageOpportunities = opportunities.filter(
     (opp) => opp.stageId === stage.id
   )
@@ -141,12 +145,18 @@ function KanbanColumn({ stage, opportunities }: KanbanColumnProps) {
   }
 
   return (
-    <div className="flex min-w-[320px] flex-col rounded-2xl bg-gray-50 p-4">
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "flex min-w-[320px] flex-col rounded-2xl bg-gray-50 p-4 transition-colors",
+        isOver && "bg-blue-50 ring-2 ring-blue-200"
+      )}
+    >
       <div className="mb-4 space-y-2">
         <div className="flex items-center gap-2">
           <div
             className="h-3 w-3 rounded-full"
-            style={{ backgroundColor: stage.color }}
+            style={{ backgroundColor: stage.color || "#6B7280" }}
           />
           <h3 className="font-semibold text-[#0A0A0A]">{stage.name}</h3>
           <Badge variant="secondary" className="ml-auto">
@@ -158,25 +168,20 @@ function KanbanColumn({ stage, opportunities }: KanbanColumnProps) {
         </div>
       </div>
 
-      <SortableContext
-        items={stageOpportunities.map((opp) => opp.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="flex-1 space-y-3 overflow-y-auto">
-          {stageOpportunities.length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-500">
-              Nenhuma oportunidade
-            </div>
-          ) : (
-            stageOpportunities.map((opportunity) => (
-              <SortableOpportunity
-                key={opportunity.id}
-                opportunity={opportunity}
-              />
-            ))
-          )}
-        </div>
-      </SortableContext>
+      <div className="flex-1 space-y-3 overflow-y-auto">
+        {stageOpportunities.length === 0 ? (
+          <div className="py-8 text-center text-sm text-gray-500">
+            Nenhuma oportunidade
+          </div>
+        ) : (
+          stageOpportunities.map((opportunity) => (
+            <DraggableOpportunity
+              key={opportunity.id}
+              opportunity={opportunity}
+            />
+          ))
+        )}
+      </div>
     </div>
   )
 }
@@ -188,6 +193,7 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
   const [activeOpportunity, setActiveOpportunity] =
     useState<Opportunity | null>(null)
+  const [overStageId, setOverStageId] = useState<number | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -198,52 +204,52 @@ export function KanbanBoard({
   )
 
   const handleDragStart = (event: DragStartEvent) => {
-    const opportunity = opportunities.find((opp) => opp.id === event.active.id)
-    if (opportunity) {
-      setActiveOpportunity(opportunity)
+    const opp = event.active.data.current?.opportunity as Opportunity | undefined
+    if (opp) {
+      setActiveOpportunity(opp)
     }
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const stageId = event.over?.data.current?.stageId as number | undefined
+    setOverStageId(stageId ?? null)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
 
     setActiveOpportunity(null)
+    setOverStageId(null)
 
     if (!over) return
 
-    const opportunityId = active.id as number
-    const newStageId = over.id as number
+    const opp = active.data.current?.opportunity as Opportunity | undefined
+    if (!opp) return
 
-    const opportunity = opportunities.find((opp) => opp.id === opportunityId)
-    if (!opportunity) return
+    const newStageId = over.data.current?.stageId as number | undefined
+    if (!newStageId) return
 
-    if (opportunity.stageId === newStageId) return
+    if (opp.stageId === newStageId) return
 
-    try {
-      await onMoveOpportunity(opportunityId, newStageId)
-    } catch (error) {
-      console.error("Failed to move opportunity:", error)
-    }
+    await onMoveOpportunity(opp.id, newStageId)
   }
-
-  const sortedStages = [...stages].sort((a, b) => a.order - b.order)
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={closestCorners}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-4 overflow-x-auto pb-4">
-        {sortedStages.map((stage) => (
-          <SortableContext
+        {stages.map((stage) => (
+          <KanbanColumn
             key={stage.id}
-            items={[stage.id]}
-            strategy={verticalListSortingStrategy}
-          >
-            <KanbanColumn stage={stage} opportunities={opportunities} />
-          </SortableContext>
+            stage={stage}
+            opportunities={opportunities}
+            isOver={overStageId === stage.id}
+          />
         ))}
       </div>
 

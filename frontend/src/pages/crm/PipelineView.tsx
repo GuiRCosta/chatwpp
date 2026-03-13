@@ -22,7 +22,6 @@ import { KanbanBoard } from "./KanbanBoard"
 import api from "@/lib/api"
 import type {
   Pipeline,
-  Kanban,
   Stage,
   Opportunity,
   Contact,
@@ -30,7 +29,7 @@ import type {
   PaginatedResponse
 } from "@/types"
 
-interface KanbanWithStages extends Kanban {
+interface PipelineWithStages extends Pipeline {
   stages: Stage[]
 }
 
@@ -44,7 +43,7 @@ interface OpportunityFormData {
 export function PipelineView() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("")
-  const [kanban, setKanban] = useState<KanbanWithStages | null>(null)
+  const [stages, setStages] = useState<Stage[]>([])
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -64,7 +63,7 @@ export function PipelineView() {
 
   useEffect(() => {
     if (selectedPipelineId) {
-      fetchKanbanData()
+      fetchPipelineData()
     }
   }, [selectedPipelineId])
 
@@ -85,52 +84,41 @@ export function PipelineView() {
     }
   }
 
-  const fetchKanbanData = async () => {
+  const fetchPipelineData = async () => {
     try {
       setIsLoading(true)
 
-      const selectedPipeline = pipelines.find(
-        (p) => p.id.toString() === selectedPipelineId
-      )
-      if (!selectedPipeline) return
-
-      const kanbanResponse = await api.get<ApiResponse<KanbanWithStages[]>>(
-        "/kanbans"
+      const pipelineResponse = await api.get<ApiResponse<PipelineWithStages>>(
+        `/pipelines/${selectedPipelineId}`
       )
 
-      const kanbans = Array.isArray(kanbanResponse.data.data)
-        ? kanbanResponse.data.data
-        : []
+      if (pipelineResponse.data.success && pipelineResponse.data.data) {
+        const pipelineStages = Array.isArray(pipelineResponse.data.data.stages)
+          ? pipelineResponse.data.data.stages
+          : []
 
-      if (kanbanResponse.data.success && kanbans.length > 0) {
-        const firstKanban = kanbans[0]
+        setStages(pipelineStages)
 
-        const kanbanDetailResponse = await api.get<
-          ApiResponse<KanbanWithStages>
-        >(`/kanbans/${firstKanban.id}`)
-
-        if (kanbanDetailResponse.data.success && kanbanDetailResponse.data.data) {
-          setKanban(kanbanDetailResponse.data.data)
-
-          const oppResponse = await api.get<
-            PaginatedResponse<Opportunity>
-          >("/opportunities", {
+        const oppResponse = await api.get<PaginatedResponse<Opportunity>>(
+          "/opportunities",
+          {
             params: {
-              pipelineId: selectedPipelineId
+              pipelineId: selectedPipelineId,
+              limit: 500
             }
-          })
-
-          if (oppResponse.data.success) {
-            setOpportunities(
-              Array.isArray(oppResponse.data.data)
-                ? oppResponse.data.data
-                : []
-            )
           }
+        )
+
+        if (oppResponse.data.success) {
+          setOpportunities(
+            Array.isArray(oppResponse.data.data)
+              ? oppResponse.data.data
+              : []
+          )
         }
       }
     } catch {
-      setKanban(null)
+      setStages([])
       setOpportunities([])
     } finally {
       setIsLoading(false)
@@ -176,9 +164,8 @@ export function PipelineView() {
             : opp
         )
       )
-    } catch (error) {
-      console.error("Failed to move opportunity:", error)
-      throw error
+    } catch {
+      fetchPipelineData()
     }
   }
 
@@ -215,25 +202,27 @@ export function PipelineView() {
           value: ""
         })
       }
-    } catch (error) {
-      console.error("Failed to create opportunity:", error)
+    } catch {
+      // error handled silently
     } finally {
       setIsSaving(false)
     }
   }
 
   const handleOpenDialog = () => {
-    if (kanban && kanban.stages.length > 0) {
-      const firstStage = kanban.stages.sort((a, b) => a.order - b.order)[0]
+    if (stages.length > 0) {
+      const sortedStages = [...stages].sort((a, b) => a.order - b.order)
       setFormData({
         contactId: "",
-        stageId: firstStage.id.toString(),
+        stageId: sortedStages[0].id.toString(),
         title: "",
         value: ""
       })
     }
     setDialogOpen(true)
   }
+
+  const sortedStages = [...stages].sort((a, b) => a.order - b.order)
 
   return (
     <div className="space-y-6 p-8">
@@ -252,7 +241,7 @@ export function PipelineView() {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={handleOpenDialog} disabled={!kanban}>
+          <Button onClick={handleOpenDialog} disabled={stages.length === 0}>
             <Plus className="h-4 w-4" />
             Nova Oportunidade
           </Button>
@@ -263,9 +252,9 @@ export function PipelineView() {
         <div className="flex min-h-[400px] items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
         </div>
-      ) : kanban && kanban.stages ? (
+      ) : stages.length > 0 ? (
         <KanbanBoard
-          stages={kanban.stages}
+          stages={sortedStages}
           opportunities={opportunities}
           onMoveOpportunity={handleMoveOpportunity}
         />
@@ -329,19 +318,17 @@ export function PipelineView() {
                   <SelectValue placeholder="Selecione uma etapa" />
                 </SelectTrigger>
                 <SelectContent>
-                  {kanban?.stages
-                    .sort((a, b) => a.order - b.order)
-                    .map((stage) => (
-                      <SelectItem key={stage.id} value={stage.id.toString()}>
-                        {stage.name}
-                      </SelectItem>
-                    ))}
+                  {sortedStages.map((stage) => (
+                    <SelectItem key={stage.id} value={stage.id.toString()}>
+                      {stage.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="title">Título</Label>
+              <Label htmlFor="title">Titulo</Label>
               <Input
                 id="title"
                 type="text"
@@ -352,7 +339,7 @@ export function PipelineView() {
                     title: e.target.value
                   })
                 }
-                placeholder="Digite um título (opcional)"
+                placeholder="Digite um titulo (opcional)"
               />
             </div>
 

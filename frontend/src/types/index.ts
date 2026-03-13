@@ -159,9 +159,9 @@ export interface Stage {
   name: string
   color: string
   order: number
-  pipelineId: number
+  kanbanId?: number
+  pipelineId?: number
   pipeline?: Pipeline
-  tenantId: number
   opportunities?: Opportunity[]
   createdAt: string
   updatedAt: string
@@ -169,15 +169,16 @@ export interface Stage {
 
 export interface Opportunity {
   id: number
-  title: string
+  title?: string
   description?: string
   value?: number
   contactId: number
   contact?: Contact
+  pipelineId: number
+  pipeline?: Pipeline
   stageId: number
   stage?: Stage
-  userId?: number
-  user?: User
+  status: "open" | "won" | "lost"
   tenantId: number
   tags?: Tag[]
   createdAt: string

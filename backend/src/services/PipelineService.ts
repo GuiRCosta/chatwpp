@@ -1,6 +1,7 @@
 import { Op } from "sequelize"
 
 import Pipeline from "../models/Pipeline"
+import Stage from "../models/Stage"
 import Opportunity from "../models/Opportunity"
 import { AppError } from "../helpers/AppError"
 import { emitToTenant } from "../libs/socket"
@@ -30,20 +31,12 @@ export const findPipelineById = async (id: number, tenantId: number): Promise<Pi
     where: { id, tenantId },
     include: [
       {
-        model: Opportunity,
-        as: "opportunities",
-        attributes: []
+        model: Stage,
+        as: "stages",
+        order: [["order", "ASC"]]
       }
     ],
-    attributes: {
-      include: [
-        [
-          Pipeline.sequelize!.fn("COUNT", Pipeline.sequelize!.col("opportunities.id")),
-          "opportunitiesCount"
-        ]
-      ]
-    },
-    group: ["Pipeline.id"]
+    order: [[{ model: Stage, as: "stages" }, "order", "ASC"]]
   })
 
   if (!pipeline) {

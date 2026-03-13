@@ -132,6 +132,8 @@ export const deleteKanban = async (id: number, tenantId: number): Promise<void> 
 export const createStage = async (kanbanId: number, tenantId: number, data: {
   name: string
   order: number
+  pipelineId?: number
+  color?: string
 }): Promise<Stage> => {
   const kanban = await Kanban.findOne({ where: { id: kanbanId, tenantId } })
 
@@ -141,7 +143,9 @@ export const createStage = async (kanbanId: number, tenantId: number, data: {
 
   const stage = await Stage.create({
     kanbanId,
+    pipelineId: data.pipelineId || null,
     name: data.name,
+    color: data.color || "#6B7280",
     order: data.order
   })
 
@@ -153,6 +157,8 @@ export const createStage = async (kanbanId: number, tenantId: number, data: {
 export const updateStage = async (kanbanId: number, stageId: number, tenantId: number, data: {
   name?: string
   order?: number
+  pipelineId?: number
+  color?: string
 }): Promise<Stage> => {
   const kanban = await Kanban.findOne({ where: { id: kanbanId, tenantId } })
 
