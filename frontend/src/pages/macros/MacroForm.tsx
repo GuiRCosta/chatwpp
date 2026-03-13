@@ -9,7 +9,8 @@ import {
   Globe,
   Bell,
   GitBranch,
-  Paperclip
+  Paperclip,
+  Clock
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import {
@@ -61,7 +62,8 @@ const ACTION_TYPES: {
   { type: "send_webhook", label: "Enviar webhook", icon: Globe },
   { type: "send_notification", label: "Notificar admins", icon: Bell },
   { type: "create_opportunity", label: "Criar oportunidade", icon: GitBranch },
-  { type: "send_media", label: "Enviar midia", icon: Paperclip }
+  { type: "send_media", label: "Enviar midia", icon: Paperclip },
+  { type: "wait", label: "Aguardar", icon: Clock }
 ]
 
 export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
@@ -109,6 +111,8 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
       newAction.params = { pipelineId: 0, stageId: 0, title: "", value: 0 }
     } else if (type === "send_media") {
       newAction.params = { mediaUrl: "", mediaType: "", originalName: "", body: "" }
+    } else if (type === "wait") {
+      newAction.params = { duration: 5, unit: "seconds" }
     }
 
     setActions([...actions, newAction])
@@ -173,6 +177,9 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
       }
       if (action.type === "send_media" && !String(action.params.mediaUrl || "").trim()) {
         newErrors[`action_${i}`] = "Faca upload de um arquivo"
+      }
+      if (action.type === "wait" && (!action.params.duration || Number(action.params.duration) <= 0)) {
+        newErrors[`action_${i}`] = "Informe um tempo valido"
       }
     }
 

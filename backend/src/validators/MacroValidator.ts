@@ -10,7 +10,8 @@ const actionTypes = [
   "send_webhook",
   "send_notification",
   "create_opportunity",
-  "send_media"
+  "send_media",
+  "wait"
 ]
 
 const actionSchema = yup.object().shape({

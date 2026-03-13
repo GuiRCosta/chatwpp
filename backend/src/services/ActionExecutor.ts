@@ -257,6 +257,32 @@ async function handleSendMedia(
   })
 }
 
+const MAX_WAIT_MS = 60 * 60 * 1000 // 1 hour
+
+async function handleWait(
+  _ctx: ActionContext,
+  params: Record<string, unknown>
+): Promise<void> {
+  const duration = Number(params.duration)
+  const unit = String(params.unit || "seconds")
+
+  if (!duration || duration <= 0) {
+    throw new Error("duration must be a positive number")
+  }
+
+  const multipliers: Record<string, number> = {
+    seconds: 1000,
+    minutes: 60 * 1000,
+    hours: 60 * 60 * 1000
+  }
+
+  const multiplier = multipliers[unit] || 1000
+  const ms = Math.min(duration * multiplier, MAX_WAIT_MS)
+
+  logger.info("ActionExecutor: Waiting %dms before next action", ms)
+  await new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 const ACTION_HANDLERS: Record<string, ActionHandler> = {
   send_message: handleSendMessage,
   assign_agent: handleAssignAgent,
@@ -267,7 +293,8 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
   send_webhook: handleSendWebhook,
   send_notification: handleSendNotification,
   create_opportunity: handleCreateOpportunity,
-  send_media: handleSendMedia
+  send_media: handleSendMedia,
+  wait: handleWait
 }
 
 export async function executeActions(

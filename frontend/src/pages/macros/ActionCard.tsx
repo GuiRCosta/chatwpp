@@ -13,7 +13,8 @@ import {
   GitBranch,
   Paperclip,
   Upload,
-  X
+  X,
+  Clock
 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import { Input } from "@/components/ui/Input"
@@ -71,7 +72,8 @@ const ACTION_LABELS: Record<MacroActionType, string> = {
   send_webhook: "Enviar webhook",
   send_notification: "Notificar admins",
   create_opportunity: "Criar oportunidade",
-  send_media: "Enviar midia"
+  send_media: "Enviar midia",
+  wait: "Aguardar"
 }
 
 const ACTION_ICONS: Record<MacroActionType, React.ElementType> = {
@@ -84,7 +86,8 @@ const ACTION_ICONS: Record<MacroActionType, React.ElementType> = {
   send_webhook: Globe,
   send_notification: Bell,
   create_opportunity: GitBranch,
-  send_media: Paperclip
+  send_media: Paperclip,
+  wait: Clock
 }
 
 const WABA_ACCEPT =
@@ -416,6 +419,46 @@ export function ActionCard({
             </div>
           </div>
         )
+
+      case "wait": {
+        const unitLabels: Record<string, string> = {
+          seconds: "Segundos",
+          minutes: "Minutos",
+          hours: "Horas"
+        }
+        return (
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Label className="text-xs text-gray-500">Tempo</Label>
+              <Input
+                type="number"
+                min={1}
+                value={String(action.params.duration || "")}
+                onChange={(e) => updateParam("duration", Number(e.target.value))}
+                placeholder="5"
+                className="mt-1 h-9"
+              />
+            </div>
+            <div className="w-32">
+              <Select
+                value={String(action.params.unit || "seconds")}
+                onValueChange={(val) => updateParam("unit", val)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(unitLabels).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        )
+      }
 
       case "send_media": {
         const hasFile = !!action.params.mediaUrl

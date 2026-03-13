@@ -389,6 +389,7 @@ export type MacroActionType =
   | "send_notification"
   | "create_opportunity"
   | "send_media"
+  | "wait"
 
 export interface MacroAction {
   type: MacroActionType
