@@ -76,6 +76,9 @@ export default class Message extends Model {
   @Column(DataType.INTEGER)
   ack!: number
 
+  @Column(DataType.INTEGER)
+  automationRuleId!: number | null
+
   @CreatedAt
   createdAt!: Date
 

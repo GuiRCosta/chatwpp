@@ -54,6 +54,7 @@ export const createMessage = async (ticketId: number, tenantId: number, data: {
   mediaType?: string
   fromMe?: boolean
   quotedMsgId?: string
+  automationRuleId?: number
 }): Promise<Message> => {
   const ticket = await Ticket.findOne({
     where: { id: ticketId, tenantId }
@@ -73,7 +74,8 @@ export const createMessage = async (ticketId: number, tenantId: number, data: {
     quotedMsgId: data.quotedMsgId || "",
     timestamp: Math.floor(Date.now() / 1000),
     status: "sent",
-    ack: 1
+    ack: 1,
+    automationRuleId: data.automationRuleId || null
   })
 
   await ticket.update({

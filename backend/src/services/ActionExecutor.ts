@@ -22,6 +22,7 @@ export interface ActionContext {
   ticketId: number
   tenantId: number
   userId: number
+  automationRuleId?: number
 }
 
 export interface ActionResult {
@@ -53,7 +54,8 @@ async function handleSendMessage(
 
   await MessageService.createMessage(ctx.ticketId, ctx.tenantId, {
     body,
-    fromMe: true
+    fromMe: true,
+    automationRuleId: ctx.automationRuleId
   })
 }
 
@@ -272,7 +274,8 @@ async function handleSendMedia(
     body,
     mediaUrl,
     mediaType,
-    fromMe: true
+    fromMe: true,
+    automationRuleId: ctx.automationRuleId
   })
 }
 

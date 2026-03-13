@@ -6,6 +6,7 @@ import {
   Kanban,
   Megaphone,
   Zap,
+  Bot,
   Settings2,
   LogOut,
   ChevronsLeft,
@@ -33,6 +34,7 @@ const navItems = [
   { name: "CRM", href: "/crm", icon: Kanban },
   { name: "Campanhas", href: "/campaigns", icon: Megaphone },
   { name: "Macros", href: "/macros", icon: Zap },
+  { name: "Automacoes", href: "/automations", icon: Bot },
 ]
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {

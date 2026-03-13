@@ -27,6 +27,7 @@ import { uploadRoutes } from "./uploadRoutes"
 import { webhookConfigRoutes } from "./webhookConfigRoutes"
 import { deadLetterRoutes } from "./deadLetterRoutes"
 import { macroRoutes } from "./macroRoutes"
+import { automationRuleRoutes } from "./automationRuleRoutes"
 import { isAuth } from "../middleware/isAuth"
 import { getHealth } from "../services/HealthService"
 import { isShuttingDown } from "../helpers/shutdownState"
@@ -73,5 +74,6 @@ appRoutes.use("/upload", uploadRoutes)
 appRoutes.use("/webhook-configs", webhookConfigRoutes)
 appRoutes.use("/dead-letter", deadLetterRoutes)
 appRoutes.use("/macros", macroRoutes)
+appRoutes.use("/automation-rules", automationRuleRoutes)
 
 export { appRoutes }

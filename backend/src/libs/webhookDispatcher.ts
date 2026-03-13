@@ -1,6 +1,7 @@
 import TenantWebhook from "../models/TenantWebhook"
 import { getQueue } from "./queues"
 import { QUEUE_NAME as WEBHOOK_QUEUE } from "../jobs/WebhookDispatchJob"
+import { QUEUE_NAME as AUTOMATION_QUEUE } from "../jobs/AutomationJob"
 import { logger } from "../helpers/logger"
 
 interface CacheEntry {
@@ -69,5 +70,34 @@ export async function dispatchEvent(
     )
   } catch (error) {
     logger.error("webhookDispatcher: Failed to dispatch event %s: %o", event, error)
+  }
+
+  enqueueAutomation(tenantId, event, data)
+}
+
+const AUTOMATION_EVENTS = ["message_created", "conversation_created", "conversation_status_changed"]
+
+function enqueueAutomation(
+  tenantId: number,
+  event: string,
+  data: Record<string, unknown>
+): void {
+  if (!AUTOMATION_EVENTS.includes(event)) return
+
+  const ticketId = Number(data.ticketId || data.id)
+  if (!ticketId) return
+
+  try {
+    const queue = getQueue(AUTOMATION_QUEUE)
+    const eventName = event === "conversation_status_changed" ? "conversation_updated" : event
+
+    queue.add({
+      tenantId,
+      eventName,
+      ticketId,
+      messageId: event === "message_created" ? Number(data.id) : undefined
+    })
+  } catch (error) {
+    logger.error("webhookDispatcher: Failed to enqueue automation for event %s: %o", event, error)
   }
 }

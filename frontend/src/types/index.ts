@@ -425,6 +425,40 @@ export interface MacroExecutionResult {
   }
 }
 
+// Automation Rules
+export type AutomationEventName =
+  | "conversation_created"
+  | "conversation_updated"
+  | "message_created"
+
+export type ConditionOperator =
+  | "equal_to"
+  | "not_equal_to"
+  | "contains"
+  | "does_not_contain"
+  | "is_present"
+  | "is_not_present"
+
+export interface AutomationCondition {
+  attribute: string
+  operator: ConditionOperator
+  value: unknown
+  queryOperator: "AND" | "OR"
+}
+
+export interface AutomationRule {
+  id: number
+  name: string
+  description?: string | null
+  eventName: AutomationEventName
+  conditions: AutomationCondition[]
+  actions: MacroAction[]
+  isActive: boolean
+  tenantId: number
+  createdAt: string
+  updatedAt: string
+}
+
 // Todo Lists
 export interface TodoList {
   id: number

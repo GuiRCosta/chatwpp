@@ -32,6 +32,7 @@ import UserWhatsApp from "./UserWhatsApp"
 import MessageTemplate from "./MessageTemplate"
 import TenantWebhook from "./TenantWebhook"
 import Macro from "./Macro"
+import AutomationRule from "./AutomationRule"
 
 const models = [
   Tenant,
@@ -67,7 +68,8 @@ const models = [
   UserWhatsApp,
   MessageTemplate,
   TenantWebhook,
-  Macro
+  Macro,
+  AutomationRule
 ]
 
 export {
@@ -104,7 +106,8 @@ export {
   UserWhatsApp,
   MessageTemplate,
   TenantWebhook,
-  Macro
+  Macro,
+  AutomationRule
 }
 
 export default models
