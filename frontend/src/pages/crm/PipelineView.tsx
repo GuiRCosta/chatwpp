@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Plus, MoreVertical, Pencil, Trash2, Settings2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/Button"
 import {
   Select,
@@ -180,6 +181,16 @@ export function PipelineView() {
       )
     } catch {
       fetchPipelineData()
+    }
+  }
+
+  const handleDeleteOpportunity = async (opportunityId: number) => {
+    try {
+      await api.delete(`/opportunities/${opportunityId}`)
+      setOpportunities(opportunities.filter((opp) => opp.id !== opportunityId))
+      toast.success("Oportunidade excluida com sucesso")
+    } catch {
+      toast.error("Erro ao excluir oportunidade")
     }
   }
 
@@ -422,6 +433,7 @@ export function PipelineView() {
           stages={sortedStages}
           opportunities={opportunities}
           onMoveOpportunity={handleMoveOpportunity}
+          onDeleteOpportunity={handleDeleteOpportunity}
         />
       ) : (
         <div className="flex min-h-[400px] items-center justify-center rounded-[2rem] border border-gray-200 bg-white">

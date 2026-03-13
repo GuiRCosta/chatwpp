@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { Trash2 } from "lucide-react"
 import {
   DndContext,
   DragEndEvent,
@@ -15,6 +16,7 @@ import {
   useDraggable
 } from "@dnd-kit/core"
 import { Badge } from "@/components/ui/Badge"
+import { ConfirmDialog } from "@/components/shared"
 import { cn } from "@/lib/utils"
 import type { Stage, Opportunity } from "@/types"
 
@@ -25,14 +27,16 @@ export interface KanbanBoardProps {
     opportunityId: number,
     newStageId: number
   ) => Promise<void>
+  onDeleteOpportunity?: (opportunityId: number) => Promise<void>
 }
 
 interface OpportunityCardProps {
   opportunity: Opportunity
   isDragging?: boolean
+  onDelete?: (opportunityId: number) => void
 }
 
-function OpportunityCard({ opportunity, isDragging = false }: OpportunityCardProps) {
+function OpportunityCard({ opportunity, isDragging = false, onDelete }: OpportunityCardProps) {
   const formatCurrency = (value?: number | string | null) => {
     const num = Number(value)
     if (!num || isNaN(num)) return "R$ 0,00"
@@ -45,7 +49,7 @@ function OpportunityCard({ opportunity, isDragging = false }: OpportunityCardPro
   return (
     <div
       className={cn(
-        "rounded-xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md",
+        "group/card rounded-xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md",
         isDragging && "opacity-50"
       )}
     >
@@ -73,11 +77,26 @@ function OpportunityCard({ opportunity, isDragging = false }: OpportunityCardPro
           <span className="text-lg font-semibold text-blue-600">
             {formatCurrency(opportunity.value)}
           </span>
-          <span className="text-xs text-gray-500">
-            {format(new Date(opportunity.createdAt), "dd/MM/yyyy", {
-              locale: ptBR
-            })}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">
+              {format(new Date(opportunity.createdAt), "dd/MM/yyyy", {
+                locale: ptBR
+              })}
+            </span>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(opportunity.id)
+                }}
+                className="rounded p-1 text-gray-400 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover/card:opacity-100"
+                title="Excluir oportunidade"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -86,9 +105,10 @@ function OpportunityCard({ opportunity, isDragging = false }: OpportunityCardPro
 
 interface DraggableOpportunityProps {
   opportunity: Opportunity
+  onDelete?: (opportunityId: number) => void
 }
 
-function DraggableOpportunity({ opportunity }: DraggableOpportunityProps) {
+function DraggableOpportunity({ opportunity, onDelete }: DraggableOpportunityProps) {
   const {
     attributes,
     listeners,
@@ -112,7 +132,7 @@ function DraggableOpportunity({ opportunity }: DraggableOpportunityProps) {
       {...listeners}
       className="cursor-grab active:cursor-grabbing"
     >
-      <OpportunityCard opportunity={opportunity} isDragging={isDragging} />
+      <OpportunityCard opportunity={opportunity} isDragging={isDragging} onDelete={onDelete} />
     </div>
   )
 }
@@ -121,9 +141,10 @@ interface KanbanColumnProps {
   stage: Stage
   opportunities: Opportunity[]
   isOver: boolean
+  onDeleteOpportunity?: (opportunityId: number) => void
 }
 
-function KanbanColumn({ stage, opportunities, isOver }: KanbanColumnProps) {
+function KanbanColumn({ stage, opportunities, isOver, onDeleteOpportunity }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({
     id: `stage-${stage.id}`,
     data: { stageId: stage.id }
@@ -179,6 +200,7 @@ function KanbanColumn({ stage, opportunities, isOver }: KanbanColumnProps) {
             <DraggableOpportunity
               key={opportunity.id}
               opportunity={opportunity}
+              onDelete={onDeleteOpportunity}
             />
           ))
         )}
@@ -190,11 +212,13 @@ function KanbanColumn({ stage, opportunities, isOver }: KanbanColumnProps) {
 export function KanbanBoard({
   stages,
   opportunities,
-  onMoveOpportunity
+  onMoveOpportunity,
+  onDeleteOpportunity
 }: KanbanBoardProps) {
   const [activeOpportunity, setActiveOpportunity] =
     useState<Opportunity | null>(null)
   const [overStageId, setOverStageId] = useState<number | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -250,6 +274,7 @@ export function KanbanBoard({
             stage={stage}
             opportunities={opportunities}
             isOver={overStageId === stage.id}
+            onDeleteOpportunity={onDeleteOpportunity ? (id) => setDeleteTarget(id) : undefined}
           />
         ))}
       </div>
@@ -261,6 +286,23 @@ export function KanbanBoard({
           </div>
         ) : null}
       </DragOverlay>
+
+      {onDeleteOpportunity && (
+        <ConfirmDialog
+          open={deleteTarget !== null}
+          onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+          title="Excluir Oportunidade"
+          description="Tem certeza que deseja excluir esta oportunidade? Esta acao nao pode ser desfeita."
+          onConfirm={async () => {
+            if (deleteTarget !== null) {
+              await onDeleteOpportunity(deleteTarget)
+              setDeleteTarget(null)
+            }
+          }}
+          confirmLabel="Excluir"
+          variant="destructive"
+        />
+      )}
     </DndContext>
   )
 }
