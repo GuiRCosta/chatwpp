@@ -41,7 +41,12 @@ export const createMacroSchema = yup.object().shape({
   visibility: yup
     .string()
     .oneOf(["personal", "global"])
-    .required("Visibility is required")
+    .required("Visibility is required"),
+  whatsappIds: yup
+    .array()
+    .of(yup.number().integer().positive().required())
+    .nullable()
+    .default(null)
 })
 
 export const updateMacroSchema = yup.object().shape({
@@ -53,7 +58,11 @@ export const updateMacroSchema = yup.object().shape({
     .min(1, "At least one action is required")
     .max(20, "Maximum 20 actions allowed"),
   visibility: yup.string().oneOf(["personal", "global"]),
-  isActive: yup.boolean()
+  isActive: yup.boolean(),
+  whatsappIds: yup
+    .array()
+    .of(yup.number().integer().positive().required())
+    .nullable()
 })
 
 export const executeMacroSchema = yup.object().shape({

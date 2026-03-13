@@ -402,6 +402,7 @@ export interface Macro {
   description?: string | null
   actions: MacroAction[]
   visibility: "personal" | "global"
+  whatsappIds?: number[] | null
   createdById: number
   createdBy?: Pick<User, "id" | "name">
   isActive: boolean

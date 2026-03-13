@@ -39,7 +39,7 @@ import {
 import { ActionCard } from "./ActionCard"
 import { toast } from "sonner"
 import api from "@/lib/api"
-import type { Macro, MacroAction, MacroActionType, ApiResponse } from "@/types"
+import type { Macro, MacroAction, MacroActionType, WhatsApp, ApiResponse } from "@/types"
 
 interface MacroFormProps {
   open: boolean
@@ -75,8 +75,21 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
     "personal"
   )
   const [actions, setActions] = useState<MacroAction[]>([])
+  const [whatsappIds, setWhatsappIds] = useState<number[]>([])
+  const [whatsapps, setWhatsapps] = useState<WhatsApp[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (open) {
+      api
+        .get<ApiResponse<WhatsApp[]>>("/whatsapp")
+        .then((res) => {
+          if (res.data.success) setWhatsapps(res.data.data)
+        })
+        .catch(() => {})
+    }
+  }, [open])
 
   useEffect(() => {
     if (open && macro) {
@@ -84,15 +97,23 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
       setDescription(macro.description || "")
       setVisibility(macro.visibility)
       setActions(macro.actions)
+      setWhatsappIds(macro.whatsappIds || [])
       setErrors({})
     } else if (open) {
       setName("")
       setDescription("")
       setVisibility("personal")
       setActions([])
+      setWhatsappIds([])
       setErrors({})
     }
   }, [open, macro])
+
+  const toggleWhatsapp = (id: number) => {
+    setWhatsappIds((prev) =>
+      prev.includes(id) ? prev.filter((wId) => wId !== id) : [...prev, id]
+    )
+  }
 
   const addAction = (type: MacroActionType) => {
     const newAction: MacroAction = { type, params: {} }
@@ -198,7 +219,8 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
         name: name.trim(),
         description: description.trim() || null,
         visibility,
-        actions
+        actions,
+        whatsappIds: whatsappIds.length > 0 ? whatsappIds : null
       }
 
       if (isEditing) {
@@ -299,6 +321,40 @@ export function MacroForm({ open, onClose, macro, onSuccess }: MacroFormProps) {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* WhatsApp Connections */}
+              {whatsapps.length > 0 && (
+                <div>
+                  <Label>
+                    Conexoes{" "}
+                    <span className="text-gray-400">(opcional)</span>
+                  </Label>
+                  <p className="text-xs text-gray-500 mt-0.5 mb-2">
+                    Deixe vazio para funcionar em todas as conexoes
+                  </p>
+                  <div className="space-y-1.5">
+                    {whatsapps.map((wa) => (
+                      <label
+                        key={wa.id}
+                        className="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={whatsappIds.includes(wa.id)}
+                          onChange={() => toggleWhatsapp(wa.id)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="font-medium">{wa.name}</span>
+                        {wa.number && (
+                          <span className="text-gray-400">
+                            {wa.number}
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div>

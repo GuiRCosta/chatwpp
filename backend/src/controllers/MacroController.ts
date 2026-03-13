@@ -11,12 +11,13 @@ export const index = async (
   res: Response
 ): Promise<Response> => {
   const { tenantId, userId } = req
-  const { searchParam } = req.query
+  const { searchParam, whatsappId } = req.query
 
   const macros = await MacroService.listMacros({
     tenantId,
     userId,
-    searchParam: String(searchParam || "")
+    searchParam: String(searchParam || ""),
+    whatsappId: whatsappId ? Number(whatsappId) : undefined
   })
 
   return res.json({ success: true, data: macros })
@@ -57,6 +58,7 @@ export const store = async (
       description?: string | null
       actions: { type: string; params: Record<string, unknown> }[]
       visibility: "personal" | "global"
+      whatsappIds?: number[] | null
     }
   )
 
@@ -86,6 +88,7 @@ export const update = async (
       actions?: { type: string; params: Record<string, unknown> }[]
       visibility?: string
       isActive?: boolean
+      whatsappIds?: number[] | null
     }
   )
 

@@ -13,12 +13,14 @@ interface ListParams {
   tenantId: number
   userId: number
   searchParam?: string
+  whatsappId?: number
 }
 
 export const listMacros = async ({
   tenantId,
   userId,
-  searchParam = ""
+  searchParam = "",
+  whatsappId
 }: ListParams): Promise<Macro[]> => {
   const where: Record<string, unknown> = {
     tenantId,
@@ -37,6 +39,12 @@ export const listMacros = async ({
     ],
     order: [["name", "ASC"]]
   })
+
+  if (whatsappId) {
+    return macros.filter(
+      (m) => !m.whatsappIds || m.whatsappIds.length === 0 || m.whatsappIds.includes(whatsappId)
+    )
+  }
 
   return macros
 }
@@ -72,6 +80,7 @@ export const createMacro = async (
     description?: string | null
     actions: MacroAction[]
     visibility: "personal" | "global"
+    whatsappIds?: number[] | null
   }
 ): Promise<Macro> => {
   const existing = await Macro.findOne({
@@ -87,6 +96,7 @@ export const createMacro = async (
     description: data.description || null,
     actions: data.actions,
     visibility: data.visibility,
+    whatsappIds: data.whatsappIds || null,
     createdById: userId
   })
 
@@ -111,6 +121,7 @@ export const updateMacro = async (
     actions?: MacroAction[]
     visibility?: string
     isActive?: boolean
+    whatsappIds?: number[] | null
   }
 ): Promise<Macro> => {
   const macro = await Macro.findOne({ where: { id, tenantId } })

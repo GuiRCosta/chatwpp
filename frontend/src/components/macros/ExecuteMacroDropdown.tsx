@@ -15,9 +15,10 @@ import type { Macro, MacroExecutionResult, ApiResponse } from "@/types"
 
 interface ExecuteMacroDropdownProps {
   ticketId: number
+  whatsappId?: number
 }
 
-export function ExecuteMacroDropdown({ ticketId }: ExecuteMacroDropdownProps) {
+export function ExecuteMacroDropdown({ ticketId, whatsappId }: ExecuteMacroDropdownProps) {
   const [macros, setMacros] = useState<Macro[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isExecuting, setIsExecuting] = useState(false)
@@ -26,7 +27,9 @@ export function ExecuteMacroDropdown({ ticketId }: ExecuteMacroDropdownProps) {
     const fetchMacros = async () => {
       try {
         setIsLoading(true)
-        const response = await api.get<ApiResponse<Macro[]>>("/macros")
+        const response = await api.get<ApiResponse<Macro[]>>("/macros", {
+          params: whatsappId ? { whatsappId } : undefined
+        })
         if (response.data.success) {
           setMacros(response.data.data)
         }
@@ -37,7 +40,7 @@ export function ExecuteMacroDropdown({ ticketId }: ExecuteMacroDropdownProps) {
       }
     }
     fetchMacros()
-  }, [])
+  }, [whatsappId])
 
   const handleExecute = async (macroId: number, macroName: string) => {
     try {

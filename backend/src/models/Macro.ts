@@ -48,6 +48,9 @@ export default class Macro extends Model {
   @Column
   createdById!: number
 
+  @Column(DataType.ARRAY(DataType.INTEGER))
+  whatsappIds!: number[] | null
+
   @Default(true)
   @Column
   isActive!: boolean

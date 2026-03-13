@@ -286,7 +286,7 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
               </span>
             </div>
 
-            <ExecuteMacroDropdown ticketId={ticket.id} />
+            <ExecuteMacroDropdown ticketId={ticket.id} whatsappId={ticket.whatsappId} />
 
             <Button
               variant="ghost"
