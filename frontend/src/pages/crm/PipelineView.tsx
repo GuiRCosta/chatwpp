@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Plus } from "lucide-react"
+import { Plus, MoreVertical, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import {
   Select,
@@ -16,6 +16,12 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/Dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/DropdownMenu"
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
 import { KanbanBoard } from "./KanbanBoard"
@@ -40,6 +46,13 @@ interface OpportunityFormData {
   value: string
 }
 
+type PipelineDialog =
+  | { type: "none" }
+  | { type: "create-pipeline" }
+  | { type: "edit-pipeline"; pipeline: Pipeline }
+  | { type: "delete-pipeline"; pipeline: Pipeline }
+  | { type: "create-opportunity" }
+
 export function PipelineView() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([])
   const [selectedPipelineId, setSelectedPipelineId] = useState<string>("")
@@ -47,8 +60,10 @@ export function PipelineView() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [dialogOpen, setDialogOpen] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [activeDialog, setActiveDialog] = useState<PipelineDialog>({ type: "none" })
+  const [pipelineName, setPipelineName] = useState("")
+  const [deleteError, setDeleteError] = useState("")
   const [formData, setFormData] = useState<OpportunityFormData>({
     contactId: "",
     stageId: "",
@@ -157,10 +172,7 @@ export function PipelineView() {
       setOpportunities(
         opportunities.map((opp) =>
           opp.id === opportunityId
-            ? {
-                ...opp,
-                stageId: newStageId
-              }
+            ? { ...opp, stageId: newStageId }
             : opp
         )
       )
@@ -194,13 +206,7 @@ export function PipelineView() {
 
       if (response.data.success && response.data.data) {
         setOpportunities([...opportunities, response.data.data])
-        setDialogOpen(false)
-        setFormData({
-          contactId: "",
-          stageId: "",
-          title: "",
-          value: ""
-        })
+        closeDialog()
       }
     } catch {
       // error handled silently
@@ -209,26 +215,150 @@ export function PipelineView() {
     }
   }
 
-  const handleOpenDialog = () => {
+  const handleCreatePipeline = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const name = pipelineName.trim()
+    if (!name) return
+
+    try {
+      setIsSaving(true)
+
+      const response = await api.post<ApiResponse<Pipeline>>(
+        "/pipelines",
+        { name }
+      )
+
+      if (response.data.success && response.data.data) {
+        const created = response.data.data
+        setPipelines([...pipelines, created])
+        setSelectedPipelineId(created.id.toString())
+        closeDialog()
+      }
+    } catch {
+      // error handled silently
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleEditPipeline = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (activeDialog.type !== "edit-pipeline") return
+
+    const name = pipelineName.trim()
+    if (!name) return
+
+    const pipelineId = activeDialog.pipeline.id
+
+    try {
+      setIsSaving(true)
+
+      const response = await api.put<ApiResponse<Pipeline>>(
+        `/pipelines/${pipelineId}`,
+        { name }
+      )
+
+      if (response.data.success && response.data.data) {
+        const updated = response.data.data
+        setPipelines(
+          pipelines.map((p) => (p.id === pipelineId ? { ...p, name: updated.name } : p))
+        )
+        closeDialog()
+      }
+    } catch {
+      // error handled silently
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDeletePipeline = async () => {
+    if (activeDialog.type !== "delete-pipeline") return
+
+    const pipelineId = activeDialog.pipeline.id
+
+    try {
+      setIsSaving(true)
+      setDeleteError("")
+
+      await api.delete(`/pipelines/${pipelineId}`)
+
+      const remaining = pipelines.filter((p) => p.id !== pipelineId)
+      setPipelines(remaining)
+
+      if (selectedPipelineId === pipelineId.toString()) {
+        if (remaining.length > 0) {
+          setSelectedPipelineId(remaining[0].id.toString())
+        } else {
+          setSelectedPipelineId("")
+          setStages([])
+          setOpportunities([])
+        }
+      }
+
+      closeDialog()
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } }
+      setDeleteError(
+        error.response?.data?.error ||
+        "Nao foi possivel excluir o pipeline. Verifique se nao ha oportunidades vinculadas."
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const closeDialog = () => {
+    setActiveDialog({ type: "none" })
+    setPipelineName("")
+    setDeleteError("")
+    setFormData({ contactId: "", stageId: "", title: "", value: "" })
+  }
+
+  const openCreatePipelineDialog = () => {
+    setPipelineName("")
+    setActiveDialog({ type: "create-pipeline" })
+  }
+
+  const openEditPipelineDialog = () => {
+    const current = pipelines.find((p) => p.id.toString() === selectedPipelineId)
+    if (!current) return
+    setPipelineName(current.name)
+    setActiveDialog({ type: "edit-pipeline", pipeline: current })
+  }
+
+  const openDeletePipelineDialog = () => {
+    const current = pipelines.find((p) => p.id.toString() === selectedPipelineId)
+    if (!current) return
+    setDeleteError("")
+    setActiveDialog({ type: "delete-pipeline", pipeline: current })
+  }
+
+  const openCreateOpportunityDialog = () => {
     if (stages.length > 0) {
-      const sortedStages = [...stages].sort((a, b) => a.order - b.order)
+      const sorted = [...stages].sort((a, b) => a.order - b.order)
       setFormData({
         contactId: "",
-        stageId: sortedStages[0].id.toString(),
+        stageId: sorted[0].id.toString(),
         title: "",
         value: ""
       })
     }
-    setDialogOpen(true)
+    setActiveDialog({ type: "create-opportunity" })
   }
 
   const sortedStages = [...stages].sort((a, b) => a.order - b.order)
+  const selectedPipeline = pipelines.find(
+    (p) => p.id.toString() === selectedPipelineId
+  )
 
   return (
     <div className="space-y-6 p-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-[#0A0A0A]">CRM</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Select value={selectedPipelineId} onValueChange={setSelectedPipelineId}>
             <SelectTrigger className="w-[250px]">
               <SelectValue placeholder="Selecione um pipeline" />
@@ -241,7 +371,36 @@ export function PipelineView() {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={handleOpenDialog} disabled={stages.length === 0}>
+
+          {selectedPipeline && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className="h-9 w-9">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={openEditPipelineDialog}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar pipeline
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={openDeletePipelineDialog}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir pipeline
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          <Button variant="outline" onClick={openCreatePipelineDialog}>
+            <Plus className="h-4 w-4" />
+            Novo Pipeline
+          </Button>
+
+          <Button onClick={openCreateOpportunityDialog} disabled={stages.length === 0}>
             <Plus className="h-4 w-4" />
             Nova Oportunidade
           </Button>
@@ -261,12 +420,155 @@ export function PipelineView() {
       ) : (
         <div className="flex min-h-[400px] items-center justify-center rounded-[2rem] border border-gray-200 bg-white">
           <p className="text-gray-500">
-            Selecione um pipeline para visualizar o funil
+            {pipelines.length === 0
+              ? "Crie um pipeline para comecar"
+              : "Selecione um pipeline para visualizar o funil"}
           </p>
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Create Pipeline Dialog */}
+      <Dialog
+        open={activeDialog.type === "create-pipeline"}
+        onOpenChange={(open) => { if (!open) closeDialog() }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Pipeline</DialogTitle>
+            <DialogDescription>
+              Crie um novo pipeline para organizar suas oportunidades
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreatePipeline} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="pipeline-name">
+                Nome <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="pipeline-name"
+                type="text"
+                value={pipelineName}
+                onChange={(e) => setPipelineName(e.target.value)}
+                placeholder="Ex: Vendas, Onboarding, Suporte"
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                rounded="sm"
+                onClick={closeDialog}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                rounded="sm"
+                disabled={!pipelineName.trim() || isSaving}
+              >
+                {isSaving ? "Criando..." : "Criar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Pipeline Dialog */}
+      <Dialog
+        open={activeDialog.type === "edit-pipeline"}
+        onOpenChange={(open) => { if (!open) closeDialog() }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Pipeline</DialogTitle>
+            <DialogDescription>
+              Altere o nome do pipeline
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleEditPipeline} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-pipeline-name">
+                Nome <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="edit-pipeline-name"
+                type="text"
+                value={pipelineName}
+                onChange={(e) => setPipelineName(e.target.value)}
+                placeholder="Nome do pipeline"
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                rounded="sm"
+                onClick={closeDialog}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                rounded="sm"
+                disabled={!pipelineName.trim() || isSaving}
+              >
+                {isSaving ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Pipeline Dialog */}
+      <Dialog
+        open={activeDialog.type === "delete-pipeline"}
+        onOpenChange={(open) => { if (!open) closeDialog() }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Pipeline</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir o pipeline{" "}
+              <strong>
+                {activeDialog.type === "delete-pipeline"
+                  ? activeDialog.pipeline.name
+                  : ""}
+              </strong>
+              ? Esta acao nao pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteError && (
+            <p className="text-sm text-red-600">{deleteError}</p>
+          )}
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              rounded="sm"
+              onClick={closeDialog}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              rounded="sm"
+              onClick={handleDeletePipeline}
+              disabled={isSaving}
+            >
+              {isSaving ? "Excluindo..." : "Excluir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Opportunity Dialog */}
+      <Dialog
+        open={activeDialog.type === "create-opportunity"}
+        onOpenChange={(open) => { if (!open) closeDialog() }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Nova Oportunidade</DialogTitle>
@@ -282,10 +584,7 @@ export function PipelineView() {
               <Select
                 value={formData.contactId}
                 onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    contactId: value
-                  })
+                  setFormData({ ...formData, contactId: value })
                 }
               >
                 <SelectTrigger id="contact">
@@ -308,10 +607,7 @@ export function PipelineView() {
               <Select
                 value={formData.stageId}
                 onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    stageId: value
-                  })
+                  setFormData({ ...formData, stageId: value })
                 }
               >
                 <SelectTrigger id="stage">
@@ -334,10 +630,7 @@ export function PipelineView() {
                 type="text"
                 value={formData.title}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    title: e.target.value
-                  })
+                  setFormData({ ...formData, title: e.target.value })
                 }
                 placeholder="Digite um titulo (opcional)"
               />
@@ -352,10 +645,7 @@ export function PipelineView() {
                 min="0"
                 value={formData.value}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    value: e.target.value
-                  })
+                  setFormData({ ...formData, value: e.target.value })
                 }
                 placeholder="0.00"
               />
@@ -366,7 +656,7 @@ export function PipelineView() {
                 type="button"
                 variant="outline"
                 rounded="sm"
-                onClick={() => setDialogOpen(false)}
+                onClick={closeDialog}
               >
                 Cancelar
               </Button>
