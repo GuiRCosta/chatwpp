@@ -377,6 +377,50 @@ export interface TenantWebhook {
   updatedAt: string
 }
 
+// Macros
+export type MacroActionType =
+  | "send_message"
+  | "assign_agent"
+  | "add_tag"
+  | "remove_tag"
+  | "close_ticket"
+  | "reopen_ticket"
+  | "send_webhook"
+  | "send_notification"
+
+export interface MacroAction {
+  type: MacroActionType
+  params: Record<string, unknown>
+}
+
+export interface Macro {
+  id: number
+  name: string
+  description?: string | null
+  actions: MacroAction[]
+  visibility: "personal" | "global"
+  createdById: number
+  createdBy?: Pick<User, "id" | "name">
+  isActive: boolean
+  tenantId: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface MacroExecutionResult {
+  ticketId: number
+  result: {
+    totalActions: number
+    succeeded: number
+    failed: number
+    results: Array<{
+      type: MacroActionType
+      success: boolean
+      error?: string
+    }>
+  }
+}
+
 // Todo Lists
 export interface TodoList {
   id: number

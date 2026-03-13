@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/Button"
 import { ScrollArea } from "@/components/ui/ScrollArea"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/Avatar"
+import { ExecuteMacroDropdown } from "@/components/macros/ExecuteMacroDropdown"
 import type { Ticket, Message } from "@/types"
 
 interface ChatPanelProps {
@@ -284,6 +285,8 @@ export default function ChatPanel({ ticket }: ChatPanelProps) {
                 {statusLabels[ticket.status]}
               </span>
             </div>
+
+            <ExecuteMacroDropdown ticketId={ticket.id} />
 
             <Button
               variant="ghost"

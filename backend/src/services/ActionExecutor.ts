@@ -1,0 +1,259 @@
+import { Op } from "sequelize"
+
+import Ticket from "../models/Ticket"
+import User from "../models/User"
+import Tag from "../models/Tag"
+import ContactTag from "../models/ContactTag"
+import { getQueue } from "../libs/queues"
+import { QUEUE_NAME as WEBHOOK_QUEUE } from "../jobs/WebhookDispatchJob"
+import * as MessageService from "./MessageService"
+import * as TicketService from "./TicketService"
+import * as NotificationService from "./NotificationService"
+import { logger } from "../helpers/logger"
+
+export interface MacroAction {
+  type: string
+  params: Record<string, unknown>
+}
+
+export interface ActionContext {
+  ticketId: number
+  tenantId: number
+  userId: number
+}
+
+export interface ActionResult {
+  type: string
+  success: boolean
+  error?: string
+}
+
+export interface ExecutionResult {
+  totalActions: number
+  succeeded: number
+  failed: number
+  results: ActionResult[]
+}
+
+type ActionHandler = (
+  ctx: ActionContext,
+  params: Record<string, unknown>
+) => Promise<void>
+
+async function handleSendMessage(
+  ctx: ActionContext,
+  params: Record<string, unknown>
+): Promise<void> {
+  const body = String(params.body || "")
+  if (!body.trim()) {
+    throw new Error("Message body is empty")
+  }
+
+  await MessageService.createMessage(ctx.ticketId, ctx.tenantId, {
+    body,
+    fromMe: true
+  })
+}
+
+async function handleAssignAgent(
+  ctx: ActionContext,
+  params: Record<string, unknown>
+): Promise<void> {
+  const targetUserId = Number(params.userId)
+  if (!targetUserId) {
+    throw new Error("userId is required for assign_agent")
+  }
+
+  const agent = await User.findOne({
+    where: { id: targetUserId, tenantId: ctx.tenantId }
+  })
+  if (!agent) {
+    throw new Error(`Agent ${targetUserId} not found in this tenant`)
+  }
+
+  await TicketService.updateTicket(
+    ctx.ticketId,
+    ctx.tenantId,
+    ctx.userId,
+    { userId: targetUserId }
+  )
+}
+
+async function handleAddTag(
+  ctx: ActionContext,
+  params: Record<string, unknown>
+): Promise<void> {
+  const tagIds = params.tagIds as number[]
+  if (!Array.isArray(tagIds) || tagIds.length === 0) {
+    throw new Error("tagIds array is required for add_tag")
+  }
+
+  const ticket = await Ticket.findOne({
+    where: { id: ctx.ticketId, tenantId: ctx.tenantId }
+  })
+  if (!ticket) {
+    throw new Error("Ticket not found")
+  }
+
+  const validTags = await Tag.findAll({
+    where: { id: tagIds, tenantId: ctx.tenantId }
+  })
+
+  if (validTags.length === 0) {
+    throw new Error("No valid tags found for this tenant")
+  }
+
+  const entries = validTags.map((tag) => ({
+    contactId: ticket.contactId,
+    tagId: tag.id
+  }))
+
+  await ContactTag.bulkCreate(entries, { ignoreDuplicates: true })
+}
+
+async function handleRemoveTag(
+  ctx: ActionContext,
+  params: Record<string, unknown>
+): Promise<void> {
+  const tagIds = params.tagIds as number[]
+  if (!Array.isArray(tagIds) || tagIds.length === 0) {
+    throw new Error("tagIds array is required for remove_tag")
+  }
+
+  const ticket = await Ticket.findOne({
+    where: { id: ctx.ticketId, tenantId: ctx.tenantId }
+  })
+  if (!ticket) {
+    throw new Error("Ticket not found")
+  }
+
+  await ContactTag.destroy({
+    where: { contactId: ticket.contactId, tagId: tagIds }
+  })
+}
+
+async function handleCloseTicket(ctx: ActionContext): Promise<void> {
+  await TicketService.updateTicket(
+    ctx.ticketId,
+    ctx.tenantId,
+    ctx.userId,
+    { status: "closed" }
+  )
+}
+
+async function handleReopenTicket(ctx: ActionContext): Promise<void> {
+  await TicketService.updateTicket(
+    ctx.ticketId,
+    ctx.tenantId,
+    ctx.userId,
+    { status: "open" }
+  )
+}
+
+async function handleSendWebhook(
+  ctx: ActionContext,
+  params: Record<string, unknown>
+): Promise<void> {
+  const url = String(params.url || "")
+  if (!url) {
+    throw new Error("url is required for send_webhook")
+  }
+
+  const ticket = await Ticket.findByPk(ctx.ticketId)
+
+  const queue = getQueue(WEBHOOK_QUEUE)
+  await queue.add({
+    url,
+    secret: null,
+    event: "macro_webhook",
+    payload: {
+      ticketId: ctx.ticketId,
+      tenantId: ctx.tenantId,
+      triggeredBy: ctx.userId,
+      ticketStatus: ticket?.status,
+      contactId: ticket?.contactId
+    }
+  })
+}
+
+async function handleSendNotification(
+  ctx: ActionContext,
+  params: Record<string, unknown>
+): Promise<void> {
+  const title = String(params.title || "Macro Notification")
+  const message = String(params.message || "")
+
+  const admins = await User.findAll({
+    where: {
+      tenantId: ctx.tenantId,
+      profile: { [Op.in]: ["admin", "superadmin"] }
+    },
+    attributes: ["id"]
+  })
+
+  const promises = admins.map((admin) =>
+    NotificationService.createNotification(ctx.tenantId, {
+      userId: admin.id,
+      title,
+      message
+    })
+  )
+
+  await Promise.allSettled(promises)
+}
+
+const ACTION_HANDLERS: Record<string, ActionHandler> = {
+  send_message: handleSendMessage,
+  assign_agent: handleAssignAgent,
+  add_tag: handleAddTag,
+  remove_tag: handleRemoveTag,
+  close_ticket: (ctx) => handleCloseTicket(ctx),
+  reopen_ticket: (ctx) => handleReopenTicket(ctx),
+  send_webhook: handleSendWebhook,
+  send_notification: handleSendNotification
+}
+
+export async function executeActions(
+  actions: MacroAction[],
+  context: ActionContext
+): Promise<ExecutionResult> {
+  const results: ActionResult[] = []
+
+  for (const action of actions) {
+    const handler = ACTION_HANDLERS[action.type]
+    if (!handler) {
+      results.push({
+        type: action.type,
+        success: false,
+        error: `Unknown action type: ${action.type}`
+      })
+      continue
+    }
+
+    try {
+      await handler(context, action.params)
+      results.push({ type: action.type, success: true })
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error"
+
+      logger.error(
+        "ActionExecutor: Action %s failed for ticket %d: %s",
+        action.type,
+        context.ticketId,
+        errorMessage
+      )
+
+      results.push({
+        type: action.type,
+        success: false,
+        error: errorMessage
+      })
+    }
+  }
+
+  const succeeded = results.filter((r) => r.success).length
+  const failed = results.filter((r) => !r.success).length
+
+  return { totalActions: actions.length, succeeded, failed, results }
+}

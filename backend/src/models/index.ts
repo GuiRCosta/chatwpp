@@ -31,6 +31,7 @@ import BulkDispatch from "./BulkDispatch"
 import UserWhatsApp from "./UserWhatsApp"
 import MessageTemplate from "./MessageTemplate"
 import TenantWebhook from "./TenantWebhook"
+import Macro from "./Macro"
 
 const models = [
   Tenant,
@@ -65,7 +66,8 @@ const models = [
   BulkDispatch,
   UserWhatsApp,
   MessageTemplate,
-  TenantWebhook
+  TenantWebhook,
+  Macro
 ]
 
 export {
@@ -101,7 +103,8 @@ export {
   BulkDispatch,
   UserWhatsApp,
   MessageTemplate,
-  TenantWebhook
+  TenantWebhook,
+  Macro
 }
 
 export default models

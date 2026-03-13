@@ -10,6 +10,7 @@ import { ContactList, ContactForm } from "@/pages/contacts"
 import { PipelineView } from "@/pages/crm/PipelineView"
 import { CampaignList } from "@/pages/campaigns/CampaignList"
 import { CampaignDetail } from "@/pages/campaigns/CampaignDetail"
+import { MacroList } from "@/pages/macros"
 import { Settings } from "@/pages/settings/Settings"
 import { Profile } from "@/pages/Profile"
 import { Notifications } from "@/pages/Notifications"
@@ -74,6 +75,7 @@ export default function App() {
         <Route path="campaigns/new" element={<CampaignList />} />
         <Route path="campaigns/:id" element={<CampaignDetail />} />
         <Route path="campaigns/:id/edit" element={<CampaignList />} />
+        <Route path="macros" element={<MacroList />} />
         <Route path="settings" element={<SuperAdminRoute><Settings /></SuperAdminRoute>} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="profile" element={<Profile />} />
