@@ -16,7 +16,14 @@ const actionSchema = yup.object().shape({
     .string()
     .oneOf(actionTypes, "Invalid action type")
     .required("Action type is required"),
-  params: yup.object().required("Action params are required")
+  params: yup
+    .mixed()
+    .test(
+      "is-object",
+      "Action params must be an object",
+      (val) => val !== null && typeof val === "object" && !Array.isArray(val)
+    )
+    .required("Action params are required")
 })
 
 export const createMacroSchema = yup.object().shape({
