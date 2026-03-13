@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Plus, MoreVertical, Pencil, Trash2 } from "lucide-react"
+import { Plus, MoreVertical, Pencil, Trash2, Settings2 } from "lucide-react"
 import { Button } from "@/components/ui/Button"
 import {
   Select,
@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/Input"
 import { Label } from "@/components/ui/Label"
 import { KanbanBoard } from "./KanbanBoard"
+import { StageManagerDialog } from "./StageManagerDialog"
 import api from "@/lib/api"
 import type {
   Pipeline,
@@ -51,6 +52,7 @@ type PipelineDialog =
   | { type: "create-pipeline" }
   | { type: "edit-pipeline"; pipeline: Pipeline }
   | { type: "delete-pipeline"; pipeline: Pipeline }
+  | { type: "manage-stages" }
   | { type: "create-opportunity" }
 
 export function PipelineView() {
@@ -380,6 +382,10 @@ export function PipelineView() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setActiveDialog({ type: "manage-stages" })}>
+                  <Settings2 className="mr-2 h-4 w-4" />
+                  Gerenciar etapas
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={openEditPipelineDialog}>
                   <Pencil className="mr-2 h-4 w-4" />
                   Editar pipeline
@@ -563,6 +569,18 @@ export function PipelineView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Manage Stages Dialog */}
+      {selectedPipeline && (
+        <StageManagerDialog
+          open={activeDialog.type === "manage-stages"}
+          onClose={closeDialog}
+          pipelineId={selectedPipeline.id}
+          pipelineName={selectedPipeline.name}
+          stages={stages}
+          onStagesChanged={fetchPipelineData}
+        />
+      )}
 
       {/* Create Opportunity Dialog */}
       <Dialog

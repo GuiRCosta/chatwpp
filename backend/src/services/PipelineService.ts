@@ -116,3 +116,82 @@ export const deletePipeline = async (id: number, tenantId: number): Promise<void
 
   emitToTenant(tenantId, "pipeline:deleted", { id })
 }
+
+export const createPipelineStage = async (
+  pipelineId: number,
+  tenantId: number,
+  data: { name: string; order: number; color?: string }
+): Promise<Stage> => {
+  const pipeline = await Pipeline.findOne({ where: { id: pipelineId, tenantId } })
+
+  if (!pipeline) {
+    throw new AppError("Pipeline not found", 404)
+  }
+
+  const stage = await Stage.create({
+    pipelineId,
+    kanbanId: null,
+    name: data.name,
+    color: data.color || "#6B7280",
+    order: data.order
+  })
+
+  emitToTenant(tenantId, "stage:created", stage)
+
+  return stage
+}
+
+export const updatePipelineStage = async (
+  pipelineId: number,
+  stageId: number,
+  tenantId: number,
+  data: { name?: string; order?: number; color?: string }
+): Promise<Stage> => {
+  const pipeline = await Pipeline.findOne({ where: { id: pipelineId, tenantId } })
+
+  if (!pipeline) {
+    throw new AppError("Pipeline not found", 404)
+  }
+
+  const stage = await Stage.findOne({ where: { id: stageId, pipelineId } })
+
+  if (!stage) {
+    throw new AppError("Stage not found", 404)
+  }
+
+  await stage.update(data)
+
+  emitToTenant(tenantId, "stage:updated", stage)
+
+  return stage
+}
+
+export const deletePipelineStage = async (
+  pipelineId: number,
+  stageId: number,
+  tenantId: number
+): Promise<void> => {
+  const pipeline = await Pipeline.findOne({ where: { id: pipelineId, tenantId } })
+
+  if (!pipeline) {
+    throw new AppError("Pipeline not found", 404)
+  }
+
+  const stage = await Stage.findOne({ where: { id: stageId, pipelineId } })
+
+  if (!stage) {
+    throw new AppError("Stage not found", 404)
+  }
+
+  const opportunitiesCount = await Opportunity.count({
+    where: { stageId }
+  })
+
+  if (opportunitiesCount > 0) {
+    throw new AppError("Nao e possivel excluir etapa com oportunidades vinculadas", 409)
+  }
+
+  await stage.destroy()
+
+  emitToTenant(tenantId, "stage:deleted", { id: stageId, pipelineId })
+}

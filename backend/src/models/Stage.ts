@@ -25,7 +25,7 @@ export default class Stage extends Model {
 
   @ForeignKey(() => Kanban)
   @Column
-  kanbanId!: number
+  kanbanId!: number | null
 
   @ForeignKey(() => Pipeline)
   @Column
