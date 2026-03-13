@@ -4,6 +4,7 @@ import Ticket from "../models/Ticket"
 import User from "../models/User"
 import Tag from "../models/Tag"
 import ContactTag from "../models/ContactTag"
+import Opportunity from "../models/Opportunity"
 import { getQueue } from "../libs/queues"
 import { QUEUE_NAME as WEBHOOK_QUEUE } from "../jobs/WebhookDispatchJob"
 import * as MessageService from "./MessageService"
@@ -222,6 +223,24 @@ async function handleCreateOpportunity(
   })
   if (!ticket) {
     throw new Error("Ticket not found")
+  }
+
+  const existing = await Opportunity.findOne({
+    where: {
+      tenantId: ctx.tenantId,
+      contactId: ticket.contactId,
+      pipelineId,
+      status: "open"
+    }
+  })
+
+  if (existing) {
+    logger.info(
+      "ActionExecutor: Skipping create_opportunity — contact %d already has open opportunity in pipeline %d",
+      ticket.contactId,
+      pipelineId
+    )
+    return
   }
 
   await OpportunityService.createOpportunity(ctx.tenantId, {
