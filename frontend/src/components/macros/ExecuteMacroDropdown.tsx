@@ -50,8 +50,12 @@ export function ExecuteMacroDropdown({ ticketId }: ExecuteMacroDropdownProps) {
       if (response.data.success) {
         const executionResult = response.data.data[0]?.result
         if (executionResult && executionResult.failed > 0) {
-          toast.success(
-            `"${macroName}": ${executionResult.succeeded}/${executionResult.totalActions} acoes executadas`
+          const failedActions = executionResult.results
+            .filter((r) => !r.success)
+            .map((r) => r.error || r.type)
+            .join(", ")
+          toast.error(
+            `"${macroName}": ${executionResult.failed} acao(oes) falharam — ${failedActions}`
           )
         } else {
           toast.success(`"${macroName}" executada com sucesso`)
