@@ -79,7 +79,8 @@ export const createMessage = async (ticketId: number, tenantId: number, data: {
   await ticket.update({
     lastMessage: data.body.substring(0, 255),
     lastMessageAt: new Date(),
-    unreadMessages: data.fromMe ? ticket.unreadMessages : ticket.unreadMessages + 1
+    unreadMessages: data.fromMe ? ticket.unreadMessages : ticket.unreadMessages + 1,
+    ...(ticket.status === "closed" && data.fromMe ? { status: "open" } : {})
   })
 
   const createdMessage = await Message.findByPk(message.id, {
