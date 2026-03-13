@@ -13,7 +13,7 @@ import type { DataTableColumn } from "@/components/shared"
 import { MacroForm } from "./MacroForm"
 import { toast } from "sonner"
 import api from "@/lib/api"
-import type { Macro, ApiResponse } from "@/types"
+import type { Macro, WhatsApp, ApiResponse } from "@/types"
 
 type VisibilityFilter = "all" | "personal" | "global"
 
@@ -26,10 +26,23 @@ export function MacroList() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingMacro, setEditingMacro] = useState<Macro | undefined>()
 
+  const [whatsapps, setWhatsapps] = useState<WhatsApp[]>([])
+
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean
     macro: Macro | null
   }>({ open: false, macro: null })
+
+  useEffect(() => {
+    api
+      .get<ApiResponse<WhatsApp[]>>("/whatsapp")
+      .then((res) => {
+        if (res.data.success) setWhatsapps(res.data.data)
+      })
+      .catch(() => {})
+  }, [])
+
+  const whatsappMap = new Map(whatsapps.map((wa) => [wa.id, wa.name]))
 
   const fetchMacros = useCallback(async () => {
     try {
@@ -101,6 +114,28 @@ export function MacroList() {
           {macro.visibility === "global" ? "Global" : "Pessoal"}
         </Badge>
       )
+    },
+    {
+      key: "connections",
+      label: "Conexao",
+      hiddenOnMobile: true,
+      render: (macro) => {
+        if (!macro.whatsappIds || macro.whatsappIds.length === 0) {
+          return <span className="text-gray-400">Todas</span>
+        }
+        const names = macro.whatsappIds
+          .map((id) => whatsappMap.get(id))
+          .filter(Boolean)
+        return (
+          <div className="flex flex-wrap gap-1">
+            {names.map((name) => (
+              <Badge key={name} variant="outline" className="text-xs">
+                {name}
+              </Badge>
+            ))}
+          </div>
+        )
+      }
     },
     {
       key: "actionsCount",
