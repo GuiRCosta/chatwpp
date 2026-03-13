@@ -33,12 +33,13 @@ interface OpportunityCardProps {
 }
 
 function OpportunityCard({ opportunity, isDragging = false }: OpportunityCardProps) {
-  const formatCurrency = (value?: number) => {
-    if (!value) return "R$ 0,00"
+  const formatCurrency = (value?: number | string | null) => {
+    const num = Number(value)
+    if (!num || isNaN(num)) return "R$ 0,00"
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL"
-    }).format(value)
+    }).format(num)
   }
 
   return (
@@ -133,7 +134,7 @@ function KanbanColumn({ stage, opportunities, isOver }: KanbanColumnProps) {
   )
 
   const totalValue = stageOpportunities.reduce(
-    (sum, opp) => sum + (opp.value || 0),
+    (sum, opp) => sum + (Number(opp.value) || 0),
     0
   )
 
