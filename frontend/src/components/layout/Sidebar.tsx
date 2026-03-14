@@ -28,7 +28,7 @@ import {
 import { useEffect } from "react"
 
 const navItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, adminOnly: true },
   { name: "Tickets", href: "/tickets", icon: MessageSquare },
   { name: "Contatos", href: "/contacts", icon: Users },
   { name: "CRM", href: "/crm", icon: Kanban },
@@ -42,6 +42,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { user, logout } = useAuthStore()
   const { collapsed } = useSidebarStore()
   const isMobile = useIsMobile()
+  const isAdmin = user?.profile === "admin" || user?.profile === "superadmin"
   const isSuperAdmin = user?.profile === "superadmin"
 
   const isExpanded = isMobile || !collapsed
@@ -87,7 +88,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Navigation */}
       <nav className="flex-1 px-3">
         <ul className="space-y-1">
-          {navItems.map((item) => (
+          {navItems.filter((item) => !item.adminOnly || isAdmin).map((item) => (
             <li key={item.href}>
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>

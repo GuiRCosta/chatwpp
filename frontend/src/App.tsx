@@ -43,9 +43,15 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore((s) => s.user)
+  const isAdmin = user?.profile === "admin" || user?.profile === "superadmin"
+  return isAdmin ? <>{children}</> : <Navigate to="/tickets" replace />
+}
+
 function SuperAdminRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user)
-  return user?.profile === "superadmin" ? <>{children}</> : <Navigate to="/dashboard" replace />
+  return user?.profile === "superadmin" ? <>{children}</> : <Navigate to="/tickets" replace />
 }
 
 export default function App() {
@@ -65,8 +71,8 @@ export default function App() {
           </PrivateRoute>
         }
       >
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
+        <Route index element={<Navigate to="/tickets" replace />} />
+        <Route path="dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
         <Route path="tickets" element={<TicketList />} />
         <Route path="contacts" element={<ContactList />} />
         <Route path="contacts/new" element={<ContactForm />} />
