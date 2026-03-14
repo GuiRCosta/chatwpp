@@ -7,6 +7,8 @@ import User from "../models/User"
 import Queue from "../models/Queue"
 import WhatsApp from "../models/WhatsApp"
 import Message from "../models/Message"
+import Opportunity from "../models/Opportunity"
+import Stage from "../models/Stage"
 import TicketLog from "../models/TicketLog"
 import TicketNote from "../models/TicketNote"
 import { AppError } from "../helpers/AppError"
@@ -66,7 +68,25 @@ export const listTickets = async ({
     {
       model: Contact,
       as: "contact",
-      attributes: ["id", "name", "number", "profilePicUrl"]
+      attributes: ["id", "name", "number", "profilePicUrl"],
+      include: [
+        {
+          model: Opportunity,
+          as: "opportunities",
+          where: { status: "open" },
+          required: false,
+          limit: 1,
+          order: [["createdAt", "DESC"]],
+          attributes: ["id", "stageId"],
+          include: [
+            {
+              model: Stage,
+              as: "stage",
+              attributes: ["id", "name", "color"]
+            }
+          ]
+        }
+      ]
     },
     {
       model: User,

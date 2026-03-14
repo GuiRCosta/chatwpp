@@ -15,6 +15,7 @@ import {
 
 import Tenant from "./Tenant"
 import Ticket from "./Ticket"
+import Opportunity from "./Opportunity"
 import ContactTag from "./ContactTag"
 import CampaignContact from "./CampaignContact"
 
@@ -74,6 +75,9 @@ export default class Contact extends Model {
 
   @HasMany(() => Ticket)
   tickets!: Ticket[]
+
+  @HasMany(() => Opportunity)
+  opportunities!: Opportunity[]
 
   @HasMany(() => ContactTag)
   contactTags!: ContactTag[]

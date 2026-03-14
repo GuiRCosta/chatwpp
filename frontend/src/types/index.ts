@@ -48,6 +48,7 @@ export interface Contact {
   tenantId: number
   isGroup: boolean
   tags?: Tag[]
+  opportunities?: { id: number; stageId: number; stage?: { id: number; name: string; color: string } }[]
   createdAt: string
   updatedAt: string
 }

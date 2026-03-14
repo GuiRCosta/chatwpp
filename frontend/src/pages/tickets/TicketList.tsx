@@ -83,7 +83,7 @@ function TicketCard({ ticket, isSelected, onClick }: {
           </p>
 
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <div className={cn("w-2 h-2 rounded-full", statusColors[ticket.status])} />
               <span className="text-xs text-gray-500">
                 {statusLabels[ticket.status]}
@@ -91,6 +91,18 @@ function TicketCard({ ticket, isSelected, onClick }: {
               {ticket.whatsapp?.name && (
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                   {ticket.whatsapp.name}
+                </Badge>
+              )}
+              {ticket.contact?.opportunities?.[0]?.stage && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] px-1.5 py-0"
+                  style={{
+                    borderColor: ticket.contact.opportunities[0].stage.color,
+                    color: ticket.contact.opportunities[0].stage.color
+                  }}
+                >
+                  {ticket.contact.opportunities[0].stage.name}
                 </Badge>
               )}
             </div>
