@@ -75,8 +75,6 @@ export const listTickets = async ({
           as: "opportunities",
           where: { status: "open" },
           required: false,
-          limit: 1,
-          order: [["createdAt", "DESC"]],
           attributes: ["id", "stageId"],
           include: [
             {

@@ -95,6 +95,7 @@ export function CampaignList() {
       setCampaigns([])
       setTotal(0)
       setHasMore(false)
+      toast.error("Erro ao carregar campanhas")
     } finally {
       setIsLoading(false)
     }

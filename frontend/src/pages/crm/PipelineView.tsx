@@ -98,7 +98,7 @@ export function PipelineView() {
         }
       }
     } catch {
-      setPipelines([])
+      toast.error("Erro ao carregar pipelines")
     }
   }
 
@@ -138,6 +138,7 @@ export function PipelineView() {
     } catch {
       setStages([])
       setOpportunities([])
+      toast.error("Erro ao carregar dados do pipeline")
     } finally {
       setIsLoading(false)
     }
@@ -159,7 +160,7 @@ export function PipelineView() {
         )
       }
     } catch {
-      setContacts([])
+      toast.error("Erro ao carregar contatos")
     }
   }
 
