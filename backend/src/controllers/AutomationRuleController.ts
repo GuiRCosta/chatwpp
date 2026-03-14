@@ -56,6 +56,7 @@ export const store = async (
       eventName: string
       conditions: AutomationCondition[]
       actions: AutomationAction[]
+      whatsappIds?: number[] | null
     }
   )
 
@@ -84,6 +85,7 @@ export const update = async (
       conditions?: AutomationCondition[]
       actions?: AutomationAction[]
       isActive?: boolean
+      whatsappIds?: number[] | null
     }
   )
 
