@@ -32,9 +32,9 @@ const navItems = [
   { name: "Tickets", href: "/tickets", icon: MessageSquare },
   { name: "Contatos", href: "/contacts", icon: Users },
   { name: "CRM", href: "/crm", icon: Kanban },
-  { name: "Campanhas", href: "/campaigns", icon: Megaphone },
-  { name: "Macros", href: "/macros", icon: Zap },
-  { name: "Automacoes", href: "/automations", icon: Bot },
+  { name: "Campanhas", href: "/campaigns", icon: Megaphone, adminOnly: true },
+  { name: "Macros", href: "/macros", icon: Zap, adminOnly: true },
+  { name: "Automacoes", href: "/automations", icon: Bot, adminOnly: true },
 ]
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {

@@ -78,12 +78,12 @@ export default function App() {
         <Route path="contacts/new" element={<ContactForm />} />
         <Route path="contacts/:id/edit" element={<ContactForm />} />
         <Route path="crm" element={<PipelineView />} />
-        <Route path="campaigns" element={<CampaignList />} />
-        <Route path="campaigns/new" element={<CampaignList />} />
-        <Route path="campaigns/:id" element={<CampaignDetail />} />
-        <Route path="campaigns/:id/edit" element={<CampaignList />} />
-        <Route path="macros" element={<MacroList />} />
-        <Route path="automations" element={<AutomationList />} />
+        <Route path="campaigns" element={<AdminRoute><CampaignList /></AdminRoute>} />
+        <Route path="campaigns/new" element={<AdminRoute><CampaignList /></AdminRoute>} />
+        <Route path="campaigns/:id" element={<AdminRoute><CampaignDetail /></AdminRoute>} />
+        <Route path="campaigns/:id/edit" element={<AdminRoute><CampaignList /></AdminRoute>} />
+        <Route path="macros" element={<AdminRoute><MacroList /></AdminRoute>} />
+        <Route path="automations" element={<AdminRoute><AutomationList /></AdminRoute>} />
         <Route path="settings" element={<SuperAdminRoute><Settings /></SuperAdminRoute>} />
         <Route path="notifications" element={<Notifications />} />
         <Route path="profile" element={<Profile />} />
