@@ -74,7 +74,11 @@ export const createAutomationRuleSchema = yup.object().shape({
     .of(actionSchema)
     .min(1, "At least one action is required")
     .max(20, "Maximum 20 actions allowed")
-    .required("Actions are required")
+    .required("Actions are required"),
+  whatsappIds: yup
+    .array()
+    .of(yup.number().integer().positive())
+    .nullable()
 })
 
 export const updateAutomationRuleSchema = yup.object().shape({
@@ -90,5 +94,9 @@ export const updateAutomationRuleSchema = yup.object().shape({
     .of(actionSchema)
     .min(1, "At least one action is required")
     .max(20, "Maximum 20 actions allowed"),
-  isActive: yup.boolean()
+  isActive: yup.boolean(),
+  whatsappIds: yup
+    .array()
+    .of(yup.number().integer().positive())
+    .nullable()
 })

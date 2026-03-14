@@ -56,6 +56,7 @@ export const createAutomationRule = async (
     eventName: string
     conditions: AutomationCondition[]
     actions: AutomationAction[]
+    whatsappIds?: number[] | null
   }
 ): Promise<AutomationRule> => {
   const existing = await AutomationRule.findOne({
@@ -71,7 +72,8 @@ export const createAutomationRule = async (
     description: data.description || null,
     eventName: data.eventName,
     conditions: data.conditions,
-    actions: data.actions
+    actions: data.actions,
+    whatsappIds: data.whatsappIds || null
   })
 
   await invalidateRulesCache(tenantId)
@@ -90,6 +92,7 @@ export const updateAutomationRule = async (
     conditions?: AutomationCondition[]
     actions?: AutomationAction[]
     isActive?: boolean
+    whatsappIds?: number[] | null
   }
 ): Promise<AutomationRule> => {
   const rule = await AutomationRule.findOne({ where: { id, tenantId } })

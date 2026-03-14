@@ -13,7 +13,7 @@ import type { DataTableColumn } from "@/components/shared"
 import { AutomationForm } from "./AutomationForm"
 import { toast } from "sonner"
 import api from "@/lib/api"
-import type { AutomationRule, AutomationEventName, ApiResponse } from "@/types"
+import type { AutomationRule, AutomationEventName, WhatsApp, ApiResponse } from "@/types"
 
 type EventFilter = "all" | AutomationEventName
 
@@ -37,6 +37,18 @@ export function AutomationList() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingRule, setEditingRule] = useState<AutomationRule | undefined>()
+  const [whatsapps, setWhatsapps] = useState<WhatsApp[]>([])
+
+  useEffect(() => {
+    api
+      .get<ApiResponse<WhatsApp[]>>("/whatsapp")
+      .then((res) => {
+        if (res.data.success) setWhatsapps(res.data.data)
+      })
+      .catch(() => {})
+  }, [])
+
+  const whatsappMap = new Map(whatsapps.map((wa) => [wa.id, wa.name]))
 
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean
@@ -123,6 +135,28 @@ export function AutomationList() {
           {EVENT_LABELS[rule.eventName]}
         </Badge>
       )
+    },
+    {
+      key: "connections",
+      label: "Conexao",
+      hiddenOnMobile: true,
+      render: (rule) => {
+        if (!rule.whatsappIds || rule.whatsappIds.length === 0) {
+          return <span className="text-gray-400">Todas</span>
+        }
+        const names = rule.whatsappIds
+          .map((id) => whatsappMap.get(id))
+          .filter(Boolean)
+        return (
+          <div className="flex flex-wrap gap-1">
+            {names.map((name) => (
+              <Badge key={name} variant="outline" className="text-xs">
+                {name}
+              </Badge>
+            ))}
+          </div>
+        )
+      }
     },
     {
       key: "conditions",

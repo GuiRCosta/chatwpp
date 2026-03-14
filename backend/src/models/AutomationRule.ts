@@ -54,6 +54,9 @@ export default class AutomationRule extends Model {
   @Column(DataType.JSONB)
   actions!: AutomationAction[]
 
+  @Column(DataType.ARRAY(DataType.INTEGER))
+  whatsappIds!: number[] | null
+
   @Default(true)
   @Column
   isActive!: boolean

@@ -454,6 +454,7 @@ export interface AutomationRule {
   conditions: AutomationCondition[]
   actions: MacroAction[]
   isActive: boolean
+  whatsappIds?: number[] | null
   tenantId: number
   createdAt: string
   updatedAt: string

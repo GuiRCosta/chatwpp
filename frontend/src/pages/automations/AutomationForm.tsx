@@ -46,7 +46,8 @@ import type {
   AutomationEventName,
   MacroAction,
   MacroActionType,
-  ApiResponse
+  ApiResponse,
+  WhatsApp
 } from "@/types"
 
 interface AutomationFormProps {
@@ -120,8 +121,21 @@ export function AutomationForm({ open, onClose, rule, onSuccess }: AutomationFor
   const [eventName, setEventName] = useState<AutomationEventName>("message_created")
   const [conditions, setConditions] = useState<AutomationCondition[]>([])
   const [actions, setActions] = useState<MacroAction[]>([])
+  const [whatsappIds, setWhatsappIds] = useState<number[]>([])
+  const [whatsapps, setWhatsapps] = useState<WhatsApp[]>([])
   const [isSaving, setIsSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (open) {
+      api
+        .get<ApiResponse<WhatsApp[]>>("/whatsapp")
+        .then((res) => {
+          if (res.data.success) setWhatsapps(res.data.data)
+        })
+        .catch(() => {})
+    }
+  }, [open])
 
   useEffect(() => {
     if (open && rule) {
@@ -130,6 +144,7 @@ export function AutomationForm({ open, onClose, rule, onSuccess }: AutomationFor
       setEventName(rule.eventName)
       setConditions(rule.conditions)
       setActions(rule.actions)
+      setWhatsappIds(rule.whatsappIds || [])
       setErrors({})
     } else if (open) {
       setName("")
@@ -137,9 +152,16 @@ export function AutomationForm({ open, onClose, rule, onSuccess }: AutomationFor
       setEventName("message_created")
       setConditions([])
       setActions([])
+      setWhatsappIds([])
       setErrors({})
     }
   }, [open, rule])
+
+  const toggleWhatsapp = (id: number) => {
+    setWhatsappIds((prev) =>
+      prev.includes(id) ? prev.filter((wId) => wId !== id) : [...prev, id]
+    )
+  }
 
   const addCondition = () => {
     setConditions([
@@ -248,7 +270,8 @@ export function AutomationForm({ open, onClose, rule, onSuccess }: AutomationFor
         description: description.trim() || null,
         eventName,
         conditions,
-        actions
+        actions,
+        whatsappIds: whatsappIds.length > 0 ? whatsappIds : null
       }
 
       if (isEditing) {
@@ -354,6 +377,40 @@ export function AutomationForm({ open, onClose, rule, onSuccess }: AutomationFor
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* WhatsApp Connections */}
+              {whatsapps.length > 0 && (
+                <div>
+                  <Label>
+                    Conexoes{" "}
+                    <span className="text-gray-400">(opcional)</span>
+                  </Label>
+                  <p className="text-xs text-gray-500 mt-0.5 mb-2">
+                    Deixe vazio para funcionar em todas as conexoes
+                  </p>
+                  <div className="space-y-1.5">
+                    {whatsapps.map((wa) => (
+                      <label
+                        key={wa.id}
+                        className="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={whatsappIds.includes(wa.id)}
+                          onChange={() => toggleWhatsapp(wa.id)}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="font-medium">{wa.name}</span>
+                        {wa.number && (
+                          <span className="text-gray-400">
+                            {wa.number}
+                          </span>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Conditions */}
               <div>

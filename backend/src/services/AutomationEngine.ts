@@ -40,11 +40,17 @@ async function getCachedRules(
   return plain as AutomationRule[]
 }
 
+interface BuildContextResult {
+  context: EvaluationContext
+  whatsappId: number | undefined
+}
+
 async function buildContext(
   ticketId: number,
   messageId?: number
-): Promise<EvaluationContext> {
+): Promise<BuildContextResult> {
   const context: EvaluationContext = {}
+  let whatsappId: number | undefined
 
   const ticket = await Ticket.findByPk(ticketId, {
     include: [
@@ -53,6 +59,7 @@ async function buildContext(
   })
 
   if (ticket) {
+    whatsappId = ticket.whatsappId
     context.ticket = {
       status: ticket.status,
       channel: ticket.channel,
@@ -79,7 +86,7 @@ async function buildContext(
     }
   }
 
-  return context
+  return { context, whatsappId }
 }
 
 export async function processAutomation(data: AutomationJobData): Promise<void> {
@@ -100,10 +107,20 @@ export async function processAutomation(data: AutomationJobData): Promise<void> 
   const rules = await getCachedRules(tenantId, eventName)
   if (rules.length === 0) return
 
-  const context = await buildContext(ticketId, messageId)
+  const { context, whatsappId: ticketWhatsappId } = await buildContext(ticketId, messageId)
 
   for (const rule of rules) {
     try {
+      const ruleWhatsappIds = rule.whatsappIds
+      if (
+        ruleWhatsappIds &&
+        ruleWhatsappIds.length > 0 &&
+        ticketWhatsappId &&
+        !ruleWhatsappIds.includes(ticketWhatsappId)
+      ) {
+        continue
+      }
+
       const matches = evaluateConditions(rule.conditions, context)
       if (!matches) continue
 
