@@ -47,27 +47,27 @@ export async function dispatchEvent(
       (wh) => wh.events.includes(event) || wh.events.includes("*")
     )
 
-    if (matching.length === 0) return
+    if (matching.length > 0) {
+      const queue = getQueue(WEBHOOK_QUEUE)
 
-    const queue = getQueue(WEBHOOK_QUEUE)
+      const enqueuePromises = matching.map((wh) =>
+        queue.add({
+          url: wh.url,
+          secret: wh.secret,
+          event,
+          payload: { ...data, tenantId }
+        })
+      )
 
-    const enqueuePromises = matching.map((wh) =>
-      queue.add({
-        url: wh.url,
-        secret: wh.secret,
+      await Promise.all(enqueuePromises)
+
+      logger.debug(
+        "webhookDispatcher: Event %s enqueued for %d webhook(s) (tenant %d)",
         event,
-        payload: { ...data, tenantId }
-      })
-    )
-
-    await Promise.all(enqueuePromises)
-
-    logger.debug(
-      "webhookDispatcher: Event %s enqueued for %d webhook(s) (tenant %d)",
-      event,
-      matching.length,
-      tenantId
-    )
+        matching.length,
+        tenantId
+      )
+    }
   } catch (error) {
     logger.error("webhookDispatcher: Failed to dispatch event %s: %o", event, error)
   }
